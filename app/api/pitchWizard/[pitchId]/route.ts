@@ -54,7 +54,7 @@ const updatePitchSchema = z.object({
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { pitchId: string } }
+  { params }: { params: Record<string, string> }
 ) {
   try {
     // Ensure the user is logged in
