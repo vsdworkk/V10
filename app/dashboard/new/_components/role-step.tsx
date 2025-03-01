@@ -29,10 +29,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 
 export default function RoleStep() {
-  const { control, register, watch } = useFormContext<PitchWizardFormData>()
+  const { control, register, watch, formState } = useFormContext<PitchWizardFormData>()
 
   // We'll watch the pitchWordLimit for dynamic logic in next steps
   const pitchLimitValue = watch("pitchWordLimit")
+  
+  console.log("RoleStep rendered with form state:", {
+    values: {
+      roleName: watch("roleName"),
+      roleLevel: watch("roleLevel"),
+      pitchWordLimit: pitchLimitValue
+    },
+    errors: formState.errors
+  })
 
   return (
     <div className="space-y-6">
@@ -95,6 +104,8 @@ export default function RoleStep() {
                 type="number"
                 placeholder="e.g. 500"
                 {...field}
+                onChange={e => field.onChange(Number(e.target.value))}
+                value={field.value}
               />
             </FormControl>
             <FormMessage />

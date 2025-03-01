@@ -89,7 +89,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   // Form setup
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
-    mode: "onTouched",
+    mode: "onChange",
     defaultValues: {
       userId,
       roleName: "",
@@ -110,6 +110,12 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
+  console.log("Form initialized with methods:", { 
+    isValid: methods.formState.isValid,
+    isDirty: methods.formState.isDirty,
+    errors: methods.formState.errors
+  })
+
   // Check pitchWordLimit for starExample2 logic
   const watchWordLimit = methods.watch("pitchWordLimit")
   useEffect(() => {
@@ -121,11 +127,50 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
   // Navigation
   const goNext = useCallback(async () => {
-    // Validate the current step's fields
-    const isValid = await methods.trigger()
-    if (!isValid) return
+    console.log("Next button clicked")
+    
+    // Define fields to validate based on current step
+    type FieldName = keyof PitchWizardFormData | `starExample2.${keyof (PitchWizardFormData['starExample2'] & {})}`;
+    
+    const fieldsToValidate: Record<number, FieldName[]> = {
+      1: ["roleName", "roleLevel", "pitchWordLimit", "roleDescription"],
+      2: ["yearsExperience", "relevantExperience"],
+      3: [], // Guidance step has no required fields
+      4: watchWordLimit >= 650 
+        ? ["starExample1", "starExample2"] 
+        : ["starExample1"],
+      5: [] // Review step has no additional fields
+    }
+    
+    const currentFields = fieldsToValidate[currentStep] || []
+
+    // Validate only the current step's fields
+    const isValid = await methods.trigger(currentFields)
+    console.log("Validation result:", isValid)
+    console.log("Form values:", methods.getValues())
+    console.log("Form errors:", methods.formState.errors)
+    
+    if (!isValid) {
+      const errors = methods.formState.errors
+      // Only show errors for the current step's fields
+      const currentStepErrors = Object.entries(errors)
+        .filter(([key]) => currentFields.includes(key as FieldName))
+        .map(([_, error]) => error?.message)
+        .filter(Boolean)
+      
+      console.log("Validation errors:", currentStepErrors)
+      if (currentStepErrors.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: currentStepErrors.join(", "),
+          variant: "destructive"
+        })
+        return
+      }
+    }
+    
     setCurrentStep(s => Math.min(s + 1, totalSteps))
-  }, [methods])
+  }, [methods, toast, currentStep, watchWordLimit])
 
   const goBack = useCallback(() => {
     setCurrentStep(s => Math.max(s - 1, 1))
