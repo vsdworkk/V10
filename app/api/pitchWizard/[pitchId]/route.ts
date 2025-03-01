@@ -51,10 +51,12 @@ const updatePitchSchema = z.object({
 /**
  * A dynamic route handler for /api/pitchWizard/[pitchId].
  * We only define a PATCH method here to handle pitch updates.
+ * NOTE: We mark "params" as Promise<{ pitchId: string }> and then await it.
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Record<string, string> }
+  // Workaround #1: Next.js expects params to be a Promise in Next 15+.
+  { params }: { params: Promise<{ pitchId: string }> }
 ) {
   try {
     // Ensure the user is logged in
@@ -66,7 +68,8 @@ export async function PATCH(
       )
     }
 
-    const pitchId = params.pitchId
+    // Destructure pitchId from the awaited params
+    const { pitchId } = await params
     if (!pitchId) {
       return NextResponse.json(
         { error: "Pitch ID is required in the URL" },
@@ -74,9 +77,10 @@ export async function PATCH(
       )
     }
 
+    // Parse request body
     const body = await request.json()
 
-    // Validate the incoming data with zod
+    // Validate data with Zod
     const parseResult = updatePitchSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
@@ -85,10 +89,8 @@ export async function PATCH(
       )
     }
 
-    // We have validated data
+    // Update pitch in DB
     const updatedData = parseResult.data
-
-    // We call updatePitchAction, ensuring that we pass userId for ownership check.
     const result = await updatePitchAction(pitchId, updatedData, userId)
     if (!result.isSuccess) {
       return NextResponse.json({ error: result.message }, { status: 400 })
