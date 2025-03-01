@@ -54,7 +54,7 @@ const updatePitchSchema = z.object({
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { pitchID: string } }
+  { params }: { params: { pitchId: string } }
 ) {
   try {
     // Ensure the user is logged in
@@ -66,7 +66,7 @@ export async function PATCH(
       )
     }
 
-    const pitchId = params.pitchID
+    const pitchId = params.pitchId
     if (!pitchId) {
       return NextResponse.json(
         { error: "Pitch ID is required in the URL" },
@@ -85,16 +85,13 @@ export async function PATCH(
       )
     }
 
-    // At this point we have validated data
+    // We have validated data
     const updatedData = parseResult.data
 
     // We call updatePitchAction, ensuring that we pass userId for ownership check.
     const result = await updatePitchAction(pitchId, updatedData, userId)
     if (!result.isSuccess) {
-      return NextResponse.json(
-        { error: result.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: result.message }, { status: 400 })
     }
 
     return NextResponse.json(
