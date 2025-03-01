@@ -30,21 +30,25 @@ import { getPitchByIdAction } from "@/actions/db/pitches-actions"
 import EditPitch from "./_components/edit-pitch"
 
 /**
- * We expect a dynamic route param called pitchId (matching [pitchId] in the folder name).
- * In Next.js App Router, we receive that via a function param.
+ * In Next.js 15, dynamic route params are async.
+ * So here we define params as a Promise<{ pitchId: string }> and await it below.
  */
 interface PitchDetailPageProps {
-  params: { pitchId: string } // The route parameter for the pitch ID
+  params: Promise<{ pitchId: string }>
 }
 
 export default async function PitchDetailPage({ params }: PitchDetailPageProps) {
+  // Destructure pitchId from the awaited params
+  const { pitchId } = await params
+
+  // Check Clerk auth
   const { userId } = await auth()
   if (!userId) {
     redirect("/login")
   }
 
-  // Fetch pitch from the database, ensuring it belongs to the current user
-  const result = await getPitchByIdAction(params.pitchId, userId)
+  // Fetch pitch from DB
+  const result = await getPitchByIdAction(pitchId, userId)
 
   // If DB action fails or pitch not found
   if (!result.isSuccess || !result.data) {
@@ -58,10 +62,8 @@ export default async function PitchDetailPage({ params }: PitchDetailPageProps) 
     )
   }
 
-  // If success, result.data is the pitch object
+  // Render the EditPitch client component in Suspense, if needed
   const pitch = result.data
-
-  // Wrap the client component in Suspense if needed for any potential async calls
   return (
     <Suspense fallback={<div className="p-6">Loading Pitch...</div>}>
       <EditPitch pitch={pitch} userId={userId} />
