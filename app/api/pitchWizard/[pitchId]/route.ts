@@ -23,7 +23,7 @@
  *   })
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { updatePitchAction } from "@/actions/db/pitches-actions"
 import { z } from "zod"
@@ -53,8 +53,8 @@ const updatePitchSchema = z.object({
  * We only define a PATCH method here to handle pitch updates.
  */
 export async function PATCH(
-  request: Request,
-  { params }: { params: { pitchId: string } }
+  request: NextRequest,
+  { params }: { params: { pitchID: string } }
 ) {
   try {
     // Ensure the user is logged in
@@ -66,7 +66,7 @@ export async function PATCH(
       )
     }
 
-    const pitchId = params.pitchId
+    const pitchId = params.pitchID
     if (!pitchId) {
       return NextResponse.json(
         { error: "Pitch ID is required in the URL" },
