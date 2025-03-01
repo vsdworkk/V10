@@ -1,42 +1,42 @@
 /**
  * @description
  * A client component that implements a multi-step wizard for creating a new pitch.
- * It collects:
- *  - Role Information
- *  - Experience Information (including optional resume upload)
- *  - STAR Examples (1 or 2 depending on pitchWordLimit)
- *  - Final Review (submit data to the server as a "draft" pitch)
+ * Steps now include:
+ *  1) Role Information
+ *  2) Experience Information
+ *  3) Albert Guidance (AI suggestions)
+ *  4) STAR Examples
+ *  5) Review / Confirmation
  *
  * Key Features:
  * - Uses React Hook Form and Zod for validation.
- * - Tracks `currentStep` in local state, conditionally rendering each step.
- * - Submits data to /api/pitchWizard in the final step.
- * - Captures `resumePath` if the user uploads a resume in ExperienceStep.
+ * - Tracks currentStep in local state, conditionally rendering each step.
+ * - Submits data to /api/pitchWizard in the final step (as a "draft" pitch).
+ * - Calls /api/albertGuidance for the optional guidance step (step 3).
  *
  * @dependencies
- * - "react-hook-form" and "zod" for form handling and validation.
- * - Child step components: role-step, experience-step, star-step, review-step.
+ * - "react-hook-form" and "zod" for form handling and validation
+ * - Child step components: role-step, experience-step, guidance-step, star-step, review-step
  *
  * @notes
- * - This wizard does NOT perform final AI pitch generation, that happens in Step 9.
- * - We forcibly set "pitchContent" to "" and "status" to "draft".
- * - You can see in ExperienceStep how we upload the file and set `resumePath`.
+ * This wizard does NOT perform the final AI pitch generation at submission time (that is step 9 in the plan).
+ * For now, we only store the pitch as "draft."
  */
 
 "use client"
-
 import { useCallback, useEffect, useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import RoleStep from "@/app/dashboard/new/_components/role-step"
-import ExperienceStep from "@/app/dashboard/new/_components/experience-step"
-import StarStep from "@/app/dashboard/new/_components/star-step"
-import ReviewStep from "@/app/dashboard/new/_components/review-step"
+import RoleStep from "./role-step"
+import ExperienceStep from "./experience-step"
+import GuidanceStep from "./guidance-step"
+import StarStep from "./star-step"
+import ReviewStep from "./review-step"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/lib/hooks/use-toast"
 
-// STAR sub-schema
+// STAR sub-schema (unchanged)
 const starSchema = z.object({
   situation: z.string().min(5, "Situation must be at least 5 characters."),
   task: z.string().min(5, "Task must be at least 5 characters."),
@@ -49,6 +49,7 @@ const pitchWizardSchema = z.object({
   // We'll optionally store the userId in the form (in case we need it for the resume upload)
   userId: z.string().optional(),
 
+  // Basic role info
   roleName: z.string().min(2, "Role Name must be at least 2 characters."),
   roleLevel: z.string().nonempty("Please select a role level."),
   pitchWordLimit: z
@@ -56,15 +57,18 @@ const pitchWizardSchema = z.object({
     .min(100, "Minimum 100 words.")
     .max(2000, "Maximum 2000 words for the pitch."),
   roleDescription: z.string().optional().nullable(),
+
+  // Experience
   yearsExperience: z.string().nonempty("Years of experience is required."),
   relevantExperience: z
     .string()
     .min(10, "Please provide a bit more detail on your experience."),
-
-  // resumePath is optional, set after upload
   resumePath: z.string().optional().nullable(),
 
-  // STAR
+  // The new guidance text from Albert
+  albertGuidance: z.string().optional().nullable(),
+
+  // STAR examples
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional()
 })
@@ -78,16 +82,16 @@ interface PitchWizardProps {
 export default function PitchWizard({ userId }: PitchWizardProps) {
   const { toast } = useToast()
 
-  // Steps: 1=Role Info, 2=Experience, 3=STAR, 4=Review
+  // Steps: 1=Role Info, 2=Experience, 3=Guidance, 4=STAR, 5=Review
   const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 4
+  const totalSteps = 5
 
   // Form setup
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
     mode: "onTouched",
     defaultValues: {
-      userId, // store the userId so the experience step can read it for the upload
+      userId,
       roleName: "",
       roleLevel: "",
       pitchWordLimit: 500,
@@ -95,6 +99,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       yearsExperience: "",
       relevantExperience: "",
       resumePath: "",
+      albertGuidance: "", // new
       starExample1: {
         situation: "",
         task: "",
@@ -109,11 +114,14 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   const watchWordLimit = methods.watch("pitchWordLimit")
   useEffect(() => {
     if (watchWordLimit < 650) {
+      // Only one STAR example is needed
       methods.setValue("starExample2", undefined)
     }
   }, [watchWordLimit, methods])
 
+  // Navigation
   const goNext = useCallback(async () => {
+    // Validate the current step's fields
     const isValid = await methods.trigger()
     if (!isValid) return
     setCurrentStep(s => Math.min(s + 1, totalSteps))
@@ -147,16 +155,15 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-
       if (!res.ok) {
         const text = await res.text()
         throw new Error(`Server responded with: ${text}`)
       }
-
       toast({
         title: "Pitch Created",
         description: "Your pitch was saved as draft."
       })
+      // Reset form and go back to Step 1
       methods.reset()
       setCurrentStep(1)
     } catch (error: any) {
@@ -175,8 +182,10 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       case 2:
         return <ExperienceStep />
       case 3:
-        return <StarStep />
+        return <GuidanceStep />
       case 4:
+        return <StarStep />
+      case 5:
         return <ReviewStep />
       default:
         return null
@@ -185,8 +194,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="mx-auto max-w-2xl space-y-6 rounded-md bg-card p-6 shadow">
-        <h2 className="text-2xl font-bold">
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold">
           Create New Pitch (Step {currentStep} of {totalSteps})
         </h2>
 
@@ -198,11 +207,9 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
               Back
             </Button>
           )}
-
           {currentStep < totalSteps && (
             <Button onClick={goNext}>Next</Button>
           )}
-
           {currentStep === totalSteps && (
             <Button type="button" onClick={onSubmit}>
               Submit
