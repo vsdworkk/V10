@@ -1,25 +1,26 @@
 "use client"
+
 /**
  * @description
- * This client component displays and manages the pitch details in a form, allowing users to edit:
- * - Basic pitch fields (role, experience, word limit)
- * - STAR examples
- * - (Optionally) re-run AI to regenerate pitch text
- *
+ * This client component displays and manages the pitch details in a form, allowing users
+ * to edit. It also provides an option to re-run AI to regenerate pitch text.
+ * 
  * Key features:
- * - Uses React Hook Form to track changes
- * - "Save Changes" calls a dedicated API route for updating the pitch in the DB
- * - "Re-run AI" calls /api/finalPitch to fetch newly generated content
+ * - Form-based editing for pitch fields
+ * - "Re-run AI" button calls /api/finalPitch
+ * - "Save Changes" button updates the pitch in the DB
+ * - Includes <ExportPitch /> for PDF/Word export
  *
  * @dependencies
- * - React Hook Form for form state & validation
- * - Shadcn UI form components (Input, Textarea, Button, etc.)
- * - fetch API to call server routes
+ * - React Hook Form for form state
+ * - Shadcn UI components (Input, Textarea, Button)
+ * - fetch for server route calls
+ * - ExportPitch for PDF/Word generation
  *
  * @notes
- * - We assume the user can edit any fields. If you want to lock some fields, remove them from the form.
- * - The pitch object is pre-filled from the server (props.pitch).
- * - The new patch route is /api/pitchWizard/[pitchId], which updates the pitch data in the DB.
+ * - If pitchWordLimit < 650, starExample2 is hidden. 
+ * - pitchContent is stored in the DB on "Save Changes".
+ * - The user can export the final pitch using PDF/Word buttons at the bottom.
  */
 
 import { useForm, FormProvider } from "react-hook-form"
@@ -47,10 +48,9 @@ import { useState } from "react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
+import ExportPitch from "./export-pitch" // <-- NEW IMPORT
 
-/**
- * starSchema defines validation for a single STAR example.
- */
+// STAR validation schema
 const starSchema = z.object({
   situation: z.string().min(5, "Situation must be at least 5 characters."),
   task: z.string().min(5, "Task must be at least 5 characters."),
@@ -58,11 +58,7 @@ const starSchema = z.object({
   result: z.string().min(5, "Result must be at least 5 characters.")
 })
 
-/**
- * The full form schema for editing the pitch.
- * We unify the "status" field in the DB with a typed approach, but we won't let them
- * change the status here unless we want them to. For now, we omit it.
- */
+// Main form schema for editing the pitch
 const editPitchSchema = z.object({
   id: z.string().uuid(),
   userId: z.string(),
@@ -73,59 +69,43 @@ const editPitchSchema = z.object({
   yearsExperience: z.string().nonempty(),
   relevantExperience: z.string().min(10),
   resumePath: z.string().optional().nullable(),
-  // starExample1 is required
   starExample1: starSchema,
-  // starExample2 is optional if pitchWordLimit >= 650
   starExample2: z.union([starSchema, z.undefined()]).optional(),
   pitchContent: z.string().optional().nullable()
 })
-
 type EditPitchFormData = z.infer<typeof editPitchSchema>
 
-/**
- * Props for the EditPitch component
- */
 interface EditPitchProps {
   pitch: SelectPitch
   userId: string
 }
 
-/**
- * Main client component that provides an editable form for the pitch.
- */
 export default function EditPitch({ pitch, userId }: EditPitchProps) {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Because starExample2 could be null or undefined in the DB, we treat it carefully.
-  // If pitchWordLimit >= 650, we'll show starExample2 in the UI
-  // If not, we hide it and remove that from the submission data
-  const defaultValues: EditPitchFormData = {
-    id: pitch.id,
-    userId: pitch.userId,
-    roleName: pitch.roleName,
-    roleLevel: pitch.roleLevel,
-    pitchWordLimit: pitch.pitchWordLimit,
-    roleDescription: pitch.roleDescription ?? "",
-    yearsExperience: pitch.yearsExperience,
-    relevantExperience: pitch.relevantExperience,
-    resumePath: pitch.resumePath ?? "",
-    starExample1: (pitch.starExample1 as any) || {
-      situation: "",
-      task: "",
-      action: "",
-      result: ""
-    },
-    starExample2:
-      (pitch.starExample2 as any) ||
-      undefined, // If there's data, we load it; otherwise undefined
-    pitchContent: pitch.pitchContent ?? ""
-  }
-
-  // Build the form
+  // Initialize react-hook-form
   const methods = useForm<EditPitchFormData>({
     resolver: zodResolver(editPitchSchema),
-    defaultValues
+    defaultValues: {
+      id: pitch.id,
+      userId: pitch.userId,
+      roleName: pitch.roleName,
+      roleLevel: pitch.roleLevel,
+      pitchWordLimit: pitch.pitchWordLimit,
+      roleDescription: pitch.roleDescription ?? "",
+      yearsExperience: pitch.yearsExperience,
+      relevantExperience: pitch.relevantExperience,
+      resumePath: pitch.resumePath ?? "",
+      starExample1: (pitch.starExample1 as any) || {
+        situation: "",
+        task: "",
+        action: "",
+        result: ""
+      },
+      starExample2: (pitch.starExample2 as any) || undefined,
+      pitchContent: pitch.pitchContent ?? ""
+    }
   })
 
   const {
@@ -136,18 +116,14 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
   } = methods
 
   const watchWordLimit = watch("pitchWordLimit")
+  const pitchContent = watch("pitchContent") || ""
 
-  /**
-   * handleGenerateAi - calls /api/finalPitch to regenerate pitch text
-   * with the updated form data from the user. Overwrites pitchContent in the form.
-   */
+  // For re-run AI usage
   const [generating, setGenerating] = useState(false)
   async function handleGenerateAi() {
     try {
       setGenerating(true)
       const values = methods.getValues()
-
-      // Call the existing finalPitch endpoint
       const res = await fetch("/api/finalPitch", {
         method: "POST",
         headers: {
@@ -164,22 +140,18 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
           starExample2: watchWordLimit >= 650 ? values.starExample2 : undefined
         })
       })
-
       if (!res.ok) {
         const err = await res.text()
         throw new Error(err || "Failed to generate final pitch")
       }
-
       const data = await res.json()
       if (!data.isSuccess) {
         throw new Error(data.message || "Failed to generate final pitch")
       }
-
       setValue("pitchContent", data.data || "", { shouldDirty: true })
-
       toast({
         title: "Pitch Regenerated",
-        description: "AI pitch has been updated in the text area below."
+        description: "AI pitch has been updated."
       })
     } catch (error: any) {
       toast({
@@ -192,35 +164,27 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
     }
   }
 
-  /**
-   * handleSaveChanges - sends updated pitch data to /api/pitchWizard/[pitchId] via PATCH
-   * to persist changes in the DB.
-   */
+  // For saving changes to DB
   async function handleSaveChanges(data: EditPitchFormData) {
-    // If user modifies pitchWordLimit to <650, we remove starExample2 from the request.
+    // If pitchWordLimit < 650, remove starExample2
     const patchBody = {
       ...data,
       starExample2: watchWordLimit < 650 ? undefined : data.starExample2
     }
-
     try {
       const res = await fetch(`/api/pitchWizard/${data.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patchBody)
       })
-
       if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || "Failed to update pitch")
       }
-
       toast({
         title: "Pitch Updated",
         description: "Your changes have been saved."
       })
-
-      // Refresh or navigate to confirm
       router.refresh()
     } catch (error: any) {
       toast({
@@ -232,12 +196,8 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-2xl font-semibold">Edit Pitch</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Pitch ID: <span className="font-mono">{pitch.id}</span> 
-      </p>
-
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold">Edit Pitch</h1>
       <FormProvider {...methods}>
         <Form {...methods}>
           <form onSubmit={handleSubmit(handleSaveChanges)}>
@@ -266,10 +226,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   <FormItem>
                     <FormLabel>Role Level</FormLabel>
                     <FormControl>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a level" />
                         </SelectTrigger>
@@ -297,17 +254,20 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        {...field}
                         value={field.value}
                         onChange={e => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {watchWordLimit < 650
-                        ? "Only 1 STAR example is needed below."
-                        : "2 STAR examples are required below."}
-                    </p>
+                    {watchWordLimit < 650 ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Only 1 STAR example is needed.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        2 STAR examples are required.
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />
@@ -323,7 +283,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                       <Textarea
                         placeholder="Paste or type the official role description here..."
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -332,10 +292,10 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               />
             </div>
 
+            {/* Experience */}
             <div className="my-6 border-b pb-2 pt-4">
               <h2 className="text-lg font-semibold">Experience</h2>
             </div>
-
             <div className="space-y-4">
               {/* Years of Experience */}
               <FormField
@@ -370,23 +330,21 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 )}
               />
 
-              {/* ResumePath is displayed read-only here, if we want. */}
+              {/* Resume path (read-only) */}
               {pitch.resumePath && (
                 <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Resume Path:</span>{" "}
-                  {pitch.resumePath}
+                  <span className="font-medium">Resume Path:</span> {pitch.resumePath}
                 </div>
               )}
             </div>
 
+            {/* STAR Examples */}
             <div className="my-6 border-b pb-2 pt-4">
               <h2 className="text-lg font-semibold">STAR Examples</h2>
             </div>
-
-            {/* STAR Example 1 */}
             <div className="space-y-2">
-              <h3 className="text-base font-medium">STAR Example 1</h3>
-
+              <h3 className="font-medium">STAR Example 1</h3>
+              {/* Situation */}
               <FormField
                 control={methods.control}
                 name="starExample1.situation"
@@ -400,7 +358,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   </FormItem>
                 )}
               />
-
+              {/* Task */}
               <FormField
                 control={methods.control}
                 name="starExample1.task"
@@ -414,7 +372,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   </FormItem>
                 )}
               />
-
+              {/* Action */}
               <FormField
                 control={methods.control}
                 name="starExample1.action"
@@ -428,7 +386,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   </FormItem>
                 )}
               />
-
+              {/* Result */}
               <FormField
                 control={methods.control}
                 name="starExample1.result"
@@ -444,11 +402,11 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               />
             </div>
 
-            {/* STAR Example 2, only if word limit >= 650 */}
+            {/* STAR Example 2 (only shown if pitchWordLimit >= 650) */}
             {watchWordLimit >= 650 && (
-              <div className="mt-6 space-y-2">
-                <h3 className="text-base font-medium">STAR Example 2</h3>
-
+              <div className="mt-4 space-y-2">
+                <h3 className="font-medium">STAR Example 2</h3>
+                {/* Situation */}
                 <FormField
                   control={methods.control}
                   name="starExample2.situation"
@@ -462,7 +420,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     </FormItem>
                   )}
                 />
-
+                {/* Task */}
                 <FormField
                   control={methods.control}
                   name="starExample2.task"
@@ -476,7 +434,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     </FormItem>
                   )}
                 />
-
+                {/* Action */}
                 <FormField
                   control={methods.control}
                   name="starExample2.action"
@@ -490,7 +448,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     </FormItem>
                   )}
                 />
-
+                {/* Result */}
                 <FormField
                   control={methods.control}
                   name="starExample2.result"
@@ -507,18 +465,16 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               </div>
             )}
 
+            {/* Final Pitch Content */}
             <div className="my-6 border-b pb-2 pt-4">
               <h2 className="text-lg font-semibold">Final Pitch Content</h2>
             </div>
-
             <p className="mb-2 text-sm text-muted-foreground">
               Optionally regenerate your pitch using updated info:
             </p>
-
             <Button type="button" onClick={handleGenerateAi} disabled={generating}>
               {generating ? "Generating AI..." : "Re-run AI Pitch Generation"}
             </Button>
-
             <div className="mt-4 space-y-2">
               <FormField
                 control={methods.control}
@@ -540,6 +496,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               />
             </div>
 
+            {/* Save Changes */}
             <div className="mt-8 flex gap-4">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save Changes"}
@@ -548,6 +505,13 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
           </form>
         </Form>
       </FormProvider>
+
+      {/* ExportPitch component to allow PDF/Word export */}
+      <ExportPitch
+        pitchContent={pitchContent}
+        pitchTitle={pitch.roleName}
+        pitchId={pitch.id}
+      />
     </div>
   )
 }
