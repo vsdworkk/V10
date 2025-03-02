@@ -1,28 +1,23 @@
 /**
- * @description
- * Client sub-component for wizard Step 2: Experience Information.
- * Collects:
- *  - yearsExperience
- *  - relevantExperience
- *  - optional resume upload (file input + upload button)
- *
- * Key Features:
- * - Uses React Hook Form context from the wizard
- * - Optionally uploads the resume to Supabase (via /api/resume-upload) if user selects a file
- * - On successful upload, sets the "resumePath" in the form state
- *
- * @dependencies
- * - React Hook Form
- * - Shadcn UI form components
- * - fetch API for the upload route
- *
- * @notes
- * - If the user doesn't want to upload, they can skip the file input entirely
- * - We do not finalize the pitch here; this is just step 2 of the wizard
- */
+@description
+Client sub-component for wizard Step 2: Experience Information.
+Collects:
+- yearsExperience
+- relevantExperience
+- optional resume file selection (WITHOUT a manual upload button).
+When the user clicks "Next" in the main wizard, the file is automatically
+uploaded to Supabase if present.
 
+@dependencies
+- React Hook Form context from the wizard
+- Shadcn UI form components
+@notes
+We removed the old "Upload Resume" button and manual upload flow. Instead,
+when the user clicks "Next" from Step 2, pitch-wizard.tsx will handle the
+actual file upload if a file is present.
+*/
 "use client"
-
+import { ChangeEvent, useRef } from "react"
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import {
@@ -34,96 +29,40 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { Paperclip } from "lucide-react"
 
 export default function ExperienceStep() {
   const { control, setValue, watch } = useFormContext<PitchWizardFormData>()
-
-  /**
-   * Local state for handling file input and upload feedback
-   */
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState<boolean>(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // We'll watch the current resumePath in the form, if any
   const currentResumePath = watch("resumePath", "")
+  const selectedFile = watch("selectedFile")
 
   /**
-   * handleFileChange - event callback for selecting a file
+   * handleFileChange - event callback for selecting a file.
+   * Instead of uploading immediately, we simply store it in form state as "selectedFile."
    */
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0])
-      setUploadError(null)
-      setUploadSuccess(null)
+      setValue("selectedFile", e.target.files[0], {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: false
+      })
     } else {
-      setSelectedFile(null)
+      setValue("selectedFile", null)
     }
   }
 
-  /**
-   * handleUpload - uploads the selected file (if any) to our /api/resume-upload route
-   */
-  const handleUpload = async () => {
-    try {
-      if (!selectedFile) {
-        return
-      }
-      setUploading(true)
-      setUploadError(null)
-      setUploadSuccess(null)
-
-      const formData = new FormData()
-      // We also need the user's ID for path organization
-      // That is stored in the parent wizard but we do not have direct userId in this step
-      // Typically you'd also pass userId from wizard or from a higher scope
-      // For demonstration, let's do a simple approach:
-      // We'll store userId in the wizard form too, or skip if not available
-      // But let's do it properly if we had the userId from the wizard:
-      // In real usage, the wizard might store userId, or we can do a separate prop. 
-      // We'll do a safe fallback:
-      const wizardUserId = watch("userId") || "unknown-user"
-      formData.append("userId", wizardUserId)
-      formData.append("file", selectedFile)
-
-      const res = await fetch("/api/resume-upload", {
-        method: "POST",
-        body: formData
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || "Upload failed")
-      }
-
-      const data = await res.json()
-      if (!data.path) {
-        throw new Error("No path returned from server")
-      }
-
-      // store path in the wizard form
-      setValue("resumePath", data.path)
-      setUploadSuccess(`Successfully uploaded: ${selectedFile.name}`)
-    } catch (error: any) {
-      setUploadError(error.message || "Failed to upload file")
-    } finally {
-      setUploading(false)
-    }
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click()
   }
 
   return (
     <div className="space-y-6">
-      {/* Years Experience */}
+      {/* Years of Experience */}
       <FormField
         control={control}
         name="yearsExperience"
@@ -131,20 +70,7 @@ export default function ExperienceStep() {
           <FormItem>
             <FormLabel>Years of Experience</FormLabel>
             <FormControl>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your experience range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Less than 1 year">
-                    Less than 1 year
-                  </SelectItem>
-                  <SelectItem value="1-2 years">1-2 years</SelectItem>
-                  <SelectItem value="2-5 years">2-5 years</SelectItem>
-                  <SelectItem value="5-10 years">5-10 years</SelectItem>
-                  <SelectItem value="10+ years">10+ years</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input placeholder="e.g. 2-5 years" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -169,34 +95,34 @@ export default function ExperienceStep() {
         )}
       />
 
-      {/* Resume Upload (Optional) */}
+      {/* Optional Resume Upload */}
       <div className="space-y-2">
-        <FormLabel>Optional Resume Upload</FormLabel>
-
-        <Input
+        <FormLabel className="text-sm text-muted-foreground">Optional Resume Upload</FormLabel>
+        <input
           type="file"
+          ref={fileInputRef}
           accept=".pdf,.doc,.docx"
           onChange={handleFileChange}
+          className="hidden"
         />
-
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleUpload}
-            disabled={!selectedFile || uploading}
-            variant="outline"
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm"
+            onClick={triggerFileSelect}
+            className="text-xs"
           >
-            {uploading ? "Uploading..." : "Upload Resume"}
+            <Paperclip className="h-3.5 w-3.5 mr-1" />
+            Choose file
           </Button>
-
-          {uploadSuccess && (
-            <p className="text-sm text-green-600">{uploadSuccess}</p>
-          )}
-          {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}
+          <span className="text-xs text-muted-foreground">
+            {selectedFile ? selectedFile.name : "No file chosen"}
+          </span>
         </div>
-
         {currentResumePath && (
-          <p className="text-sm text-muted-foreground">
-            Current stored resume path: <span className="font-semibold">{currentResumePath}</span>
+          <p className="text-xs text-muted-foreground mt-2">
+            Current stored resume: <span className="font-semibold">{currentResumePath.split('/').pop()}</span>
           </p>
         )}
       </div>

@@ -1,36 +1,29 @@
 /**
- * @description
- * Client sub-component for wizard Step (Albert Guidance).
- * This step calls the AI server action `generatePitchAction` with mode = "guidance"
- * to get role-specific suggestions that the user can copy or reference while
- * filling out the STAR examples.
- *
- * Key Features:
- * - Provides a "Get Guidance" button that triggers the AI call if not done yet.
- * - Displays the returned AI suggestions in a text area or read-only block.
- * - Encourages user to read or copy them before proceeding to the next step.
- *
- * @dependencies
- * - React Hook Form for storing "albertGuidance" in the wizard context.
- * - generatePitchAction from "@/actions/ai-actions" for the AI call (invoked via fetch inside the wizard).
- *
- * @notes
- * The user can skip or re-fetch guidance as needed. In real usage, you might handle
- * multiple attempts or refine prompt inputs.
- */
+@description
+Client sub-component for wizard Step 3: Automatic Albert Guidance.
+Upon loading, this component automatically calls the AI endpoint "/api/albertGuidance"
+to get role-specific suggestions that the user can refer to before filling out the STAR
+examples. The guidance is displayed in a large Card component. If there is any error,
+it is shown to the user.
+@notes
+- The user no longer has a "Get Guidance" button; guidance is fetched as soon as the step
+  is rendered and required data is present.
+- We store the returned guidance in the form's "albertGuidance" field so it persists if
+  the user navigates away and returns to this step.
+*/
 
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { useFormContext } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { useToast } from "@/lib/hooks/use-toast"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 export default function GuidanceStep() {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
 
   // We watch these fields to build the request for guidance:
   const roleName = watch("roleName")
@@ -40,85 +33,123 @@ export default function GuidanceStep() {
   const relevantExperience = watch("relevantExperience")
   const roleDescription = watch("roleDescription")
 
-  // We also have a local state "albertGuidance" but we can store it in the form context
-  // so that it's included if user navigates away/back. We'll store in the form as "albertGuidance"
+  // The form context also stores "albertGuidance"
   const albertGuidance = watch("albertGuidance")
 
-  const handleGetGuidance = async () => {
-    try {
-      setLoading(true)
-      // We'll call the same endpoint used for pitch generation, but with mode = "guidance"
-      const response = await fetch("/api/albertGuidance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roleName,
-          roleLevel,
-          pitchWordLimit,
-          yearsExperience,
-          relevantExperience,
-          roleDescription,
-          mode: "guidance"
-        })
-      })
+  // Local states for request feedback
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
 
-      if (!response.ok) {
-        const errText = await response.text()
-        throw new Error(errText || "Failed to fetch guidance")
-      }
-
-      const data = await response.json()
-      // data structure: { isSuccess, message, data: string }
-      if (!data.isSuccess) {
-        throw new Error(data.message || "Error generating guidance")
-      }
-
-      // Set the returned guidance text into form state
-      setValue("albertGuidance", data.data, {
-        shouldDirty: true,
-        shouldTouch: true,
-        shouldValidate: false
-      })
-
-      toast({
-        title: "Guidance Generated",
-        description: "Albert's suggestions have been retrieved."
-      })
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    // If we already have guidance or we're missing required fields, don't fetch again
+    if (
+      albertGuidance ||
+      !roleName ||
+      !roleLevel ||
+      !pitchWordLimit ||
+      !yearsExperience ||
+      !relevantExperience
+    ) {
+      return
     }
-  }
+
+    const fetchGuidance = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await fetch("/api/albertGuidance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roleName,
+            roleLevel,
+            pitchWordLimit,
+            yearsExperience,
+            relevantExperience,
+            roleDescription
+          })
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          throw new Error(errText || "Failed to fetch guidance")
+        }
+
+        const data = await response.json()
+        if (!data.isSuccess) {
+          throw new Error(data.message || "Error generating guidance")
+        }
+
+        // Store the returned guidance in form state
+        setValue("albertGuidance", data.data, { shouldDirty: true })
+      } catch (err: any) {
+        setError(err.message)
+        toast({
+          title: "Error",
+          description: err.message,
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void fetchGuidance()
+  }, [
+    albertGuidance,
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    yearsExperience,
+    relevantExperience,
+    roleDescription,
+    setValue,
+    toast
+  ])
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Before filling out your STAR examples, Albert can suggest relevant experiences
-        or angles to emphasize based on your role and experience info. Click the button
-        below to get role-specific guidance.
-      </p>
+      <h2 className="text-lg font-semibold">Albert's Guidance</h2>
 
-      <Button onClick={handleGetGuidance} disabled={loading} variant="outline">
-        {loading ? "Loading..." : "Get Guidance"}
-      </Button>
+      {/* Show loading, error, or the Card with guidance */}
+      {loading && (
+        <p className="text-sm text-muted-foreground">
+          Retrieving guidance from Albert...
+        </p>
+      )}
 
-      {albertGuidance && (
-        <div className="space-y-2">
-          <label className="font-semibold text-sm">Albert's Guidance:</label>
-          <Textarea
-            readOnly
-            value={albertGuidance}
-            className="min-h-[200px]"
-          />
-          <p className="text-xs text-muted-foreground">
-            Feel free to copy from this guidance as you complete your STAR examples.
-          </p>
-        </div>
+      {error && (
+        <p className="text-sm text-red-500">
+          Failed to load guidance: {error}
+        </p>
+      )}
+
+      {!loading && !error && albertGuidance && (
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Suggestions</CardTitle>
+            <CardDescription>
+              Use these tips while filling out your STAR examples.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-sm">
+              {albertGuidance}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 
+        If there's no guidance yet (and not loading), we either haven't fetched or
+        we are missing required data from Step 2. 
+      */}
+      {!loading && !error && !albertGuidance && (
+        <p className="text-muted-foreground text-sm">
+          Guidance is not available. Please ensure you have filled out Step 2 (Experience
+          details). 
+        </p>
       )}
     </div>
   )
