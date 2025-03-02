@@ -1,29 +1,27 @@
 /**
- * @description
- * A client component implementing a multi-step wizard for creating a pitch.
- * 
- * Steps:
- *  1. RoleStep
- *  2. ExperienceStep
- *  3. GuidanceStep
- *  4. StarStep
- *  5. ReviewStep (Now includes final pitch generation & preview)
- *
- * On final Submit, we gather all data (including pitchContent) and send it to
- * /api/pitchWizard to create the pitch record. If pitchContent is present, we
- * mark the pitch as "final"; otherwise, "draft".
- * 
- * @dependencies
- * - React Hook Form for wizard state
- * - fetch for calling /api/pitchWizard
- * - The child steps: role-step, experience-step, guidance-step, star-step,
- *   review-step
- * 
- * @notes
- * The pitchWizardSchema has been updated to include pitchContent.
- * The handleSubmit logic uses the normal create pitch approach.
- */
+@description
+A client component implementing a multi-step wizard for creating a pitch.
+Steps:
+  1. RoleStep
+  2. ExperienceStep
+  3. GuidanceStep
+  4. StarStep
+  5. ReviewStep
 
+On final Submit, we gather all data (including pitchContent) and send it to
+/api/pitchWizard to create the pitch record. If pitchContent is present,
+we mark the pitch as "final"; otherwise, "draft".
+
+@dependencies
+ - React Hook Form for wizard state
+ - fetch for calling /api/pitchWizard
+ - The child steps: role-step, experience-step, guidance-step, star-step, review-step
+
+@notes
+ - We updated pitchWordLimit to a string-based enum: "<500","<650","<750","<1000>".
+ - We parse that string to a numeric value before sending to the DB.
+ - We replaced roleLevel with an enum of APS1...APS6, EL1.
+*/
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
@@ -38,7 +36,9 @@ import ReviewStep from "./review-step"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/lib/hooks/use-toast"
 
-// STAR sub-schema
+/**
+STAR sub-schema for situation, task, action, result
+*/
 const starSchema = z.object({
   situation: z.string().min(5, "Situation must be at least 5 characters."),
   task: z.string().min(5, "Task must be at least 5 characters."),
@@ -46,16 +46,16 @@ const starSchema = z.object({
   result: z.string().min(5, "Result must be at least 5 characters.")
 })
 
-// Main wizard schema
+/**
+@constant pitchWizardSchema
+Defines validation for all wizard steps, including the new enum for pitchWordLimit.
+*/
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
   // Basic role info
   roleName: z.string().min(2, "Role Name must be at least 2 characters."),
-  roleLevel: z.string().nonempty("Please select a role level."),
-  pitchWordLimit: z
-    .number()
-    .min(100, "Minimum 100 words.")
-    .max(2000, "Maximum 2000 words for the pitch."),
+  roleLevel: z.enum(["APS1","APS2","APS3","APS4","APS5","APS6","EL1"]),
+  pitchWordLimit: z.enum(["<500","<650","<750","<1000"]),
   roleDescription: z.string().optional().nullable(),
 
   // Experience
@@ -70,10 +70,8 @@ const pitchWizardSchema = z.object({
 
   // STAR examples
   starExample1: starSchema,
-  // starExample2 can be omitted if pitchWordLimit < 650
-  starExample2: z
-    .union([starSchema, z.undefined()])
-    .optional(),
+  // starExample2 can be omitted if pitchWordLimit is small
+  starExample2: z.union([starSchema, z.undefined()]).optional(),
 
   // The final pitch text from GPT-4o, if generated
   pitchContent: z.string().optional().nullable()
@@ -89,7 +87,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   const { toast } = useToast()
 
   // Steps
-  const [currentStep, setCurrentStep] = useState<number>(1)
+  const [currentStep, setCurrentStep] = useState(1)
   const totalSteps = 5
 
   // Initialize form
@@ -99,8 +97,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     defaultValues: {
       userId,
       roleName: "",
-      roleLevel: "",
-      pitchWordLimit: 500,
+      roleLevel: "APS1",         // default
+      pitchWordLimit: "<500",    // Ensure this is a string value
       roleDescription: "",
       yearsExperience: "",
       relevantExperience: "",
@@ -117,34 +115,45 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
-  // If pitchWordLimit < 650, we don't need starExample2
+  // If pitchWordLimit <650, we don't need starExample2 in later steps.
+  // We'll parse this in star-step or on final submission.
   const watchWordLimit = methods.watch("pitchWordLimit")
+
+  // Clean up starExample2 if user picks <650
   useEffect(() => {
-    if (watchWordLimit < 650) {
-      methods.setValue("starExample2", undefined)
+    // Log the value to see what's coming in
+    console.log('watchWordLimit type:', typeof watchWordLimit, 'value:', watchWordLimit);
+    
+    // Extract numeric value from string like "<650" -> 650
+    if (typeof watchWordLimit === 'string') {
+      const numericLimit = parseInt(watchWordLimit.substring(1), 10)
+      if (numericLimit < 650) {
+        methods.setValue("starExample2", undefined)
+      }
     }
   }, [watchWordLimit, methods])
 
-  // Next/back logic
+  /**
+  @function goNext
+  Handles advancing to the next step, performing step-specific validations.
+  */
   const goNext = useCallback(async () => {
-    // define which fields to validate on each step
-    type FieldName = keyof PitchWizardFormData | `starExample2.${keyof (PitchWizardFormData["starExample2"] & {})}`
+    type FieldName = keyof PitchWizardFormData
 
+    // define which fields to validate on each step
     const fieldsToValidate: Record<number, FieldName[]> = {
       1: ["roleName", "roleLevel", "pitchWordLimit", "roleDescription"],
       2: ["yearsExperience", "relevantExperience"],
       3: [], // Guidance step has no required fields
-      4: watchWordLimit >= 650
-        ? ["starExample1", "starExample2"]
-        : ["starExample1"],
-      5: [] // Review step has no direct required fields
+      4: ["starExample1", "starExample2"], // We'll handle logic if starExample2 is undefined
+      5: [] // Review step
     }
 
     const currentFields = fieldsToValidate[currentStep] || []
     const isValid = await methods.trigger(currentFields)
 
     if (!isValid) {
-      // gather errors only for the fields of the current step
+      // gather errors for the fields of the current step
       const errors = methods.formState.errors
       const currentStepErrors = Object.entries(errors)
         .filter(([key]) => currentFields.includes(key as FieldName))
@@ -162,30 +171,43 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
 
     setCurrentStep(s => Math.min(s + 1, totalSteps))
-  }, [methods, toast, currentStep, watchWordLimit])
+  }, [methods, toast, currentStep])
 
+  /**
+  @function goBack
+  Moves to the previous step, if possible.
+  */
   const goBack = useCallback(() => {
     setCurrentStep(s => Math.max(s - 1, 1))
   }, [])
 
-  // Final submission
+  /**
+  @function onSubmit
+  Final submission logic. Sends all wizard data to /api/pitchWizard.
+  If pitchContent is filled, we mark status "final"; otherwise "draft".
+  Also we parse the pitchWordLimit string into an integer before storing.
+  */
   const onSubmit = methods.handleSubmit(async data => {
     // If pitchContent is filled, set pitch status to "final", else "draft"
-    const pitchStatus = data.pitchContent
-      ? "final"
-      : "draft"
+    const pitchStatus = data.pitchContent ? "final" : "draft"
+
+    // Convert string choice (e.g. "<750") to integer (e.g. 750)
+    const numericLimit = typeof data.pitchWordLimit === 'string' 
+      ? parseInt(data.pitchWordLimit.substring(1), 10)
+      : 500; // fallback to default if not a string
 
     // Build the payload
     const payload = {
       userId,
       roleName: data.roleName,
       roleLevel: data.roleLevel,
-      pitchWordLimit: data.pitchWordLimit,
+      pitchWordLimit: numericLimit,
       roleDescription: data.roleDescription || "",
       yearsExperience: data.yearsExperience,
       relevantExperience: data.relevantExperience,
       resumePath: data.resumePath || null,
       starExample1: data.starExample1,
+      // if user chose <650, starExample2 is undefined anyway
       starExample2: data.starExample2,
       pitchContent: data.pitchContent || "",
       status: pitchStatus
@@ -207,9 +229,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         title: pitchStatus === "final"
           ? "Final Pitch Saved"
           : "Draft Pitch Saved",
-        description: `Your pitch is now stored with status: "${pitchStatus}".`
+        description: `Your pitch is now stored with status "${pitchStatus}".`
       })
-
       // Reset form & wizard
       methods.reset()
       setCurrentStep(1)
@@ -222,7 +243,10 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
-  // Render step content
+  /**
+  @function renderStep
+  Returns the appropriate step component based on currentStep.
+  */
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -255,13 +279,11 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
               Back
             </Button>
           )}
-
           {currentStep < totalSteps && (
             <Button onClick={goNext}>
               Next
             </Button>
           )}
-
           {currentStep === totalSteps && (
             <Button type="button" onClick={onSubmit}>
               Submit
