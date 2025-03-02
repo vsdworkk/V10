@@ -9,7 +9,7 @@ it is shown to the user.
 - The user now has a "Retry" button if the initial fetch fails
 - We store the returned guidance in the form's "albertGuidance" field so it persists if
   the user navigates away and returns to this step.
-- The component now tracks changes to input fields and refreshes guidance when needed
+- The component now tracks changes to input fields using a hash and refreshes guidance when needed
 */
 
 "use client"
@@ -42,15 +42,12 @@ export default function GuidanceStep() {
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState<number>(0)
   
-  // Store previous values to detect changes
-  const previousValuesRef = useRef({
-    roleName,
-    roleLevel,
-    pitchWordLimit,
-    yearsExperience,
-    relevantExperience,
-    roleDescription
-  })
+  // Use a key string to detect changes
+  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}`
+  const lastFetchKeyRef = useRef<string>("")
+  
+  // Flag to force re-fetching when the component mounts in a new step navigation
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   const fetchGuidance = useCallback(async () => {
     if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
@@ -99,15 +96,8 @@ export default function GuidanceStep() {
       setValue("albertGuidance", data.data, { shouldDirty: true })
       setRetryCount(0) // Reset retry count on success
       
-      // Update previous values after successful fetch
-      previousValuesRef.current = {
-        roleName,
-        roleLevel,
-        pitchWordLimit,
-        yearsExperience,
-        relevantExperience,
-        roleDescription
-      }
+      // Update the last fetch key
+      lastFetchKeyRef.current = formDataKey
     } catch (err: any) {
       const errorMessage = err.name === 'AbortError' 
         ? "Request timed out. Please try again with a shorter description."
@@ -122,41 +112,77 @@ export default function GuidanceStep() {
     } finally {
       setLoading(false)
     }
-  },
-    [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, toast]
-  )
+  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, toast, formDataKey])
 
-  // Check if any relevant fields have changed
-  const haveFieldsChanged = useCallback(() => {
-    const prev = previousValuesRef.current
-    return (
-      prev.roleName !== roleName ||
-      prev.roleLevel !== roleLevel ||
-      prev.pitchWordLimit !== pitchWordLimit ||
-      prev.yearsExperience !== yearsExperience ||
-      prev.relevantExperience !== relevantExperience ||
-      prev.roleDescription !== roleDescription
-    )
-  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription])
-
-  // Initial fetch on component mount if we don't already have guidance
-  // OR if any of the relevant fields have changed
+  // Run when the component mounts to set up initialization
   useEffect(() => {
-    const fieldsChanged = haveFieldsChanged()
-    
-    if ((!albertGuidance || fieldsChanged) && !loading && retryCount === 0) {
+    setHasInitialized(true)
+    // Force clear guidance if we have never initialized before
+    // This ensures that when navigating to the step, we always fetch fresh guidance
+    if (!hasInitialized && !loading) {
+      setValue("albertGuidance", "", { shouldDirty: false })
+    }
+  }, [])
+
+  // Check data and fetch guidance when needed
+  useEffect(() => {
+    // Don't run on first render
+    if (!hasInitialized) return
+
+    const dataChanged = lastFetchKeyRef.current !== formDataKey
+    const needsInitialFetch = !albertGuidance && !loading
+    const needsRefresh = dataChanged && !loading
+
+    if ((needsInitialFetch || needsRefresh) && retryCount === 0) {
+      console.log("Fetching guidance because:", { 
+        needsInitialFetch, 
+        needsRefresh, 
+        dataChanged,
+        lastKey: lastFetchKeyRef.current,
+        currentKey: formDataKey
+      })
       void fetchGuidance()
     }
-  }, [albertGuidance, fetchGuidance, loading, retryCount, haveFieldsChanged])
+  }, [
+    albertGuidance, 
+    formDataKey, 
+    fetchGuidance, 
+    loading, 
+    retryCount, 
+    hasInitialized
+  ])
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1)
     void fetchGuidance()
   }
 
+  // Add a manual refresh button for users
+  const handleManualRefresh = () => {
+    // Clear any existing guidance
+    setValue("albertGuidance", "", { shouldDirty: false })
+    // Reset retry count
+    setRetryCount(0)
+    // Fetch new guidance
+    void fetchGuidance()
+  }
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Albert's Guidance</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Albert's Guidance</h2>
+        {albertGuidance && !loading && (
+          <Button 
+            onClick={handleManualRefresh} 
+            variant="outline" 
+            size="sm"
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Guidance
+          </Button>
+        )}
+      </div>
 
       {/* Show loading, error, or the Card with guidance */}
       {loading && (
