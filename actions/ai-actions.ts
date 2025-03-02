@@ -22,6 +22,7 @@
 
 "use server"
 import { ActionState } from "@/types"
+import OpenAI from "openai"
 
 /**
  * @interface GeneratePitchParams
@@ -65,66 +66,60 @@ export interface GeneratePitchParams {
  *
  * @param {GeneratePitchParams} pitchData - The user-defined pitch/guidance data
  * @returns {Promise<ActionState<string>>} - The AI-generated text or an error state
- *
- * @notes
- * Currently stubs the GPT-4o call by returning different placeholder content
- * depending on mode. In a real scenario, you would call your GPT-4o endpoint
- * with a structured prompt. Validate pitchData before using it in the actual GPT prompt.
  */
 export async function generatePitchAction(
   pitchData: GeneratePitchParams
 ): Promise<ActionState<string>> {
   try {
-    // You would do something like:
-    // const apiKey = process.env.GPT_4O_API_KEY
-    // if (!apiKey) {
-    //   throw new Error("Missing GPT_4O_API_KEY environment variable.")
-    // }
-    // Then call GPT-4o via fetch or a client library
+    const apiKey = process.env.GPT_4O_API_KEY || process.env.OPENAI_API_KEY
+    
+    if (!apiKey) {
+      throw new Error("Missing OpenAI API key in environment variables.")
+    }
+
+    const openai = new OpenAI({
+      apiKey: apiKey
+    })
 
     const mode = pitchData.mode || "pitch"
-
-    // For demonstration, return a different placeholder text depending on the mode:
+    
+    // Build the appropriate prompt based on the mode
+    let prompt = ""
     if (mode === "guidance") {
-      const guidanceText = `
-Albert Guidance Analysis (Placeholder):
-Based on your role: "${pitchData.roleName}" at level "${pitchData.roleLevel}",
-and your experience: "${pitchData.relevantExperience.slice(0, 80)}...", here
-are suggestions for picking relevant experiences for the STAR method:
-
-1) Highlight major achievements from your experience that align with the
-   responsibilities of "${pitchData.roleName}".
-2) Show how your actions led to a result that demonstrates key APS
-   capabilities (e.g., communication, stakeholder management).
-3) If you have a second STAR example, focus on a different skill set or
-   scenario to show breadth of experience.
-
-(End of placeholder guidance.)
-`
-      return {
-        isSuccess: true,
-        message: "Guidance generated successfully",
-        data: guidanceText.trim()
-      }
+      prompt = buildGuidancePrompt(pitchData)
     } else {
-      // Normal "pitch" mode (default)
-      const placeholderPitch = `
-Thank you for using the AI-Powered APS Pitch Builder!
-This is a placeholder pitch that would normally be generated
-by GPT-4o based on your role and STAR examples.
+      prompt = buildPitchPrompt(pitchData)
+    }
 
-Role: ${pitchData.roleName}, Level: ${pitchData.roleLevel}
-Word Limit: ${pitchData.pitchWordLimit}
-Years of Experience: ${pitchData.yearsExperience}
-Relevant Experience: ${pitchData.relevantExperience.slice(0, 80)}...
+    // Call the OpenAI API
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // Use GPT-4o model
+      messages: [
+        {
+          role: "system",
+          content: mode === "guidance" 
+            ? "You are Albert, an AI assistant specializing in providing guidance for job applications. You help users craft effective STAR examples for their pitch."
+            : "You are Albert, an AI assistant specializing in crafting job application pitches. You help users create compelling pitches based on their experience."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    })
 
-[Placeholder generated pitch content...]
-`
-      return {
-        isSuccess: true,
-        message: "Pitch generated successfully",
-        data: placeholderPitch.trim()
-      }
+    const aiResponse = response.choices[0]?.message?.content || ""
+    
+    if (!aiResponse) {
+      throw new Error("Failed to generate response from OpenAI")
+    }
+
+    return {
+      isSuccess: true,
+      message: mode === "guidance" ? "Guidance generated successfully" : "Pitch generated successfully",
+      data: aiResponse.trim()
     }
   } catch (error) {
     console.error("Error generating pitch or guidance:", error)
@@ -133,4 +128,71 @@ Relevant Experience: ${pitchData.relevantExperience.slice(0, 80)}...
       message: (error as Error).message || "Failed to generate pitch/guidance"
     }
   }
+}
+
+/**
+ * Helper function to build the guidance prompt
+ */
+function buildGuidancePrompt(pitchData: GeneratePitchParams): string {
+  return `
+I'm applying for a "${pitchData.roleName}" position at level "${pitchData.roleLevel}".
+I have ${pitchData.yearsExperience} years of experience.
+
+Here's a brief summary of my relevant experience:
+${pitchData.relevantExperience}
+
+${pitchData.roleDescription ? `The role description is: ${pitchData.roleDescription}` : ''}
+
+Word limit for my pitch: ${pitchData.pitchWordLimit}
+
+Please provide me with guidance on:
+1. How to select the most relevant experiences for my STAR examples
+2. What specific skills or achievements I should highlight for this role
+3. How to structure my examples to be most effective
+4. Any tips specific to the Australian Public Service (APS) application process for this level
+`
+}
+
+/**
+ * Helper function to build the pitch prompt
+ */
+function buildPitchPrompt(pitchData: GeneratePitchParams): string {
+  let prompt = `
+Please generate a professional pitch for a "${pitchData.roleName}" position at level "${pitchData.roleLevel}" in the Australian Public Service.
+I have ${pitchData.yearsExperience} years of experience.
+
+Here's a brief summary of my relevant experience:
+${pitchData.relevantExperience}
+
+${pitchData.roleDescription ? `The role description is: ${pitchData.roleDescription}` : ''}
+
+The pitch should be under ${pitchData.pitchWordLimit} words.
+`
+
+  if (pitchData.starExample1) {
+    prompt += `
+Here's my first STAR example:
+Situation: ${pitchData.starExample1.situation}
+Task: ${pitchData.starExample1.task}
+Action: ${pitchData.starExample1.action}
+Result: ${pitchData.starExample1.result}
+`
+  }
+
+  if (pitchData.starExample2) {
+    prompt += `
+Here's my second STAR example:
+Situation: ${pitchData.starExample2.situation}
+Task: ${pitchData.starExample2.task}
+Action: ${pitchData.starExample2.action}
+Result: ${pitchData.starExample2.result}
+`
+  }
+
+  prompt += `
+Please structure the pitch to highlight my skills and experiences most relevant to this role.
+Focus on demonstrating how my experience makes me a strong candidate for this position.
+`
+
+  return prompt
 }
