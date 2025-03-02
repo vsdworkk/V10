@@ -20,6 +20,9 @@
 import { NextResponse } from "next/server"
 import { generatePitchAction } from "@/actions/ai-actions"
 
+// Increase the timeout for this route
+export const maxDuration = 300 // 5 minutes in seconds
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -64,6 +67,18 @@ export async function POST(request: Request) {
     )
   } catch (error: any) {
     console.error("Error in /api/albertGuidance POST:", error)
+    
+    // Check for timeout errors
+    if (error.message?.includes('timeout') || error.name === 'AbortError' || error.code === 'ETIMEDOUT') {
+      return NextResponse.json(
+        { 
+          isSuccess: false, 
+          message: "The request took too long to process. Please try again or use a shorter description." 
+        },
+        { status: 504 }
+      )
+    }
+    
     return NextResponse.json(
       { isSuccess: false, message: error.message || "Internal server error" },
       { status: 500 }

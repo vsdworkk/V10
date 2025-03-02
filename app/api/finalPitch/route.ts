@@ -20,29 +20,29 @@
 import { NextResponse } from "next/server"
 import { generatePitchAction } from "@/actions/ai-actions"
 
+// Increase the timeout for this route
+export const maxDuration = 300 // 5 minutes in seconds
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Basic validation: ensure we have the required fields
-    // We allow starExample1/starExample2 if present
+    // Basic validation
     if (
       !body.roleName ||
       !body.roleLevel ||
       !body.pitchWordLimit ||
       !body.yearsExperience ||
-      !body.relevantExperience
+      !body.relevantExperience ||
+      !body.starExample1
     ) {
       return NextResponse.json(
-        {
-          isSuccess: false,
-          message: "Missing required fields for final pitch generation"
-        },
+        { isSuccess: false, message: "Missing required fields for pitch generation" },
         { status: 400 }
       )
     }
 
-    // Prepare the payload for generatePitchAction (mode="pitch")
+    // We call generatePitchAction with mode="pitch" (default)
     const aiResult = await generatePitchAction({
       roleName: body.roleName,
       roleLevel: body.roleLevel,
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
       yearsExperience: body.yearsExperience,
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
-      starExample1: body.starExample1 || undefined,
-      starExample2: body.starExample2 || undefined,
+      starExample1: body.starExample1,
+      starExample2: body.starExample2,
       mode: "pitch"
     })
 
@@ -62,13 +62,24 @@ export async function POST(request: Request) {
       )
     }
 
-    // Return the pitch text
     return NextResponse.json(
       { isSuccess: true, message: aiResult.message, data: aiResult.data },
       { status: 200 }
     )
   } catch (error: any) {
     console.error("Error in /api/finalPitch POST:", error)
+    
+    // Check for timeout errors
+    if (error.message?.includes('timeout') || error.name === 'AbortError' || error.code === 'ETIMEDOUT') {
+      return NextResponse.json(
+        { 
+          isSuccess: false, 
+          message: "The request took too long to process. Please try again or use a shorter description." 
+        },
+        { status: 504 }
+      )
+    }
+    
     return NextResponse.json(
       { isSuccess: false, message: error.message || "Internal server error" },
       { status: 500 }

@@ -6,20 +6,20 @@ to get role-specific suggestions that the user can refer to before filling out t
 examples. The guidance is displayed in a large Card component. If there is any error,
 it is shown to the user.
 @notes
-- The user no longer has a "Get Guidance" button; guidance is fetched as soon as the step
-  is rendered and required data is present.
+- The user now has a "Retry" button if the initial fetch fails
 - We store the returned guidance in the form's "albertGuidance" field so it persists if
   the user navigates away and returns to this step.
 */
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { useToast } from "@/lib/hooks/use-toast"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { RefreshCw } from "lucide-react"
 
 export default function GuidanceStep() {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
@@ -39,65 +39,69 @@ export default function GuidanceStep() {
   // Local states for request feedback
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState<number>(0)
 
-  useEffect(() => {
-    // If we already have guidance or we're missing required fields, don't fetch again
-    if (
-      albertGuidance ||
-      !roleName ||
-      !roleLevel ||
-      !pitchWordLimit ||
-      !yearsExperience ||
-      !relevantExperience
-    ) {
+  const fetchGuidance = useCallback(async () => {
+    if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
+      setError("Missing required fields. Please complete Step 2 first.")
       return
     }
 
-    const fetchGuidance = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        const response = await fetch("/api/albertGuidance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            roleName,
-            roleLevel,
-            pitchWordLimit,
-            yearsExperience,
-            relevantExperience,
-            roleDescription
-          })
-        })
+      // Set a timeout for the fetch operation
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
 
-        if (!response.ok) {
-          const errText = await response.text()
-          throw new Error(errText || "Failed to fetch guidance")
+      const response = await fetch("/api/albertGuidance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roleName,
+          roleLevel,
+          pitchWordLimit,
+          yearsExperience,
+          relevantExperience,
+          roleDescription
+        }),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        if (response.status === 504) {
+          throw new Error("The request timed out. Please try again with a shorter description or retry later.")
         }
-
-        const data = await response.json()
-        if (!data.isSuccess) {
-          throw new Error(data.message || "Error generating guidance")
-        }
-
-        // Store the returned guidance in form state
-        setValue("albertGuidance", data.data, { shouldDirty: true })
-      } catch (err: any) {
-        setError(err.message)
-        toast({
-          title: "Error",
-          description: err.message,
-          variant: "destructive"
-        })
-      } finally {
-        setLoading(false)
+        const errText = await response.text()
+        throw new Error(errText || "Failed to fetch guidance")
       }
-    }
 
-    void fetchGuidance()
+      const data = await response.json()
+      if (!data.isSuccess) {
+        throw new Error(data.message || "Error generating guidance")
+      }
+
+      // Store the returned guidance in form state
+      setValue("albertGuidance", data.data, { shouldDirty: true })
+      setRetryCount(0) // Reset retry count on success
+    } catch (err: any) {
+      const errorMessage = err.name === 'AbortError' 
+        ? "Request timed out. Please try again with a shorter description."
+        : err.message
+      
+      setError(errorMessage)
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }, [
-    albertGuidance,
     roleName,
     roleLevel,
     pitchWordLimit,
@@ -108,21 +112,47 @@ export default function GuidanceStep() {
     toast
   ])
 
+  // Initial fetch on component mount if we don't already have guidance
+  useEffect(() => {
+    if (!albertGuidance && !loading && !error && retryCount === 0) {
+      void fetchGuidance()
+    }
+  }, [albertGuidance, fetchGuidance, loading, error, retryCount])
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1)
+    void fetchGuidance()
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Albert's Guidance</h2>
 
       {/* Show loading, error, or the Card with guidance */}
       {loading && (
-        <p className="text-sm text-muted-foreground">
-          Retrieving guidance from Albert...
-        </p>
+        <div className="flex flex-col items-center space-y-2 py-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Retrieving guidance from Albert... This may take a moment.
+          </p>
+        </div>
       )}
 
       {error && (
-        <p className="text-sm text-red-500">
-          Failed to load guidance: {error}
-        </p>
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <p className="text-sm text-red-600 mb-3">
+            {error}
+          </p>
+          <Button 
+            onClick={handleRetry} 
+            variant="outline" 
+            size="sm"
+            disabled={loading}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
       )}
 
       {!loading && !error && albertGuidance && (
@@ -146,10 +176,21 @@ export default function GuidanceStep() {
         we are missing required data from Step 2. 
       */}
       {!loading && !error && !albertGuidance && (
-        <p className="text-muted-foreground text-sm">
-          Guidance is not available. Please ensure you have filled out Step 2 (Experience
-          details). 
-        </p>
+        <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+          <p className="text-muted-foreground text-sm mb-3">
+            Guidance is not available. Please ensure you have filled out Step 2 (Experience
+            details) completely.
+          </p>
+          <Button 
+            onClick={handleRetry} 
+            variant="outline" 
+            size="sm"
+            disabled={loading || !roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
       )}
     </div>
   )

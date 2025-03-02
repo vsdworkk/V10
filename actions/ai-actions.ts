@@ -78,7 +78,9 @@ export async function generatePitchAction(
     }
 
     const openai = new OpenAI({
-      apiKey: apiKey
+      apiKey: apiKey,
+      timeout: 60000, // 60 second timeout
+      maxRetries: 2 // Limit retries to avoid long waits
     })
 
     const mode = pitchData.mode || "pitch"
@@ -91,14 +93,18 @@ export async function generatePitchAction(
       prompt = buildPitchPrompt(pitchData)
     }
 
+    // For guidance mode, use a faster model with fewer tokens
+    const model = mode === "guidance" ? "gpt-3.5-turbo" : "gpt-4o"
+    const maxTokens = mode === "guidance" ? 500 : 1000
+
     // Call the OpenAI API
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // Use GPT-4o model
+      model: model,
       messages: [
         {
           role: "system",
           content: mode === "guidance" 
-            ? "You are Albert, an AI assistant specializing in providing guidance for job applications. You help users craft effective STAR examples for their pitch."
+            ? "You are Albert, an AI assistant specializing in providing guidance for job applications. You help users craft effective STAR examples for their pitch. Be concise and direct."
             : "You are Albert, an AI assistant specializing in crafting job application pitches. You help users create compelling pitches based on their experience."
         },
         {
@@ -107,7 +113,7 @@ export async function generatePitchAction(
         }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: maxTokens
     })
 
     const aiResponse = response.choices[0]?.message?.content || ""
@@ -123,6 +129,18 @@ export async function generatePitchAction(
     }
   } catch (error) {
     console.error("Error generating pitch or guidance:", error)
+    
+    // Check if it's a timeout error
+    if (error instanceof Error && 
+        (error.message.includes('timeout') || 
+         error.message.includes('ETIMEDOUT') || 
+         error.message.includes('FUNCTION_INVOCATION_TIMEOUT'))) {
+      return {
+        isSuccess: false,
+        message: "The request took too long to process. Please try again or use a shorter description."
+      }
+    }
+    
     return {
       isSuccess: false,
       message: (error as Error).message || "Failed to generate pitch/guidance"
@@ -145,11 +163,13 @@ ${pitchData.roleDescription ? `The role description is: ${pitchData.roleDescript
 
 Word limit for my pitch: ${pitchData.pitchWordLimit}
 
-Please provide me with guidance on:
+Please provide me with brief, concise guidance on:
 1. How to select the most relevant experiences for my STAR examples
 2. What specific skills or achievements I should highlight for this role
 3. How to structure my examples to be most effective
 4. Any tips specific to the Australian Public Service (APS) application process for this level
+
+Keep your response brief and to the point.
 `
 }
 
