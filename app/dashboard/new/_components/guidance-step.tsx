@@ -9,11 +9,12 @@ it is shown to the user.
 - The user now has a "Retry" button if the initial fetch fails
 - We store the returned guidance in the form's "albertGuidance" field so it persists if
   the user navigates away and returns to this step.
+- The component now tracks changes to input fields and refreshes guidance when needed
 */
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { useToast } from "@/lib/hooks/use-toast"
@@ -40,6 +41,16 @@ export default function GuidanceStep() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState<number>(0)
+  
+  // Store previous values to detect changes
+  const previousValuesRef = useRef({
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    yearsExperience,
+    relevantExperience,
+    roleDescription
+  })
 
   const fetchGuidance = useCallback(async () => {
     if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
@@ -87,6 +98,16 @@ export default function GuidanceStep() {
       // Store the returned guidance in form state
       setValue("albertGuidance", data.data, { shouldDirty: true })
       setRetryCount(0) // Reset retry count on success
+      
+      // Update previous values after successful fetch
+      previousValuesRef.current = {
+        roleName,
+        roleLevel,
+        pitchWordLimit,
+        yearsExperience,
+        relevantExperience,
+        roleDescription
+      }
     } catch (err: any) {
       const errorMessage = err.name === 'AbortError' 
         ? "Request timed out. Please try again with a shorter description."
@@ -101,23 +122,32 @@ export default function GuidanceStep() {
     } finally {
       setLoading(false)
     }
-  }, [
-    roleName,
-    roleLevel,
-    pitchWordLimit,
-    yearsExperience,
-    relevantExperience,
-    roleDescription,
-    setValue,
-    toast
-  ])
+  },
+    [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, toast]
+  )
+
+  // Check if any relevant fields have changed
+  const haveFieldsChanged = useCallback(() => {
+    const prev = previousValuesRef.current
+    return (
+      prev.roleName !== roleName ||
+      prev.roleLevel !== roleLevel ||
+      prev.pitchWordLimit !== pitchWordLimit ||
+      prev.yearsExperience !== yearsExperience ||
+      prev.relevantExperience !== relevantExperience ||
+      prev.roleDescription !== roleDescription
+    )
+  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription])
 
   // Initial fetch on component mount if we don't already have guidance
+  // OR if any of the relevant fields have changed
   useEffect(() => {
-    if (!albertGuidance && !loading && !error && retryCount === 0) {
+    const fieldsChanged = haveFieldsChanged()
+    
+    if ((!albertGuidance || fieldsChanged) && !loading && retryCount === 0) {
       void fetchGuidance()
     }
-  }, [albertGuidance, fetchGuidance, loading, error, retryCount])
+  }, [albertGuidance, fetchGuidance, loading, retryCount, haveFieldsChanged])
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1)

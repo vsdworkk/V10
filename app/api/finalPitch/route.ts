@@ -21,7 +21,7 @@ import { NextResponse } from "next/server"
 import { generatePitchAction } from "@/actions/ai-actions"
 
 // Increase the timeout for this route
-export const maxDuration = 55 // 5 minutes in seconds
+export const maxDuration = 55 // 55 seconds
 
 export async function POST(request: Request) {
   try {

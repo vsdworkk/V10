@@ -6,6 +6,7 @@
  * - Shows a summary of all user inputs (Role, Experience, STAR).
  * - "Generate Final Pitch" button calls the new /api/finalPitch route (mode="pitch").
  * - Renders an editable text area for `pitchContent` if AI pitch is generated.
+ * - Detects changes in form data and clears pitchContent when needed.
  * 
  * @dependencies
  * - React Hook Form: to get the wizard data and set pitchContent
@@ -23,8 +24,9 @@ import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/lib/hooks/use-toast"
+import { AlertCircle } from "lucide-react"
 
 export default function ReviewStep() {
   const { getValues, watch, setValue } = useFormContext<PitchWizardFormData>()
@@ -32,14 +34,78 @@ export default function ReviewStep() {
 
   // For local loading state on the "Generate Final Pitch" button
   const [generating, setGenerating] = useState(false)
+  const [dataChanged, setDataChanged] = useState(false)
 
   const data = getValues()
   const pitchContent = watch("pitchContent")
+  
+  // Watch all relevant fields that would affect the pitch
+  const roleName = watch("roleName")
+  const roleLevel = watch("roleLevel")
+  const pitchWordLimit = watch("pitchWordLimit")
+  const roleDescription = watch("roleDescription")
+  const yearsExperience = watch("yearsExperience")
+  const relevantExperience = watch("relevantExperience")
+  const starExample1 = watch("starExample1")
+  const starExample2 = watch("starExample2")
+  
+  // Store previous values to detect changes
+  const previousValuesRef = useRef({
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    roleDescription,
+    yearsExperience,
+    relevantExperience,
+    starExample1,
+    starExample2
+  })
+
+  // Check for changes in the form data
+  useEffect(() => {
+    // Only check if we already have a pitch content
+    if (pitchContent) {
+      const prev = previousValuesRef.current
+      
+      // Deep comparison for STAR examples
+      const starExample1Changed = JSON.stringify(prev.starExample1) !== JSON.stringify(starExample1)
+      const starExample2Changed = JSON.stringify(prev.starExample2) !== JSON.stringify(starExample2)
+      
+      // Check if any field has changed
+      const hasChanged = 
+        prev.roleName !== roleName ||
+        prev.roleLevel !== roleLevel ||
+        prev.pitchWordLimit !== pitchWordLimit ||
+        prev.roleDescription !== roleDescription ||
+        prev.yearsExperience !== yearsExperience ||
+        prev.relevantExperience !== relevantExperience ||
+        starExample1Changed ||
+        starExample2Changed
+      
+      if (hasChanged) {
+        setDataChanged(true)
+        // Optionally clear the pitch content when data changes
+        // setValue("pitchContent", "", { shouldDirty: true })
+      }
+    }
+  }, [
+    pitchContent,
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    roleDescription,
+    yearsExperience,
+    relevantExperience,
+    starExample1,
+    starExample2
+  ])
 
   // Handler to call the final pitch API
   async function handleGenerateFinalPitch() {
     try {
       setGenerating(true)
+      setDataChanged(false)
+      
       // build request body from wizard data
       const response = await fetch("/api/finalPitch", {
         method: "POST",
@@ -68,6 +134,19 @@ export default function ReviewStep() {
 
       // The AI pitch text is in result.data
       setValue("pitchContent", result.data, { shouldDirty: true })
+      
+      // Update previous values after successful generation
+      previousValuesRef.current = {
+        roleName,
+        roleLevel,
+        pitchWordLimit,
+        roleDescription,
+        yearsExperience,
+        relevantExperience,
+        starExample1,
+        starExample2
+      }
+      
       toast({
         title: "Final Pitch Generated",
         description: "Albert has created a complete pitch using your data."
@@ -151,9 +230,19 @@ export default function ReviewStep() {
         </p>
 
         <Button onClick={handleGenerateFinalPitch} disabled={generating}>
-          {generating ? "Generating..." : "Generate Final Pitch"}
+          {generating ? "Generating..." : dataChanged && pitchContent ? "Regenerate Final Pitch" : "Generate Final Pitch"}
         </Button>
       </div>
+
+      {/* Warning if data has changed since last generation */}
+      {dataChanged && pitchContent && (
+        <div className="rounded-md bg-amber-50 p-3 border border-amber-200 flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-800">
+            Your information has changed since the pitch was generated. Please regenerate the pitch to reflect your latest information.
+          </p>
+        </div>
+      )}
 
       {/* If we have pitchContent, show it in a text area for user editing */}
       {pitchContent && (
