@@ -1,27 +1,31 @@
 /**
 @description
 A client component implementing a multi-step wizard for creating a pitch.
-Now extended to handle a second STAR example (starExample2) if pitchWordLimit >= 650.
+Now we remove the "Generate Final Pitch" button from the final step and
+automatically generate the pitch after the last STAR sub-step. During the
+generation, we display a spinner. Once the pitch is fetched, we navigate
+the user to the final review step (step 12).
 Steps (total of 12 potential steps):
- 1) RoleStep
- 2) ExperienceStep
- 3) GuidanceStep
- 4) SituationStep (starExample1)
- 5) TaskStep (starExample1)
- 6) ActionStep (starExample1)
- 7) ResultStep (starExample1)
- 8) SituationStep (starExample2)     [only if pitchWordLimit >= 650]
- 9) TaskStep (starExample2)         [only if pitchWordLimit >= 650]
-10) ActionStep (starExample2)       [only if pitchWordLimit >= 650]
-11) ResultStep (starExample2)       [only if pitchWordLimit >= 650]
-12) ReviewStep (final)
-If pitchWordLimit < 650, we skip steps 8–11 and go directly from step 7 to step 12.
-On final Submit, we gather all data and call /api/pitchWizard. If pitchContent is
-present, we mark status "final", otherwise "draft".
+1.  RoleStep
+2.  ExperienceStep
+3.  GuidanceStep
+4.  SituationStep (starExample1)
+5.  TaskStep (starExample1)
+6.  ActionStep (starExample1)
+7.  ResultStep (starExample1)
+8.  SituationStep (starExample2) [only if pitchWordLimit >= 650]
+9.  TaskStep (starExample2) [only if pitchWordLimit >= 650]
+10. ActionStep (starExample2) [only if pitchWordLimit >= 650]
+11. ResultStep (starExample2) [only if pitchWordLimit >= 650]
+12. ReviewStep (final)
+
+On completing step 7 (if pitchWordLimit < 650) or step 11 (if >= 650),
+we auto-generate the final pitch by calling /api/finalPitch before
+moving to step 12.
+
 @notes
-We reuse the same sub-step components (SituationStep, TaskStep, etc.) for starExample2
-by passing exampleKey="starExample2". 
-We keep the existing logic for auto-upload of resumes (Step 2).
+We follow the project rule of returning the complete file.
+
 */
 
 "use client"
@@ -56,13 +60,13 @@ const starSchema = z.object({
 
 /**
  * pitchWizardSchema
- * - roleName, roleLevel, pitchWordLimit, roleDescription (optional)
- * - yearsExperience, relevantExperience, optional resumePath
- * - albertGuidance for guidance text
- * - starExample1 always present
- * - starExample2 is optional, only used for pitchWordLimit >= 650
- * - pitchContent is the final AI-generated text
- * - selectedFile is a File object for local usage to upload the resume
+ * roleName, roleLevel, pitchWordLimit, roleDescription (optional)
+ * yearsExperience, relevantExperience, optional resumePath
+ * albertGuidance for guidance text
+ * starExample1 always present
+ * starExample2 is optional, only used for pitchWordLimit >= 650
+ * pitchContent is the final AI-generated text
+ * selectedFile is a File object for local usage to upload the resume
  */
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
@@ -70,17 +74,14 @@ const pitchWizardSchema = z.object({
   roleLevel: z.enum(["APS1","APS2","APS3","APS4","APS5","APS6","EL1"]),
   pitchWordLimit: z.enum(["<500","<650","<750","<1000"]),
   roleDescription: z.string().optional().nullable(),
-
   yearsExperience: z.string().nonempty("Years of experience is required."),
   relevantExperience: z
     .string()
     .min(10, "Please provide a bit more detail on your experience."),
   resumePath: z.string().optional().nullable(),
   albertGuidance: z.string().optional().nullable(),
-
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional(),
-
   pitchContent: z.string().optional().nullable(),
   // The user-supplied file, if they uploaded one in Step 2
   selectedFile: z.any().optional().nullable()
@@ -92,19 +93,22 @@ interface PitchWizardProps {
   userId: string
 }
 
+/**
+ * @function PitchWizard
+ * The main multi-step wizard for collecting pitch data.
+ * We handle:
+ *   - steps 1-3 for role & experience
+ *   - up to 2 STAR examples (1 or 2 depending on pitchWordLimit)
+ *   - final pitch generation is now automatic after the last STAR step
+ *   - final step 12: review & editing
+ */
 export default function PitchWizard({ userId }: PitchWizardProps) {
   const { toast } = useToast()
 
-  // We define up to 12 steps (the second STAR example adds 4 steps: 8-11).
-  // The final step is step 12.
-
+  // We define up to 12 steps. The second STAR example is conditionally shown.
   const [currentStep, setCurrentStep] = useState(1)
-
-  // For simplicity, let's define the maximum step as 12, but we may skip steps 8–11
-  // if the pitchWordLimit < 650.
   const totalSteps = 12
 
-  // Initialize the form
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
     mode: "onChange",
@@ -130,17 +134,21 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
+  // Additional states for auto-generation
+  const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
+  const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
+
+  // Watch pitchWordLimit
   const watchWordLimit = methods.watch("pitchWordLimit")
 
-  // Convert string limit to a numeric for easier checks.
+  // Convert string limit to numeric
   function numericLimit(): number {
-    // example: "<650" -> 650
     const str = watchWordLimit || "<500"
+    // e.g. "<650" => parseInt("650", 10)
     return parseInt(str.replace("<", ""), 10)
   }
 
-  // If the numeric limit is < 650, we don't need starExample2. So we set starExample2 to undefined.
-  // This ensures we don't show those fields in the final data.
+  // If user picks a limit < 650, we do not use starExample2
   useEffect(() => {
     if (numericLimit() < 650) {
       methods.setValue("starExample2", undefined)
@@ -148,9 +156,9 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   }, [watchWordLimit, methods])
 
   /**
-   * autoUploadResume:
+   * autoUploadResume
    * Called when leaving Step 2 -> Step 3. If there's a file in "selectedFile",
-   * we POST it to /api/resume-upload, get the path, store in "resumePath".
+   * we POST it to /api/resume-upload, get the path, and store in "resumePath".
    */
   const autoUploadResume = async () => {
     const file = methods.getValues("selectedFile")
@@ -174,13 +182,12 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       if (!data.path) {
         throw new Error("No path returned from server")
       }
-
-      // Store the path
       methods.setValue("resumePath", data.path, {
         shouldDirty: true,
         shouldTouch: true
       })
-      // Clear selectedFile so we don't re-upload if user goes back and forth
+
+      // Clear selectedFile so we don't re-upload if user toggles back/next
       methods.setValue("selectedFile", null)
 
       toast({
@@ -197,42 +204,93 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   }
 
   /**
-   * goNext: Advances the wizard to the next step. We do step-specific validations,
-   * and if finishing Step 2, we upload the resume if present.
-   * Also, if we are finishing step 7 and the numeric limit < 650, skip steps 8–11
-   * and jump to step 12. If finishing step 11, go to step 12.
+   * generateFinalPitch
+   * Helper that calls /api/finalPitch with the user’s data.
+   * On success, it sets pitchContent in form state. On failure, sets an error.
+   */
+  const generateFinalPitch = useCallback(async () => {
+    setFinalPitchError(null)
+    // Gather wizard data
+    const {
+      roleName,
+      roleLevel,
+      pitchWordLimit,
+      roleDescription,
+      yearsExperience,
+      relevantExperience,
+      starExample1,
+      starExample2
+    } = methods.getValues()
+
+    try {
+      setIsGeneratingFinalPitch(true)
+
+      const bodyData = {
+        roleName,
+        roleLevel,
+        pitchWordLimit,
+        roleDescription: roleDescription || "",
+        yearsExperience,
+        relevantExperience,
+        starExample1,
+        // starExample2 only if user provided it (pitchWordLimit >= 650)
+        starExample2: numericLimit() >= 650 ? starExample2 : undefined
+      }
+
+      const res = await fetch("/api/finalPitch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData)
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || "Failed to fetch final pitch")
+      }
+      const result = await res.json()
+      if (!result.isSuccess) {
+        throw new Error(result.message || "Error generating final pitch")
+      }
+
+      // Insert final text
+      methods.setValue("pitchContent", result.data, { shouldDirty: true })
+    } catch (error: any) {
+      setFinalPitchError(error.message)
+    } finally {
+      setIsGeneratingFinalPitch(false)
+    }
+  }, [methods, numericLimit])
+
+  /**
+   * goNext
+   * The main "Next" button logic. We do step-specific validation and tasks (upload resume,
+   * auto-generate final pitch if this is the last STAR sub-step), then move on.
    */
   const goNext = useCallback(async () => {
     type FieldName = keyof PitchWizardFormData
-
-    // We'll define which fields to validate at each step.
-    // We have up to 12 steps, but we skip some if needed.
+    // Minimal validation for each step:
     const fieldsToValidate: Record<number, FieldName[]> = {
       1: ["roleName", "roleLevel", "pitchWordLimit", "roleDescription"],
       2: ["yearsExperience", "relevantExperience"],
       3: [], // Guidance step has no required fields
-      4: [], // Because the user is filling "Situation" for starExample1 via sub-component
-      5: [],
-      6: [],
-      7: [], // We'll consider validating starExample1 more thoroughly if needed
-      8: [], // starExample2 situation
-      9: [],
-      10: [],
-      11: [], // By the time we get to step 11, starExample2 is nearly done
-      12: [] // The final review step doesn't force required fields
+      4: [], // situationStep for starExample1
+      5: [], // taskStep for starExample1
+      6: [], // actionStep for starExample1
+      7: [], // resultStep for starExample1
+      8: [], // situationStep for starExample2
+      9: [], // taskStep for starExample2
+      10: [], // actionStep for starExample2
+      11: [], // resultStep for starExample2
+      12: [] // final review step
     }
 
-    // Validate only the fields in the current step
     const currentFields = fieldsToValidate[currentStep] || []
     const isValid = await methods.trigger(currentFields)
     if (!isValid) {
-      // gather errors
       const errors = methods.formState.errors
       const currentStepErrors = Object.entries(errors)
         .filter(([key]) => currentFields.includes(key as FieldName))
-        .map(([_, error]) => error?.message)
+        .map(([_, err]) => err?.message)
         .filter(Boolean)
-
       if (currentStepErrors.length > 0) {
         toast({
           title: "Validation Error",
@@ -248,42 +306,49 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       await autoUploadResume()
     }
 
-    // Now handle skipping logic for second example:
-    // If finishing Step 7 (the first STAR example result),
-    // and pitchWordLimit < 650, jump directly to step 12 (review).
+    // If finishing Step 7 with limit < 650, auto-generate final pitch, then jump to step 12
     if (currentStep === 7 && numericLimit() < 650) {
+      await generateFinalPitch()
       setCurrentStep(12)
       return
     }
 
-    // If finishing Step 11 (the last step of starExample2),
-    // we jump to step 12 (the review).
+    // If finishing Step 11, auto-generate final pitch, then step 12
     if (currentStep === 11) {
+      await generateFinalPitch()
       setCurrentStep(12)
       return
     }
 
-    // Otherwise go next
-    setCurrentStep(s => Math.min(s + 1, totalSteps))
-  }, [currentStep, methods, toast])
+    // Otherwise just proceed
+    setCurrentStep((s) => Math.min(s + 1, totalSteps))
+  }, [
+    currentStep,
+    methods,
+    toast,
+    autoUploadResume,
+    numericLimit,
+    generateFinalPitch
+  ])
 
   /**
-   * goBack: Moves to the previous step if possible. We do not do advanced skip-back logic
-   * to jump from step 12 to step 7, etc. The user can just manually step back if they'd like.
+   * goBack
+   * Move to the previous step if possible. We do not skip logic here, user can backtrack
+   * to review or fix fields.
    */
   const goBack = useCallback(() => {
-    setCurrentStep(s => Math.max(s - 1, 1))
+    setCurrentStep((s) => Math.max(s - 1, 1))
   }, [])
 
   /**
-   * onSubmit: Called once the user is at step 12 and clicks "Submit".
-   * We parse pitchWordLimit, build a payload, and call /api/pitchWizard.
-   * If pitchContent is present, we mark as "final"; otherwise "draft".
+   * onSubmit
+   * Called once the user is at the final step (step 12) and clicks "Submit".
+   * We post all data to /api/pitchWizard to store the pitch. If pitchContent is present, we
+   * mark it final; otherwise "draft".
    */
-  const onSubmit = methods.handleSubmit(async data => {
+  const onSubmit = methods.handleSubmit(async (data) => {
     const pitchStatus = data.pitchContent ? "final" : "draft"
-    const strLimit = data.pitchWordLimit || "<500"
-    const numeric = parseInt(strLimit.replace("<", ""), 10) || 500
+    const numeric = parseInt(data.pitchWordLimit.replace("<", ""), 10) || 500
 
     const payload = {
       userId,
@@ -310,13 +375,11 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         const text = await res.text()
         throw new Error(`Server responded with: ${text}`)
       }
-
       toast({
         title: pitchStatus === "final" ? "Final Pitch Saved" : "Draft Pitch Saved",
         description: `Your pitch is now stored with status "${pitchStatus}".`
       })
-
-      // reset wizard
+      // Reset wizard
       methods.reset()
       setCurrentStep(1)
     } catch (error: any) {
@@ -328,11 +391,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
-  /**
-   * Renders the correct step sub-component.
-   * We always show steps 1-7. Steps 8-11 are only relevant if pitchWordLimit >= 650,
-   * but we won't forcibly hide them; we do skip them in the goNext logic though.
-   */
+  // Renders the correct sub-step
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -364,6 +423,46 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   }
 
+  // If we’re generating the final pitch, show a spinner / loading UI
+  // similar to guidance-step
+  if (isGeneratingFinalPitch) {
+    return (
+      <div className="flex flex-col items-center space-y-2 py-10">
+        <svg
+          className="h-8 w-8 animate-spin text-muted-foreground"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v8H4z"
+          ></path>
+        </svg>
+
+        <p className="text-sm text-muted-foreground">
+          Retrieving your final pitch from Albert...
+        </p>
+
+        {finalPitchError && (
+          <div className="rounded-md border border-red-300 bg-red-50 p-3 text-red-700">
+            <p className="text-sm font-semibold">Error:</p>
+            <p className="text-sm">{finalPitchError}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <FormProvider {...methods}>
       <div className="space-y-6">
@@ -373,6 +472,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
         <div>{renderStep()}</div>
 
+        {/* Navigation Buttons */}
         <div className="flex justify-between pt-4">
           {currentStep > 1 && (
             <Button variant="outline" onClick={goBack}>
@@ -381,9 +481,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
           )}
 
           {currentStep < 12 && (
-            <Button onClick={goNext}>
-              Next
-            </Button>
+            <Button onClick={goNext}>Next</Button>
           )}
 
           {currentStep === 12 && (
