@@ -54,7 +54,6 @@ import HeadingExtension from "@tiptap/extension-heading"
 import BulletListExtension from "@tiptap/extension-bullet-list"
 import OrderedListExtension from "@tiptap/extension-ordered-list"
 import ListItemExtension from "@tiptap/extension-list-item"
-import HistoryExtension from "@tiptap/extension-history"
 import CharacterCountExtension from "@tiptap/extension-character-count"
 
 /**
@@ -211,7 +210,6 @@ export default function ReviewStep() {
       BulletListExtension,
       OrderedListExtension,
       ListItemExtension,
-      HistoryExtension,
       CharacterCountExtension.configure({ limit: 10000 }) // optional limit
     ],
     content: pitchContent,
