@@ -1,47 +1,88 @@
 /**
- * @description
- * Client sub-component for wizard Step 5: Review & Final Pitch Generation.
- * 
- * Key Features:
- * - Shows a summary of all user inputs (Role, Experience, STAR).
- * - "Generate Final Pitch" button calls the new /api/finalPitch route (mode="pitch").
- * - Renders an editable text area for `pitchContent` if AI pitch is generated.
- * - Detects changes in form data using a key-hash approach.
- * - Provides manual refresh option for users.
- * 
- * @dependencies
- * - React Hook Form: to get the wizard data and set pitchContent
- * - fetch API: to call /api/finalPitch
- * - Shadcn UI (Button, Textarea) for styling
- * 
- * @notes
- * The actual saving to the DB happens in the wizard's final submit,
- * which includes the `pitchContent` in the payload.
- */
+@description
+Client sub-component for wizard Step 5: Final Preview & Editing with TipTap.
+We replace the old "Review Your Data" text area with a TipTap editor, allowing
+the user to format the final pitch. The user may also click "Generate Final Pitch"
+to re-run AI generation if they've changed their data (role, experience, STAR examples).
+Key Features:
+1. TipTap Editor for final pitch content:
+   - Bold, Italic, Headings, Bullet/Ordered List, Undo/Redo, Word Count.
+   - We store the result in form state via pitchContent.
+2. "Generate Final Pitch" button uses /api/finalPitch to fetch AI text and sets
+   pitchContent. If data changed since last generation, it prompts user to re-generate.
+3. The rest of the wizard's data is not displayed here (unlike prior "Review" step),
+   focusing on final editing. The user can see the rest in prior steps.
+4. We continue to track "dataChanged" to highlight that the user's underlying
+   answers have changed. If so, we show a small warning prompting them to
+   "Regenerate" to incorporate the new data.
+
+@dependencies
+React Hook Form: to read/write pitchContent
+TipTap: for the text editor
+fetch: for server call to /api/finalPitch
+useToast: for user notifications
+@notes
+- We assume the user has installed TipTap libraries: 
+  npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-* ...
+- If user wants advanced grammar checks or other extension packs, they can add them,
+  but for now we handle a minimal set of formatting.
+
+Edge Cases & Error Handling:
+- If AI generation fails, we toast an error. 
+- If the user has not filled out prior steps, they might get an error from the server
+  or an incomplete pitch. Typically the wizard flow ensures required fields are set
+  before Step 5.
+*/
 
 "use client"
 
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/lib/hooks/use-toast"
-import { AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, Bold, Italic, List, ListOrdered, RotateCw, 
+   Undo2, Redo2, Heading1 } from "lucide-react"
 
+// TipTap & its extensions
+import { EditorContent, useEditor } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import BoldExtension from "@tiptap/extension-bold"
+import ItalicExtension from "@tiptap/extension-italic"
+import UnderlineExtension from "@tiptap/extension-underline"
+import HeadingExtension from "@tiptap/extension-heading"
+import BulletListExtension from "@tiptap/extension-bullet-list"
+import OrderedListExtension from "@tiptap/extension-ordered-list"
+import ListItemExtension from "@tiptap/extension-list-item"
+import HistoryExtension from "@tiptap/extension-history"
+import CharacterCountExtension from "@tiptap/extension-character-count"
+
+/**
+@interface ReviewStepProps
+We don't receive separate props here; we rely on form context (RHF).
+*/
+
+/**
+@function ReviewStep
+@description
+The final step in the pitch wizard. Renders a TipTap-based editor for the final
+pitch, plus a button to (re)generate final pitch text from the server if the user
+has changed data since the last generation. 
+*/
 export default function ReviewStep() {
   const { getValues, watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
-  // For local loading state on the "Generate Final Pitch" button
+  // We'll track whether we are currently calling the AI
   const [generating, setGenerating] = useState(false)
+  // We'll also track if data changed since last pitch generation
   const [dataChanged, setDataChanged] = useState(false)
   const [hasInitialized, setHasInitialized] = useState(false)
 
-  const data = getValues()
-  const pitchContent = watch("pitchContent")
-  
-  // Watch all relevant fields that would affect the pitch
+  // The final pitch text is stored in pitchContent
+  const pitchContent = watch("pitchContent") || ""
+
+  // Watch the underlying wizard data that would affect generation
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
   const pitchWordLimit = watch("pitchWordLimit")
@@ -50,73 +91,83 @@ export default function ReviewStep() {
   const relevantExperience = watch("relevantExperience")
   const starExample1 = watch("starExample1")
   const starExample2 = watch("starExample2")
-  
-  // Create a key to represent the current state of all inputs
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}|${JSON.stringify(starExample1)}|${JSON.stringify(starExample2)}`
-  const lastGenerationKeyRef = useRef<string>("")
 
-  // Initialize component
+  /**
+  Build a key that represents all relevant data for final pitch generation. If the user
+  modifies any of these fields, we consider data "changed."
+  */
+  const formDataKey = JSON.stringify({
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    roleDescription,
+    yearsExperience,
+    relevantExperience,
+    starExample1,
+    starExample2
+  })
+
+  // We store the last generation's "key" in a ref so that re-renders don't discard it
+  const lastGenerationKeyRef = useRef("")
+
+  // On mount, mark as initialized
   useEffect(() => {
     setHasInitialized(true)
   }, [])
 
-  // Check for changes in the form data
+  // Whenever form data changes, if we already had pitch content,
+  // we mark dataChanged = true if the new key doesn't match the old key
   useEffect(() => {
-    // Skip the first render
     if (!hasInitialized) return
-    
-    // Only check if we already have a pitch content
-    if (pitchContent && lastGenerationKeyRef.current) {
-      const currentChanged = lastGenerationKeyRef.current !== formDataKey
-      
-      if (currentChanged) {
-        console.log("Pitch data changed:", {
-          oldKey: lastGenerationKeyRef.current.slice(0, 50),
-          newKey: formDataKey.slice(0, 50)
-        })
-        setDataChanged(true)
-      }
+    // If there's no pitchContent, user hasn't generated anything yet
+    if (!pitchContent) return
+    // If the user has already generated content before:
+    if (lastGenerationKeyRef.current && formDataKey !== lastGenerationKeyRef.current) {
+      setDataChanged(true)
     }
-  }, [pitchContent, formDataKey, hasInitialized])
+  }, [formDataKey, pitchContent, hasInitialized])
 
-  // Handler to call the final pitch API
-  async function handleGenerateFinalPitch() {
+  /**
+  handleGenerateFinalPitch
+  Makes a POST to /api/finalPitch, passing all relevant wizard data,
+  updates the pitchContent in our form state upon success.
+  */
+  const handleGenerateFinalPitch = useCallback(async () => {
     try {
       setGenerating(true)
       setDataChanged(false)
-      
-      // build request body from wizard data
-      const response = await fetch("/api/finalPitch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roleName: data.roleName,
-          roleLevel: data.roleLevel,
-          pitchWordLimit: data.pitchWordLimit,
-          roleDescription: data.roleDescription,
-          yearsExperience: data.yearsExperience,
-          relevantExperience: data.relevantExperience,
-          starExample1: data.starExample1,
-          starExample2: data.starExample2
-        })
-      })
 
-      if (!response.ok) {
-        const errText = await response.text()
-        throw new Error(errText || "Failed to fetch final pitch")
+      // Build request body
+      const bodyData = {
+        roleName,
+        roleLevel,
+        pitchWordLimit,
+        roleDescription: roleDescription || "",
+        yearsExperience,
+        relevantExperience,
+        starExample1,
+        starExample2
       }
 
-      const result = await response.json()
+      const res = await fetch("/api/finalPitch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData)
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || "Failed to fetch final pitch")
+      }
+      const result = await res.json()
       if (!result.isSuccess) {
         throw new Error(result.message || "Error generating final pitch")
       }
 
-      // The AI pitch text is in result.data
+      // Insert the text into pitchContent
       setValue("pitchContent", result.data, { shouldDirty: true })
-      
-      // Update last generation key after successful generation
+      // Mark the last generation key to the current data's signature
       lastGenerationKeyRef.current = formDataKey
-      
+
       toast({
         title: "Final Pitch Generated",
         description: "Albert has created a complete pitch using your data."
@@ -130,117 +181,196 @@ export default function ReviewStep() {
     } finally {
       setGenerating(false)
     }
+  }, [
+    formDataKey,
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    roleDescription,
+    yearsExperience,
+    relevantExperience,
+    starExample1,
+    starExample2,
+    setValue,
+    toast
+  ])
+
+  /**
+  Create the TipTap editor instance
+  - We use StarterKit plus some extra extensions (bold, italic, lists, heading, character count).
+  - We set the initial content to pitchContent from the wizard.
+  - On each update, we sync the text back to the form (pitchContent).
+  */
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      BoldExtension,
+      ItalicExtension,
+      UnderlineExtension,
+      HeadingExtension.configure({ levels: [1, 2, 3] }),
+      BulletListExtension,
+      OrderedListExtension,
+      ListItemExtension,
+      HistoryExtension,
+      CharacterCountExtension.configure({ limit: 10000 }) // optional limit
+    ],
+    content: pitchContent,
+    autofocus: false,
+    onUpdate: ({ editor }: { editor: any }) => {
+      // Sync changes to RHF
+      const currentText = editor.getHTML()
+      setValue("pitchContent", currentText, { shouldDirty: true })
+    }
+  })
+
+  /**
+  Simple toolbar with buttons for Bold, Italic, Heading, Bullet/Ordered List, Undo, Redo.
+  We also show character count or word count if desired.
+  */
+  const handleBold = () => editor?.chain().focus().toggleBold().run()
+  const handleItalic = () => editor?.chain().focus().toggleItalic().run()
+  const handleHeading = (level: 1 | 2 | 3 | 4 | 5 | 6) =>
+    editor?.chain().focus().toggleHeading({ level }).run()
+  const handleBulletList = () => editor?.chain().focus().toggleBulletList().run()
+  const handleOrderedList = () => editor?.chain().focus().toggleOrderedList().run()
+  const handleUndo = () => editor?.chain().focus().undo().run()
+  const handleRedo = () => editor?.chain().focus().redo().run()
+
+  // If the editor is not yet ready, we show a small fallback
+  if (!editor) {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm">Loading editor...</p>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Review Your Data</h2>
+      <h2 className="text-xl font-semibold">Final Preview</h2>
 
-      <div className="text-sm space-y-2">
-        <p>
-          <strong>Role Name:</strong> {data.roleName}
-        </p>
-        <p>
-          <strong>Role Level:</strong> {data.roleLevel}
-        </p>
-        <p>
-          <strong>Word Limit:</strong> {data.pitchWordLimit}
-        </p>
-        <p>
-          <strong>Role Description:</strong> {data.roleDescription}
-        </p>
-        <p>
-          <strong>Years of Experience:</strong> {data.yearsExperience}
-        </p>
-        <p>
-          <strong>Relevant Experience:</strong> {data.relevantExperience}
-        </p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Click "Generate Final Pitch" to have Albert produce a complete APS pitch from
+        your wizard inputs. Then use the formatting tools to refine your text before
+        submitting.
+      </p>
 
-      {/* STAR Example 1 */}
-      <div className="text-sm space-y-1">
-        <p className="font-semibold">STAR Example 1:</p>
-        <p>
-          <strong>Situation:</strong> {data.starExample1.situation}
-        </p>
-        <p>
-          <strong>Task:</strong> {data.starExample1.task}
-        </p>
-        <p>
-          <strong>Action:</strong> {data.starExample1.action}
-        </p>
-        <p>
-          <strong>Result:</strong> {data.starExample1.result}
-        </p>
-      </div>
+      <Button onClick={handleGenerateFinalPitch} disabled={generating}>
+        {generating
+          ? "Generating..."
+          : dataChanged && pitchContent
+          ? "Regenerate Final Pitch"
+          : "Generate Final Pitch"}
+      </Button>
 
-      {/* STAR Example 2 (if present) */}
-      {data.starExample2 && (
-        <div className="text-sm space-y-1">
-          <p className="font-semibold">STAR Example 2:</p>
-          <p>
-            <strong>Situation:</strong> {data.starExample2.situation}
-          </p>
-          <p>
-            <strong>Task:</strong> {data.starExample2.task}
-          </p>
-          <p>
-            <strong>Action:</strong> {data.starExample2.action}
-          </p>
-          <p>
-            <strong>Result:</strong> {data.starExample2.result}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Click "Generate Final Pitch" to have Albert produce a complete APS pitch
-          from the above details. You can then edit the resulting text before saving.
-        </p>
-
-        <Button onClick={handleGenerateFinalPitch} disabled={generating}>
-          {generating ? "Generating..." : dataChanged && pitchContent ? "Regenerate Final Pitch" : "Generate Final Pitch"}
-        </Button>
-      </div>
-
-      {/* Warning if data has changed since last generation */}
+      {/* If data changed after last generation, show a small warning */}
       {dataChanged && pitchContent && (
-        <div className="rounded-md bg-amber-50 p-3 border border-amber-200 flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+          <AlertCircle className="mt-0.5 h-5 w-5 text-amber-500" />
           <p className="text-sm text-amber-800">
-            Your information has changed since the pitch was generated. Please regenerate the pitch to reflect your latest information.
+            Your details have changed since generating this pitch. Click{" "}
+            <strong>Regenerate Final Pitch</strong> to incorporate your latest data.
           </p>
         </div>
       )}
 
-      {/* If we have pitchContent, show it in a text area for user editing */}
-      {pitchContent && (
-        <div className="mt-4 space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="font-semibold text-sm">Final Pitch (Editable):</label>
-            {dataChanged && (
-              <Button 
-                onClick={handleGenerateFinalPitch} 
-                variant="outline" 
-                size="sm"
-                disabled={generating}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Pitch
-              </Button>
-            )}
-          </div>
-          <Textarea
-            value={pitchContent}
-            onChange={e => setValue("pitchContent", e.target.value, { shouldDirty: true })}
-            className="min-h-[200px]"
-          />
-          <p className="text-xs text-muted-foreground">
-            You can refine any wording before submitting.
-          </p>
+      {/* Editor Toolbar */}
+      <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted p-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bold") ? "default" : "outline"}
+          onClick={handleBold}
+          aria-label="Toggle Bold"
+          className="flex items-center gap-1"
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("italic") ? "default" : "outline"}
+          onClick={handleItalic}
+          aria-label="Toggle Italic"
+          className="flex items-center gap-1"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => handleHeading(1)}
+          aria-label="Heading Level 1"
+          className="flex items-center gap-1"
+        >
+          <Heading1 className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bulletList") ? "default" : "outline"}
+          onClick={handleBulletList}
+          aria-label="Toggle Bullet List"
+          className="flex items-center gap-1"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("orderedList") ? "default" : "outline"}
+          onClick={handleOrderedList}
+          aria-label="Toggle Ordered List"
+          className="flex items-center gap-1"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleUndo}
+          aria-label="Undo"
+          className="flex items-center gap-1"
+        >
+          <Undo2 className="h-4 w-4" />
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleRedo}
+          aria-label="Redo"
+          className="flex items-center gap-1"
+        >
+          <Redo2 className="h-4 w-4" />
+        </Button>
+
+        {/* Optional: If you want to show a word or character count from tiptap */}
+        <div className="ml-auto text-xs text-muted-foreground">
+          {editor.storage.characterCount
+            ? `Characters: ${editor.storage.characterCount.characters() ?? 0}`
+            : null}
         </div>
-      )}
+      </div>
+
+      {/* Editor Area */}
+      <div className="min-h-[300px] rounded-md border p-2">
+        <EditorContent editor={editor} />
+      </div>
+
+      {/* Helpful note */}
+      <p className="text-xs text-muted-foreground">
+        Feel free to use the formatting tools above. Once satisfied, click{" "}
+        <strong>Submit</strong> on the final wizard screen to save your pitch.
+      </p>
     </div>
   )
 }
