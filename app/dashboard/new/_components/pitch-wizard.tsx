@@ -36,6 +36,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { useRouter } from "next/navigation"
 
 // Step components
 import RoleStep from "./role-step"
@@ -109,6 +110,7 @@ interface PitchWizardProps {
  */
 export default function PitchWizard({ userId }: PitchWizardProps) {
   const { toast } = useToast()
+  const router = useRouter()
 
   // There can be up to 12 steps in total
   const [currentStep, setCurrentStep] = useState(1)
@@ -356,7 +358,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
    * @function onSubmit
    * Called at the final step (step 12) to save the pitch into the DB as either
    * "final" if we have pitch content, or "draft" if for some reason pitchContent
-   * was missing. We POST to /api/pitchWizard, then reset the wizard or show errors.
+   * was missing. We POST to /api/pitchWizard, then redirect to the dashboard.
    */
   const onSubmit = methods.handleSubmit(async (data) => {
     const pitchStatus = data.pitchContent ? "final" : "draft"
@@ -394,9 +396,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         description: `Your pitch is now stored with status "${pitchStatus}".`
       })
 
-      // Reset wizard
-      methods.reset()
-      setCurrentStep(1)
+      // Redirect to dashboard instead of resetting the form
+      router.push("/dashboard")
     } catch (error: any) {
       toast({
         title: "Error",
