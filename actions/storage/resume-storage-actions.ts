@@ -109,3 +109,70 @@ export async function uploadResumeStorage(
     }
   }
 }
+
+/**
+ * @function getResumeContentStorage
+ * @description
+ * Retrieves resume content from Supabase Storage using the stored path.
+ * For now, this function assumes plain text extraction for simplicity.
+ * In a production environment, proper PDF/DOC parsing would be needed.
+ *
+ * @param resumePath - The stored path of the resume file
+ * @returns Promise<ActionState<string>> - The content of the resume or an error
+ */
+export async function getResumeContentStorage(
+  resumePath: string
+): Promise<ActionState<string>> {
+  try {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase environment configuration.")
+    }
+    
+    if (!resumePath) {
+      return {
+        isSuccess: false,
+        message: "No resume path provided"
+      }
+    }
+
+    // Prepare a server-side supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false }
+    })
+
+    // Download the file from storage
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .download(resumePath)
+
+    if (error) {
+      throw new Error(`Supabase download error: ${error.message}`)
+    }
+
+    // Extract text based on file type
+    // Note: In a production app, you would use more robust methods for
+    // PDF and DOC parsing (e.g., pdf.js, mammoth.js, etc.)
+    let textContent = "Resume content could not be extracted."
+    
+    // Simple text extraction - in a real app, use proper file format parsers
+    if (data) {
+      // Basic handling - convert blob to text for text-based files
+      // For PDFs and DOCs, proper parsing libraries would be needed
+      textContent = await data.text().catch(() => {
+        return "Resume uploaded but content extraction is not supported for this file type."
+      })
+    }
+
+    return {
+      isSuccess: true,
+      message: "Resume content retrieved successfully",
+      data: textContent
+    }
+  } catch (error) {
+    console.error("Error retrieving resume content:", error)
+    return {
+      isSuccess: false,
+      message: (error as Error).message || "Failed to retrieve resume content."
+    }
+  }
+}

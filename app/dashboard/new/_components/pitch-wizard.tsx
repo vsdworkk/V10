@@ -232,6 +232,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       roleDescription,
       yearsExperience,
       relevantExperience,
+      resumePath,
       starExample1,
       starExample2
     } = methods.getValues()
@@ -246,6 +247,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         roleDescription: roleDescription || "",
         yearsExperience,
         relevantExperience,
+        resumePath: resumePath || null,
         starExample1,
         // Only include starExample2 if pitchWordLimit >= 650
         starExample2: numericLimit() >= 650 ? starExample2 : undefined

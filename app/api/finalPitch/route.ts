@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       yearsExperience: body.yearsExperience,
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
+      resumePath: body.resumePath || null,
       starExample1: body.starExample1,
       starExample2: body.starExample2,
       mode: "pitch"

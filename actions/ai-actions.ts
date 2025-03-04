@@ -23,6 +23,7 @@
 "use server"
 import { ActionState } from "@/types"
 import OpenAI from "openai"
+import { getResumeContentStorage } from "./storage/resume-storage-actions"
 
 /**
  * @interface GeneratePitchParams
@@ -36,6 +37,7 @@ export interface GeneratePitchParams {
   roleDescription?: string
   yearsExperience: string
   relevantExperience: string
+  resumePath?: string | null
   starExample1?: {
     situation: string
     task: string
@@ -77,6 +79,21 @@ export async function generatePitchAction(
       throw new Error("Missing OpenAI API key in environment variables.")
     }
 
+    // Fetch resume content if available
+    let resumeContent = ""
+    if (pitchData.resumePath) {
+      const resumeResult = await getResumeContentStorage(pitchData.resumePath)
+      if (resumeResult.isSuccess && resumeResult.data) {
+        resumeContent = resumeResult.data
+      }
+    }
+
+    // Inject resumeContent into pitchData for prompt building
+    const enhancedPitchData = {
+      ...pitchData,
+      resumeContent
+    }
+
     const openai = new OpenAI({
       apiKey: apiKey,
       timeout: 60000, // 60 second timeout
@@ -88,9 +105,9 @@ export async function generatePitchAction(
     // Build the appropriate prompt based on the mode
     let prompt = ""
     if (mode === "guidance") {
-      prompt = buildGuidancePrompt(pitchData)
+      prompt = buildGuidancePrompt(enhancedPitchData)
     } else {
-      prompt = buildPitchPrompt(pitchData)
+      prompt = buildPitchPrompt(enhancedPitchData)
     }
 
     // For guidance mode, use a faster model with fewer tokens
@@ -172,12 +189,13 @@ function extractScenarioOutput(response: string): string {
 /**
  * Helper function to build the guidance prompt
  */
-function buildGuidancePrompt(pitchData: GeneratePitchParams): string {
-  // Extract job requirements from role info
+function buildGuidancePrompt(pitchData: GeneratePitchParams & { resumeContent?: string }): string {
+  // Extract job requirements from role info, including resume content if available
   const jobRequirements = `
 Role: ${pitchData.roleName}
 Level: ${pitchData.roleLevel}
 ${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ''}
+${pitchData.resumeContent ? `Resume Content: ${pitchData.resumeContent}` : ''}
   `.trim();
 
   // Use candidate experience
@@ -249,11 +267,6 @@ Action: ${pitchData.starExample2.action}
 Result: ${pitchData.starExample2.result}
 `
   }
-
-  prompt += `
-Please structure the pitch to highlight my skills and experiences most relevant to this role.
-Focus on demonstrating how my experience makes me a strong candidate for this position.
-`
 
   return prompt
 }

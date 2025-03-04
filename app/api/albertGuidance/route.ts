@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       yearsExperience: body.yearsExperience,
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
+      resumePath: body.resumePath || null,
       // We do not need starExample1 or starExample2 for basic guidance
       // so we skip them or pass empty placeholders
       mode: "guidance"

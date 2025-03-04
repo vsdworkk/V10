@@ -33,6 +33,7 @@ export default function GuidanceStep() {
   const yearsExperience = watch("yearsExperience")
   const relevantExperience = watch("relevantExperience")
   const roleDescription = watch("roleDescription")
+  const resumePath = watch("resumePath")
 
   // The form context also stores "albertGuidance"
   const albertGuidance = watch("albertGuidance")
@@ -43,7 +44,7 @@ export default function GuidanceStep() {
   const [retryCount, setRetryCount] = useState<number>(0)
   
   // Use a key string to detect changes
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}`
+  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}|${resumePath}`
   const lastFetchKeyRef = useRef<string>("")
   
   // Flag to force re-fetching when the component mounts in a new step navigation
@@ -72,7 +73,8 @@ export default function GuidanceStep() {
           pitchWordLimit,
           yearsExperience,
           relevantExperience,
-          roleDescription
+          roleDescription,
+          resumePath
         }),
         signal: controller.signal
       })
@@ -112,7 +114,7 @@ export default function GuidanceStep() {
     } finally {
       setLoading(false)
     }
-  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, toast, formDataKey])
+  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, resumePath, setValue, toast, formDataKey])
 
   // Run when the component mounts to set up initialization
   useEffect(() => {
