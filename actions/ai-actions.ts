@@ -104,7 +104,7 @@ export async function generatePitchAction(
         {
           role: "system",
           content: mode === "guidance" 
-            ? "You are Albert, an AI assistant specializing in providing guidance for job applications. You help users craft effective STAR examples for their pitch. Be concise and direct."
+            ? "You are an expert recruitment advisor tasked with helping job candidates identify the most impactful experiences from their resume that align with specific job requirements."
             : "You are Albert, an AI assistant specializing in crafting job application pitches. You help users create compelling pitches based on their experience."
         },
         {
@@ -122,10 +122,16 @@ export async function generatePitchAction(
       throw new Error("Failed to generate response from OpenAI")
     }
 
+    // For guidance mode, only return the content within scenario_output tags
+    let processedResponse = aiResponse.trim()
+    if (mode === "guidance") {
+      processedResponse = extractScenarioOutput(aiResponse)
+    }
+    
     return {
       isSuccess: true,
       message: mode === "guidance" ? "Guidance generated successfully" : "Pitch generated successfully",
-      data: aiResponse.trim()
+      data: processedResponse
     }
   } catch (error) {
     console.error("Error generating pitch or guidance:", error)
@@ -149,27 +155,62 @@ export async function generatePitchAction(
 }
 
 /**
+ * Helper function to extract only the content within scenario_output tags
+ */
+function extractScenarioOutput(response: string): string {
+  // Extract content between a single set of scenario_output tags
+  const scenarioMatch = response.match(/<scenario_output>([\s\S]*?)<\/scenario_output>/);
+  
+  if (scenarioMatch && scenarioMatch[1]) {
+    return scenarioMatch[1].trim();
+  }
+  
+  // If no match found or format is incorrect, return original response
+  return response.trim();
+}
+
+/**
  * Helper function to build the guidance prompt
  */
 function buildGuidancePrompt(pitchData: GeneratePitchParams): string {
+  // Extract job requirements from role info
+  const jobRequirements = `
+Role: ${pitchData.roleName}
+Level: ${pitchData.roleLevel}
+${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ''}
+  `.trim();
+
+  // Use candidate experience
+  const candidateExperience = pitchData.relevantExperience;
+
   return `
-I'm applying for a "${pitchData.roleName}" position at level "${pitchData.roleLevel}".
-I have ${pitchData.yearsExperience} years of experience.
-
-Here's a brief summary of my relevant experience:
-${pitchData.relevantExperience}
-
-${pitchData.roleDescription ? `The role description is: ${pitchData.roleDescription}` : ''}
-
-Word limit for my pitch: ${pitchData.pitchWordLimit}
-
-Please provide me with brief, concise guidance on:
-1. How to select the most relevant experiences for my STAR examples
-2. What specific skills or achievements I should highlight for this role
-3. How to structure my examples to be most effective
-4. Any tips specific to the Australian Public Service (APS) application process for this level
-
-Keep your response brief and to the point.
+Your goal is to select and recommend three experiences that would make strong STAR (Situation, Task, Action, Result) examples for the candidate to use in their job application or interview.
+First, review the following job requirements:
+<job_requirements>
+${jobRequirements}
+</job_requirements>
+Now, review the candidate's experience:
+<candidate_experience>
+${candidateExperience}
+</candidate_experience>
+IMPORTANT: In your response, you MUST include the XML tags exactly as shown below. Do not modify or omit these tags.
+Begin your response with this exact text including the tags:
+<analysis_output>
+Before formulating your response, analyse the job requirements and candidate experience:
+Evaluate and rank the experiences based on their relevance and impact, choosing the three most powerful examples.
+</analysis_output>
+Then surround all scenarios with these exact tags:
+<scenario_output>
+Scenario [number]: [Achievement/Project from Resume]
+This experience from [company/role] demonstrates your ability to [brief explanation of relevance].
+Elements to Cover:
+- [Competency 1]
+- [Competency 2]
+- [Competency 3]
+Repeat this for Scenario 1,2,3
+</scenario_output>
+Use simple, supportive, and conversational language within the scenarios, as if you were a friendly mentor offering guidance. Keep explanations brief and present the skills/competencies as short, clear bullet points.
+REMINDER: You MUST include the <analysis_output> and <scenario_output> tags literally in your response.
 `
 }
 
