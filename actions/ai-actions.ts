@@ -79,19 +79,30 @@ export async function generatePitchAction(
       throw new Error("Missing OpenAI API key in environment variables.")
     }
 
-    // Fetch resume content if available
-    let resumeContent = ""
-    if (pitchData.resumePath) {
-      const resumeResult = await getResumeContentStorage(pitchData.resumePath)
-      if (resumeResult.isSuccess && resumeResult.data) {
-        resumeContent = resumeResult.data
-      }
-    }
-
-    // Inject resumeContent into pitchData for prompt building
-    const enhancedPitchData = {
+    // Create a copy of pitchData to work with
+    const enhancedPitchData: GeneratePitchParams & { resumeContent?: string } = { 
       ...pitchData,
-      resumeContent
+      resumeContent: "" // Initialize with empty string
+    };
+
+    // Fetch resume content if available
+    if (pitchData.resumePath) {
+      console.log(`Attempting to retrieve resume content for path: ${pitchData.resumePath}`);
+      try {
+        const resumeResult = await getResumeContentStorage(pitchData.resumePath)
+        if (resumeResult.isSuccess && resumeResult.data) {
+          enhancedPitchData.resumeContent = resumeResult.data;
+          console.log(`Successfully retrieved resume content, length: ${enhancedPitchData.resumeContent.length} chars`);
+        } else {
+          console.warn(`Failed to retrieve resume content: ${resumeResult.message}`);
+          // Still continue with the flow even if resume content couldn't be retrieved
+        }
+      } catch (resumeError) {
+        console.error("Error in resume content retrieval:", resumeError);
+        // If resume content retrieval fails, we still want to continue with the rest of the process
+      }
+    } else {
+      console.log("No resumePath provided, skipping resume content retrieval");
     }
 
     const openai = new OpenAI({
@@ -101,6 +112,7 @@ export async function generatePitchAction(
     })
 
     const mode = pitchData.mode || "pitch"
+    console.log(`Generating ${mode} with OpenAI`);
     
     // Build the appropriate prompt based on the mode
     let prompt = ""
@@ -113,6 +125,8 @@ export async function generatePitchAction(
     // For guidance mode, use a faster model with fewer tokens
     const model = mode === "guidance" ? "gpt-3.5-turbo" : "gpt-4o"
     const maxTokens = mode === "guidance" ? 500 : 1000
+
+    console.log(`Using model: ${model}, with max tokens: ${maxTokens}`);
 
     // Call the OpenAI API
     const response = await openai.chat.completions.create({
@@ -139,6 +153,8 @@ export async function generatePitchAction(
       throw new Error("Failed to generate response from OpenAI")
     }
 
+    console.log(`Received response from OpenAI, length: ${aiResponse.length} chars`);
+
     // For guidance mode, only return the content within scenario_output tags
     let processedResponse = aiResponse.trim()
     if (mode === "guidance") {
@@ -160,7 +176,7 @@ export async function generatePitchAction(
          error.message.includes('FUNCTION_INVOCATION_TIMEOUT'))) {
       return {
         isSuccess: false,
-        message: "The request took too long to process. Please try again or use a shorter description."
+        message: "The request took too long to process. Please try again with a shorter description."
       }
     }
     
@@ -235,7 +251,7 @@ REMINDER: You MUST include the <analysis_output> and <scenario_output> tags lite
 /**
  * Helper function to build the pitch prompt
  */
-function buildPitchPrompt(pitchData: GeneratePitchParams): string {
+function buildPitchPrompt(pitchData: GeneratePitchParams & { resumeContent?: string }): string {
   let prompt = `
 Please generate a professional pitch for a "${pitchData.roleName}" position at level "${pitchData.roleLevel}" in the Australian Public Service.
 I have ${pitchData.yearsExperience} years of experience.
@@ -244,6 +260,7 @@ Here's a brief summary of my relevant experience:
 ${pitchData.relevantExperience}
 
 ${pitchData.roleDescription ? `The role description is: ${pitchData.roleDescription}` : ''}
+${pitchData.resumeContent ? `Additional resume information: ${pitchData.resumeContent}` : ''}
 
 The pitch should be under ${pitchData.pitchWordLimit} words.
 `

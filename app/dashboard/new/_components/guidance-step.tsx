@@ -62,7 +62,19 @@ export default function GuidanceStep() {
 
       // Set a timeout for the fetch operation
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+      const timeoutId = setTimeout(() => {
+        console.log("Guidance request timeout triggered");
+        controller.abort()
+      }, 60000) // 60 second timeout
+
+      console.log("Sending guidance request with data:", {
+        roleName,
+        roleLevel,
+        pitchWordLimit,
+        yearsExperience,
+        relevantExperience: relevantExperience.substring(0, 20) + "...", // Truncate for logging
+        resumePath
+      });
 
       const response = await fetch("/api/albertGuidance", {
         method: "POST",
@@ -82,6 +94,7 @@ export default function GuidanceStep() {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
+        console.error("Guidance API error:", response.status, response.statusText);
         if (response.status === 504) {
           throw new Error("The request timed out. Please try again with a shorter description or retry later.")
         }
@@ -91,9 +104,11 @@ export default function GuidanceStep() {
 
       const data = await response.json()
       if (!data.isSuccess) {
+        console.error("Guidance generation failed:", data.message);
         throw new Error(data.message || "Error generating guidance")
       }
 
+      console.log("Guidance generated successfully, length:", data.data.length);
       // Store the returned guidance in form state
       setValue("albertGuidance", data.data, { shouldDirty: true })
       setRetryCount(0) // Reset retry count on success
@@ -101,6 +116,7 @@ export default function GuidanceStep() {
       // Update the last fetch key
       lastFetchKeyRef.current = formDataKey
     } catch (err: any) {
+      console.error("Error in fetchGuidance:", err);
       const errorMessage = err.name === 'AbortError' 
         ? "Request timed out. Please try again with a shorter description."
         : err.message

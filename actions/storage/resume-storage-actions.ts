@@ -124,11 +124,15 @@ export async function getResumeContentStorage(
   resumePath: string
 ): Promise<ActionState<string>> {
   try {
+    console.log("Getting resume content for path:", resumePath);
+    
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing Supabase env configuration");
       throw new Error("Missing Supabase environment configuration.")
     }
     
     if (!resumePath) {
+      console.log("No resume path provided");
       return {
         isSuccess: false,
         message: "No resume path provided"
@@ -141,11 +145,13 @@ export async function getResumeContentStorage(
     })
 
     // Download the file from storage
+    console.log(`Attempting to download from bucket: ${BUCKET}, path: ${resumePath}`);
     const { data, error } = await supabase.storage
       .from(BUCKET)
       .download(resumePath)
 
     if (error) {
+      console.error(`Supabase download error for ${resumePath}:`, error);
       throw new Error(`Supabase download error: ${error.message}`)
     }
 
@@ -156,11 +162,24 @@ export async function getResumeContentStorage(
     
     // Simple text extraction - in a real app, use proper file format parsers
     if (data) {
-      // Basic handling - convert blob to text for text-based files
-      // For PDFs and DOCs, proper parsing libraries would be needed
-      textContent = await data.text().catch(() => {
-        return "Resume uploaded but content extraction is not supported for this file type."
-      })
+      console.log(`Successfully downloaded file, size: ${data.size} bytes`);
+      try {
+        // Basic handling - convert blob to text for text-based files
+        // For PDFs and DOCs, proper parsing libraries would be needed
+        textContent = await data.text();
+        console.log(`Successfully extracted text, length: ${textContent.length} chars`);
+        
+        // If text is too long, truncate it to prevent token issues
+        if (textContent.length > 5000) {
+          console.log("Text content too long, truncating to 5000 chars");
+          textContent = textContent.substring(0, 5000) + "... [content truncated]";
+        }
+      } catch (textError) {
+        console.error("Error extracting text from resume:", textError);
+        textContent = "Resume uploaded but content extraction is not supported for this file type.";
+      }
+    } else {
+      console.log("No data returned from Supabase download");
     }
 
     return {
@@ -169,7 +188,8 @@ export async function getResumeContentStorage(
       data: textContent
     }
   } catch (error) {
-    console.error("Error retrieving resume content:", error)
+    console.error("Error retrieving resume content:", error);
+    // Ensure we return a valid ActionState even if there's an error
     return {
       isSuccess: false,
       message: (error as Error).message || "Failed to retrieve resume content."

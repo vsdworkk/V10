@@ -172,8 +172,12 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     const file = methods.getValues("selectedFile")
     const currentUserId = methods.getValues("userId") || "unknown"
 
-    if (!file) return
+    if (!file) {
+      console.log("No file selected for upload");
+      return;
+    }
 
+    console.log(`Uploading resume file: ${file.name}, size: ${file.size} bytes`);
     try {
       const formData = new FormData()
       formData.append("userId", currentUserId)
@@ -185,15 +189,19 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       })
 
       if (!res.ok) {
+        console.error("Resume upload failed:", res.status, res.statusText);
         const errorData = await res.json()
         throw new Error(errorData.error || "Resume upload failed")
       }
 
       const data = await res.json()
       if (!data.path) {
+        console.error("Resume upload successful but no path returned");
         throw new Error("No path returned from server")
       }
 
+      console.log(`Resume uploaded successfully, path: ${data.path}`);
+      
       // Store path in resumePath
       methods.setValue("resumePath", data.path, {
         shouldDirty: true,
@@ -207,6 +215,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         description: "We have stored your resume in Supabase."
       })
     } catch (error: any) {
+      console.error("Resume upload error:", error);
       toast({
         title: "Error Uploading Resume",
         description: error.message,
@@ -326,11 +335,24 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
     // Step 2 -> Step 3: Attempt resume upload if user selected a file
     if (currentStep === 2) {
-      await autoUploadResume()
+      console.log("Moving from Step 2 to Step 3, checking for resume upload");
+      const hasFile = !!methods.getValues("selectedFile");
+      
+      if (hasFile) {
+        console.log("File selected, starting upload process");
+        await autoUploadResume();
+        
+        // Add a small delay to ensure form state is updated before proceeding
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log("Resume path after upload:", methods.getValues("resumePath"));
+      } else {
+        console.log("No file selected for upload, skipping to next step");
+      }
     }
 
     // If finishing Step 7 with limit < 650, auto-generate final pitch -> jump to step 12
     if (currentStep === 7 && numericLimit() < 650) {
+      console.log("Completing Step 7 with word limit < 650, generating final pitch");
       await generateFinalPitch()
       setCurrentStep(12)
       return
@@ -338,12 +360,14 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
     // If finishing Step 11, auto-generate final pitch -> step 12
     if (currentStep === 11) {
+      console.log("Completing Step 11, generating final pitch");
       await generateFinalPitch()
       setCurrentStep(12)
       return
     }
 
     // Otherwise, just increment
+    console.log(`Moving from step ${currentStep} to step ${Math.min(currentStep + 1, totalSteps)}`);
     setCurrentStep(s => Math.min(s + 1, totalSteps))
   }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch])
 
