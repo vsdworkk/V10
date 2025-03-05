@@ -5,16 +5,31 @@ Expects multipart/form-data with fields:
 - userId (string)
 - file (the actual File blob)
 
-On success, returns { path: string } in JSON to indicate where the file was stored.
+After the file is uploaded, we immediately parse it via `parseResumeStorageAction`
+(pdf-parse for PDFs and a placeholder for DOC/DOCX).
+We then return:
+{
+  path: string,      // where the file is stored
+  parsedText: string // extracted text, or a placeholder if doc/docx
+}
+
 @dependencies
 - uploadResumeStorage from "@/actions/storage/resume-storage-actions"
-- parse multipart form data from the request
+- parseResumeStorageAction from "@/actions/storage/resume-storage-actions"
+- NextResponse for JSON responses
+
 @notes
-This route is used by the wizard (Step 2 -> Next) to automatically upload the
-resume file if the user selected one.
+We call parseResumeStorageAction with the "resumes" bucket and the path
+returned from uploadResumeStorage.
+If parsing fails, we return an error. Otherwise, the route responds
+with both the file storage path and the parsed text.
 */
+
 import { NextRequest, NextResponse } from "next/server"
-import { uploadResumeStorage } from "@/actions/storage/resume-storage-actions"
+import {
+  uploadResumeStorage,
+  parseResumeStorageAction
+} from "@/actions/storage/resume-storage-actions"
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,12 +62,40 @@ export async function POST(req: NextRequest) {
     })
 
     // Call our server action to upload to Supabase
-    const result = await uploadResumeStorage(resumeFile, userId)
-    if (!result.isSuccess) {
-      return NextResponse.json({ error: result.message }, { status: 500 })
+    const uploadResult = await uploadResumeStorage(resumeFile, userId)
+
+    if (!uploadResult.isSuccess) {
+      return NextResponse.json({ error: uploadResult.message }, { status: 500 })
     }
 
-    return NextResponse.json({ path: result.data?.path || "" }, { status: 200 })
+    const filePath = uploadResult.data?.path || ""
+    if (!filePath) {
+      return NextResponse.json(
+        { error: "Failed to determine resume path after upload." },
+        { status: 500 }
+      )
+    }
+
+    // Now parse the uploaded file to extract text
+    const parseResult = await parseResumeStorageAction("resumes", filePath)
+    if (!parseResult.isSuccess) {
+      return NextResponse.json(
+        {
+          error: `Resume uploaded but parsing failed: ${parseResult.message}`
+        },
+        { status: 500 }
+      )
+    }
+
+    const parsedText = parseResult.data?.text || ""
+
+    return NextResponse.json(
+      {
+        path: filePath,
+        parsedText
+      },
+      { status: 200 }
+    )
   } catch (error: any) {
     console.error("Error in POST /api/resume-upload:", error)
     return NextResponse.json(
