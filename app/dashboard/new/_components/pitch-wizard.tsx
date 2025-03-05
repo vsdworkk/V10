@@ -204,6 +204,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       formData.append("userId", currentUserId)
       formData.append("file", file)
 
+      console.log("Uploading resume...", file.name)
       const res = await fetch("/api/resume-upload", {
         method: "POST",
         body: formData
@@ -215,6 +216,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
       }
 
       const data = await res.json()
+      console.log("Resume upload response:", data)
+      
       if (!data.path) {
         throw new Error("No path returned from server")
       }
@@ -227,19 +230,38 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
       // STEP 4: Append parsedText to relevantExperience
       const parsedText = data.parsedText || ""
-      if (parsedText) {
+      console.log("Parsed text from resume:", parsedText ? `[${parsedText.length} chars]` : "None")
+      
+      if (parsedText && parsedText.trim().length > 0) {
         const existingExp = methods.getValues("relevantExperience") || ""
-        methods.setValue("relevantExperience", existingExp + "\n\n" + parsedText, {
+        const updatedExp = existingExp 
+          ? existingExp.trim() + "\n\n--- Extracted from Resume ---\n\n" + parsedText.trim()
+          : parsedText.trim()
+          
+        methods.setValue("relevantExperience", updatedExp, {
           shouldDirty: true,
-          shouldTouch: true
+          shouldTouch: true,
+          shouldValidate: true
+        })
+        
+        console.log("Updated relevantExperience field with parsed text")
+      } else {
+        console.log("No parsed text received from resume")
+        toast({
+          title: "Resume Parsed",
+          description: "Resume uploaded but no text was extracted. You may need to manually enter your experience.",
+          variant: "destructive"
         })
       }
 
       toast({
         title: "Resume Uploaded",
-        description: "We have stored your resume in Supabase."
+        description: parsedText 
+          ? "Your resume was uploaded and relevant content has been added to the experience section."
+          : "We have stored your resume in Supabase."
       })
     } catch (error: any) {
+      console.error("Error in autoUploadResume:", error)
       toast({
         title: "Error Uploading Resume",
         description: error.message,
@@ -311,8 +333,8 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   @function goNext
   Moves to the next step in the wizard, performing per-step validation or logic.
   - Step 2 -> Step 3: try to upload resume if the user selected one.
-  - Step 7 (<650): auto-generate final pitch, then jump to step 8 (review).
-  - Step 11 (>=650): auto-generate final pitch, then jump to step 12 (review).
+  - Step 7 (<650): auto-generate final pitch, then jump to step 8 (final review)
+  - Step 11 (>=650): auto-generate final pitch, then jump to step 12 (review)
   */
   const goNext = useCallback(async () => {
     // Minimal per-step validation

@@ -148,13 +148,40 @@ export async function parseResumeStorageAction(
       // Import pdf-parse dynamically only when needed
       const pdfParse = (await import('pdf-parse')).default
       
-      // Parse PDF
-      const pdfResult = await pdfParse(buffer)
-      const text = pdfResult?.text ?? ""
-      return {
-        isSuccess: true,
-        message: "Parsed PDF file successfully",
-        data: { text }
+      try {
+        console.log("Parsing PDF file:", path)
+        // Parse PDF with additional options to improve text extraction
+        const pdfResult = await pdfParse(buffer, {
+          // Set max pages to a high number to ensure we process the entire document
+          max: 0,
+          // Enable more verbose parsing for potential debugging
+          pagerender: function(pageData) {
+            return pageData.getTextContent();
+          }
+        });
+        
+        let text = pdfResult?.text ?? ""
+        
+        // Clean up the extracted text for better display
+        text = text
+          .replace(/\s+/g, ' ')  // Replace multiple spaces with a single space
+          .replace(/\r\n|\r|\n/g, '\n')  // Normalize line breaks
+          .trim();
+        
+        console.log(`PDF parsing complete. Extracted ${text.length} characters.`)
+        
+        if (!text || text.trim().length === 0) {
+          console.warn("PDF parsing returned empty text. This may indicate an issue with the PDF structure or content.")
+        }
+        
+        return {
+          isSuccess: true,
+          message: "Parsed PDF file successfully",
+          data: { text }
+        }
+      } catch (pdfError) {
+        console.error("Error parsing PDF:", pdfError)
+        throw new Error(`PDF parsing failed: ${(pdfError as Error).message}`)
       }
     } else if (lowerPath.endsWith(".doc") || lowerPath.endsWith(".docx")) {
       // Placeholder for doc/docx parsing
