@@ -1,111 +1,114 @@
 /**
- * @description
- * Exports a server action for uploading user resumes to Supabase Storage.
- *
- * Key features:
- * - Validates file size and extension (PDF, DOC, DOCX).
- * - Uses a "resume-uploads" bucket (configurable via SUPABASE_RESUME_BUCKET env var).
- * - Generates a unique path for each uploaded file: {userId}/resumes/timestamp-originalFilename
- * - Returns ActionState with success/failure to the caller.
- *
- * @dependencies
- * - Drizzle ActionState type for success/failure structure.
- * - Supabase server client for file uploads.
- *
- * @notes
- * - This file must be `use server` so that we can protect secrets and handle the file on the backend.
- * - We do not directly call this from a client component; it's invoked by an API route or other server logic.
- * - In production, you should handle more rigorous validation or virus scanning if needed.
- */
+@description
+Provides a server action for parsing a resume file (PDF or DOC/DOCX) that has
+been uploaded to Supabase Storage. The `parseResumeStorageAction` function:
+1. Downloads the specified file from the target bucket/path.
+2. Checks its extension to determine which parser to use.
+3. If PDF, uses pdf-parse to extract text.
+4. If DOC or DOCX, returns a placeholder message (not yet implemented).
+5. Returns an ActionState object containing either the extracted text or
+an error message.
+@dependencies
+- pdf-parse: For parsing PDF files
+- docx library is installed for generating docx, but not for parsing them,
+  so doc/docx parsing is a placeholder here.
+@notes
+- The caller must provide a valid bucket and file path in Supabase.
+- We rely on `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from env variables.
+*/
 
 "use server"
 
 import { createClient } from "@supabase/supabase-js"
 import { ActionState } from "@/types"
+import pdf from "pdf-parse"
 
-// We read these from environment variables
+// Environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const BUCKET = process.env.SUPABASE_RESUME_BUCKET || "resume-uploads"
 
-// Basic file checks
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"]
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("ERROR: Missing Supabase environment variables.")
+}
 
 /**
- * @function uploadResumeStorage
- * @description
- * Receives a File from an API route, validates it, and uploads it to Supabase Storage.
- *
- * @param file - The resume file from the user
- * @param userId - The user ID for path organization
- * @returns Promise<ActionState<{ path: string }>> The path to the uploaded file or an error
- */
-export async function uploadResumeStorage(
-  file: File,
-  userId: string
-): Promise<ActionState<{ path: string }>> {
+@interface ParseResumeOutput
+Defines the shape of the data returned by parseResumeStorageAction
+*/
+interface ParseResumeOutput {
+  text: string
+}
+
+/**
+@function parseResumeStorageAction
+@description
+Downloads a resume file from Supabase Storage at the given path, determines whether
+it is PDF or DOC/DOCX, and attempts to extract textual data.
+For PDF:
+- We parse it using pdf-parse
+For DOC/DOCX:
+- Currently a placeholder returning "DOCX parsing not implemented"
+@param {string} bucket - The name of the Supabase Storage bucket
+@param {string} path - The path (including folder/userId prefix and filename) in that bucket
+@returns {Promise<ActionState<ParseResumeOutput>>} - Contains `text` with parsed resume data
+on success, or an error message
+*/
+export async function parseResumeStorageAction(
+  bucket: string,
+  path: string
+): Promise<ActionState<ParseResumeOutput>> {
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase environment configuration.")
-    }
-    if (!userId) {
-      throw new Error("Missing userId for resume upload.")
-    }
-    if (!file || file.size <= 0) {
-      throw new Error("No file provided or empty file.")
-    }
-
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error(
-        `File exceeds size limit of ${MAX_FILE_SIZE / 1024 / 1024}MB.`
-      )
-    }
-
-    // Check extension by name
-    const fileName = file.name.toLowerCase()
-    const isAllowed = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext))
-    if (!isAllowed) {
-      throw new Error(
-        `Invalid file type. Only PDF, DOC, or DOCX are allowed. Provided: ${file.name}`
-      )
-    }
-
-    // Prepare a server-side supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    // Initialize the Supabase client with service role
+    const supabase = createClient(SUPABASE_URL as string, SUPABASE_SERVICE_ROLE_KEY as string, {
       auth: { persistSession: false }
     })
 
-    // Generate a unique path for storing the file
-    // e.g. "userId/resumes/1696589102573-myresume.pdf"
-    const timestamp = Date.now()
-    const storagePath = `${userId}/resumes/${timestamp}-${file.name}`
+    // Attempt to download the file from the specified bucket/path
+    const { data: downloadData, error: downloadError } = await supabase
+      .storage
+      .from(bucket)
+      .download(path)
 
-    // Upload to the designated bucket
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .upload(storagePath, file, {
-        upsert: false,
-        contentType: file.type
-      })
-
-    if (error) {
-      throw new Error(`Supabase upload error: ${error.message}`)
+    if (downloadError || !downloadData) {
+      throw new Error(`Failed to download file from Supabase: ${downloadError?.message}`)
     }
 
-    // If successful, data.path should contain the stored path
-    return {
-      isSuccess: true,
-      message: "Resume uploaded successfully",
-      data: { path: data.path }
+    // Convert the downloaded file (Blob) to an ArrayBuffer
+    const arrayBuffer = await downloadData.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Simple extension check to determine parse method
+    const lowerPath = path.toLowerCase()
+    if (lowerPath.endsWith(".pdf")) {
+      // Parse PDF
+      const pdfResult = await pdf(buffer)
+      const text = pdfResult?.text ?? ""
+      return {
+        isSuccess: true,
+        message: "Parsed PDF file successfully",
+        data: { text }
+      }
+    } else if (lowerPath.endsWith(".doc") || lowerPath.endsWith(".docx")) {
+      // Placeholder for doc/docx parsing
+      // Could integrate a 3rd-party library that actually reads .docx content.
+      // For now, we simply return a placeholder message.
+      const docMessage =
+        "DOC/DOCX parsing not yet implemented. Extend this action with a specialized library."
+      return {
+        isSuccess: true,
+        message: "Parsed DOC/DOCX file (placeholder)",
+        data: { text: docMessage }
+      }
+    } else {
+      throw new Error(
+        "Unsupported file extension for parsing. Only .pdf, .doc, or .docx are allowed."
+      )
     }
   } catch (error) {
-    console.error("Error uploading resume:", error)
+    console.error("Error parsing resume storage file:", error)
     return {
       isSuccess: false,
-      message:
-        (error as Error).message || "Failed to upload resume. Please try again."
+      message: (error as Error).message || "Failed to parse resume file"
     }
   }
 }
