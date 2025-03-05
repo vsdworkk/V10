@@ -21,7 +21,8 @@ an error message.
 
 import { createClient } from "@supabase/supabase-js"
 import { ActionState } from "@/types"
-import pdf from "pdf-parse"
+// Do not import pdf-parse directly at the module level
+// import pdf from "pdf-parse"
 
 // Environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -144,8 +145,11 @@ export async function parseResumeStorageAction(
     // Simple extension check to determine parse method
     const lowerPath = path.toLowerCase()
     if (lowerPath.endsWith(".pdf")) {
+      // Import pdf-parse dynamically only when needed
+      const pdfParse = (await import('pdf-parse')).default
+      
       // Parse PDF
-      const pdfResult = await pdf(buffer)
+      const pdfResult = await pdfParse(buffer)
       const text = pdfResult?.text ?? ""
       return {
         isSuccess: true,
