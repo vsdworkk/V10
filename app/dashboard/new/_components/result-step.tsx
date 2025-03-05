@@ -12,8 +12,8 @@ Key Features:
 - React Hook Form context
 - Three sub-fields
 - Single string output on blur
-- Now includes an h2 heading for "STAR Example One: Result" or
-  "STAR Example Two: Result"
+- Now includes a heading structure with "STAR Example One/Two" as the main h2 heading
+  and "Result" as an h3 sub-heading underneath.
 
 @notes
 */
@@ -48,8 +48,8 @@ Collects the user's inputs for the final "Result" portion:
 3. Quantification
 
 Then merges them into a single labeled text block for starExampleX.result.
-We also display "STAR Example One: Result" or "STAR Example Two: Result"
-as a heading at the top.
+We include a heading structure with "STAR Example One/Two" as the main h2 heading
+and "Result" as an h3 sub-heading underneath.
 */
 export default function ResultStep({ exampleKey }: ResultStepProps) {
   const { setValue } = useFormContext()
@@ -90,9 +90,14 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        STAR Example {exampleNumber}: Result
-      </h2>
+      <div>
+        <h2 className="text-lg font-semibold">
+          STAR Example {exampleNumber}
+        </h2>
+        <h3 className="text-md font-medium mt-1">
+          Result
+        </h3>
+      </div>
 
       {/* Outcome */}
       <FormField

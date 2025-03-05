@@ -11,8 +11,8 @@ On blur, we combine these strings with labels, storing them in starExampleX.task
 Key Features:
 - React Hook Form context
 - Detailed sub-fields -> single string in form state
-- We display a heading h2 at the top to indicate "STAR Example One: Task" or
-  "STAR Example Two: Task," depending on the exampleKey.
+- We display a heading structure with "STAR Example One/Two" as the main h2 heading
+  and "Task" as an h3 sub-heading underneath.
 
 @notes
 Similar structure to situation-step. We keep sub-fields in local state,
@@ -96,9 +96,14 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        STAR Example {exampleNumber}: Task
-      </h2>
+      <div>
+        <h2 className="text-lg font-semibold">
+          STAR Example {exampleNumber}
+        </h2>
+        <h3 className="text-md font-medium mt-1">
+          Task
+        </h3>
+      </div>
 
       {/* Objectives */}
       <FormField

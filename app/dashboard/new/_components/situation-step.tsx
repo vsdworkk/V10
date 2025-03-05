@@ -19,8 +19,8 @@ Key Features:
 - Shadcn UI components
 
 @notes
-We have added an h2 heading at the top to display "STAR Example One: Situation" or
-"STAR Example Two: Situation," depending on the exampleKey.
+We have added a heading structure with "STAR Example One/Two" as the main h2 heading
+and "Situation" as an h3 sub-heading underneath.
 */
 
 "use client"
@@ -107,9 +107,14 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        STAR Example {exampleNumber}: Situation
-      </h2>
+      <div>
+        <h2 className="text-lg font-semibold">
+          STAR Example {exampleNumber}
+        </h2>
+        <h3 className="text-md font-medium mt-1">
+          Situation
+        </h3>
+      </div>
 
       {/* Context */}
       <FormField

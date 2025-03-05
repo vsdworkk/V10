@@ -12,8 +12,8 @@ Key Features:
 - React Hook Form context
 - Three sub-fields
 - Single string output on blur
-- Now includes an h2 heading indicating whether this is "STAR Example One: Action"
-  or "STAR Example Two: Action" based on exampleKey.
+- Now includes a heading structure with "STAR Example One/Two" as the main h2 heading
+  and "Action" as an h3 sub-heading underneath.
 
 @notes
 */
@@ -46,8 +46,8 @@ Combines sub-fields (approach, skills used, collaboration) into a single
 string for the "Action" portion of a STAR example. We set the result in
 starExampleX.action on blur.
 
-We also include a heading that says, for example, "STAR Example One: Action" or
-"STAR Example Two: Action."
+We include a heading structure with "STAR Example One/Two" as the main h2 heading
+and "Action" as an h3 sub-heading underneath.
 */
 export default function ActionStep({ exampleKey }: ActionStepProps) {
   const { setValue } = useFormContext()
@@ -88,9 +88,14 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        STAR Example {exampleNumber}: Action
-      </h2>
+      <div>
+        <h2 className="text-lg font-semibold">
+          STAR Example {exampleNumber}
+        </h2>
+        <h3 className="text-md font-medium mt-1">
+          Action
+        </h3>
+      </div>
 
       {/* Approach */}
       <FormField
