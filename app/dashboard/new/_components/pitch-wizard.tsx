@@ -2,26 +2,33 @@
 @description
 A client component implementing a multi-step wizard for creating a pitch.
 It dynamically computes how many steps are necessary:
-- If pitchWordLimit < 650, we only use one STAR example (8 total steps).
-- If pitchWordLimit >= 650, we use two STAR examples (12 total steps).
+If pitchWordLimit < 650, we only use one STAR example (8 total steps).
+If pitchWordLimit >= 650, we use two STAR examples (12 total steps).
+
 It displays the correct "(current step) of (total steps)" header in the UI.
 
 Key Features:
 1. Step-by-step forms for role info, experience, AI guidance, 1 or 2 STAR examples, and review.
 2. Automatically uploads resume (if selected) on leaving Experience step.
-3. Automatically generates the final pitch once the last STAR example is completed (step 7 or step 11).
+3. Automatically generates the final pitch once the last STAR example is completed (step 7
+   or step 11).
 4. Dynamic final step count is either 8 (<650) or 12 (>=650).
-5. The final step is a ReviewStep where the user can edit the pitch text and then Submit it to the DB.
+5. The final step is a ReviewStep where the user can edit the pitch text and then Submit it
+   to the DB.
 
 @dependencies
 React Hook Form for form state management.
 Shadcn UI components for consistent styling.
 Server routes (/api/resume-upload, /api/albertGuidance, /api/finalPitch, /api/pitchWizard).
 Framer Motion for potential animations (not heavily used here).
+
 @notes
-- This implements Step 1 from the enhancement plan: "Dynamically Compute Wizard Steps & Show Correct Header."
-- If the user is on step 7 and pitchWordLimit < 650, we auto-generate the pitch, then proceed to step 8, which becomes the review step (total steps = 8).
-- If pitchWordLimit >= 650, we go from step 7 to step 8..11 for the second STAR example, then step 12 is the review.
+This implements Step 1 from the enhancement plan: "Dynamically Compute Wizard
+Steps & Show Correct Header."
+If the user is on step 7 and pitchWordLimit < 650, we auto-generate the pitch, then
+proceed to step 8, which becomes the review step (total steps = 8).
+If pitchWordLimit >= 650, we go from step 7 to step 8..11 for the second STAR example,
+then step 12 is the review.
 */
 "use client"
 
@@ -30,7 +37,6 @@ import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
-
 import RoleStep from "./role-step"
 import ExperienceStep from "./experience-step"
 import GuidanceStep from "./guidance-step"
@@ -39,12 +45,11 @@ import TaskStep from "./task-step"
 import ActionStep from "./action-step"
 import ResultStep from "./result-step"
 import ReviewStep from "./review-step"
-
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/lib/hooks/use-toast"
 import { RefreshCw } from "lucide-react"
 
-/**
+/*
 STAR sub-schema for a single example:
 Each field must be at least 5 characters (enforced in sub-steps).
 */
@@ -92,7 +97,7 @@ interface PitchWizardProps {
   userId: string
 }
 
-/**
+/*
 Helper to convert the string value of pitchWordLimit to a numeric for logic.
 */
 function parseLimitValue(limitStr: string): number {
@@ -105,8 +110,8 @@ function parseLimitValue(limitStr: string): number {
 
 /**
 Helper to compute total steps.
-- If pitchWordLimit < 650 => 8 steps total
-- Otherwise => 12 steps total
+If pitchWordLimit < 650 => 8 steps total
+Otherwise => 12 steps total
 */
 function getTotalSteps(numericLimit: number): number {
   if (numericLimit < 650) {
@@ -126,7 +131,8 @@ The main multi-step wizard for collecting pitch data. We:
 5. STAR Example 1: task (Step 5).
 6. STAR Example 1: action (Step 6).
 7. STAR Example 1: result (Step 7).
-   - If pitchWordLimit < 650, auto-generate final pitch, then go to step 8 => review.
+
+   If pitchWordLimit < 650, auto-generate final pitch, then go to step 8 (review).
 8-11. STAR Example 2 (if pitchWordLimit >= 650).
 12. Final Review step.
 
@@ -164,17 +170,15 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
 
   const watchWordLimit = methods.watch("pitchWordLimit")
   const numericLimit = parseLimitValue(watchWordLimit)
+
   const [currentStep, setCurrentStep] = useState(1)
 
-  // Dynamically compute totalSteps whenever the user changes pitchWordLimit:
-  const [totalSteps, setTotalSteps] = useState<number>(
-    getTotalSteps(numericLimit)
-  )
-
+  // Dynamically compute totalSteps whenever the user changes pitchWordLimit
+  const [totalSteps, setTotalSteps] = useState(getTotalSteps(numericLimit))
   useEffect(() => {
     setTotalSteps(getTotalSteps(numericLimit))
     // If the user has changed word limit mid-wizard and the currentStep is
-    // beyond the new totalSteps, reset them to the last valid step.
+    // beyond the new totalSteps, reset to the last valid step.
     setCurrentStep(oldStep =>
       oldStep > getTotalSteps(numericLimit) ? getTotalSteps(numericLimit) : oldStep
     )
@@ -189,13 +193,12 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   If the user selected a file in Step 2, we automatically upload it
   to Supabase when they proceed from Step 2 -> Step 3. On success, we store the
   returned path in resumePath, then clear selectedFile from form data.
+  We also append the parsedText to relevantExperience.
   */
   const autoUploadResume = async () => {
     const file = methods.getValues("selectedFile")
     const currentUserId = methods.getValues("userId") || "unknown"
-
     if (!file) return
-
     try {
       const formData = new FormData()
       formData.append("userId", currentUserId)
@@ -205,10 +208,12 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         method: "POST",
         body: formData
       })
+
       if (!res.ok) {
         const errorData = await res.json()
         throw new Error(errorData.error || "Resume upload failed")
       }
+
       const data = await res.json()
       if (!data.path) {
         throw new Error("No path returned from server")
@@ -219,6 +224,17 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         shouldTouch: true
       })
       methods.setValue("selectedFile", null)
+
+      // STEP 4: Append parsedText to relevantExperience
+      const parsedText = data.parsedText || ""
+      if (parsedText) {
+        const existingExp = methods.getValues("relevantExperience") || ""
+        methods.setValue("relevantExperience", existingExp + "\n\n" + parsedText, {
+          shouldDirty: true,
+          shouldTouch: true
+        })
+      }
+
       toast({
         title: "Resume Uploaded",
         description: "We have stored your resume in Supabase."
@@ -237,6 +253,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   Automatically called once the user finishes the last STAR step needed:
   - If numericLimit < 650, after step 7.
   - If numericLimit >= 650, after step 11.
+
   Calls /api/finalPitch with the user's data. On success, updates pitchContent.
   */
   const generateFinalPitch = useCallback(async () => {
@@ -265,19 +282,23 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
         // Only include starExample2 if pitchWordLimit >= 650
         starExample2: parseLimitValue(pitchWordLimit) >= 650 ? starExample2 : undefined
       }
+
       const res = await fetch("/api/finalPitch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
       })
+
       if (!res.ok) {
         const errText = await res.text()
         throw new Error(errText || "Failed to fetch final pitch")
       }
+
       const result = await res.json()
       if (!result.isSuccess) {
         throw new Error(result.message || "Error generating final pitch")
       }
+
       methods.setValue("pitchContent", result.data, { shouldDirty: true })
     } catch (error: any) {
       setFinalPitchError(error.message)
@@ -290,7 +311,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   @function goNext
   Moves to the next step in the wizard, performing per-step validation or logic.
   - Step 2 -> Step 3: try to upload resume if the user selected one.
-  - Step 7 (<650): auto-generate final pitch, then jump to step 8 (which is the review).
+  - Step 7 (<650): auto-generate final pitch, then jump to step 8 (review).
   - Step 11 (>=650): auto-generate final pitch, then jump to step 12 (review).
   */
   const goNext = useCallback(async () => {
@@ -362,7 +383,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     totalSteps
   ])
 
-  /**
+  /*
   @function goBack
   Moves the user back to the previous step, unless already at step 1.
   */
@@ -370,7 +391,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     setCurrentStep(s => Math.max(s - 1, 1))
   }, [])
 
-  /**
+  /*
   @function onSubmit
   Called at the final step (step = totalSteps) to save the pitch into the DB.
   We do a POST to /api/pitchWizard with status "final" (if pitchContent exists)
@@ -421,7 +442,7 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     }
   })
 
-  /**
+  /*
   Renders the correct sub-component based on the currentStep.
   We skip starExample2 steps if numericLimit < 650, but they remain in the switch
   so we can handle numericLimit >= 650 scenarios.
@@ -430,15 +451,14 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
     // If we're currently generating final pitch automatically, show spinner
     if (isGeneratingFinalPitch) {
       return (
-        <div className="mt-6 rounded-md border border-gray-300 p-4">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <RefreshCw className="h-5 w-5 animate-spin" />
-            <span>Generating your final pitch with Albert...</span>
-          </div>
+        <div className="py-4 text-center">
+          <RefreshCw className="mb-2 inline-block h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground text-sm">
+            Generating your final pitch with Albert...
+          </p>
           {finalPitchError && (
-            <div className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-red-700">
-              <p className="text-sm font-semibold">Error:</p>
-              <p className="text-sm">{finalPitchError}</p>
+            <div className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-600">
+              <strong>Error:</strong> {finalPitchError}
             </div>
           )}
         </div>
