@@ -2,23 +2,26 @@
 @description
 Client sub-component to capture the "Task" portion of a STAR example.
 Prompts user for:
-1) Objectives
-2) Responsibilities
-3) Constraints
+1. Objectives
+2. Responsibilities
+3. Constraints
+
 On blur, we combine these strings with labels, storing them in starExampleX.task.
 
 Key Features:
 - React Hook Form context
 - Detailed sub-fields -> single string in form state
+- We display a heading h2 at the top to indicate "STAR Example One: Task" or
+  "STAR Example Two: Task," depending on the exampleKey.
+
 @notes
-Similar structure to situation-step; we hold sub-fields in local state, then onBlur
-build a final labeled string.
+Similar structure to situation-step. We keep sub-fields in local state,
+then build the final labeled string on blur.
 */
 
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
 import { useState } from "react"
 import {
   FormField,
@@ -30,26 +33,39 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
+/**
+@interface TaskStepProps
+@exampleKey indicates starExample1 or starExample2
+*/
 interface TaskStepProps {
-  /**
-   * exampleKey indicates starExample1 or starExample2
-   */
   exampleKey: "starExample1" | "starExample2"
 }
 
+/**
+@function TaskStep
+Renders multiple text fields for user input:
+1. Objectives
+2. Responsibilities
+3. Constraints
+
+Builds a single labeled string on blur and places it in starExampleX.task.
+Adds an h2 heading to indicate which example is being filled out.
+*/
 export default function TaskStep({ exampleKey }: TaskStepProps) {
-  const { setValue } = useFormContext<PitchWizardFormData>()
+  const { setValue } = useFormContext()
 
   const [objectivesValue, setObjectivesValue] = useState("")
   const [responsibilitiesValue, setResponsibilitiesValue] = useState("")
   const [constraintsValue, setConstraintsValue] = useState("")
 
-  // Helper to build final labeled string
-  const buildTaskString = (
+  /**
+   * Build final labeled string for the "Task" section
+   */
+  function buildTaskString(
     objectives: string,
     responsibilities: string,
     constraints: string
-  ) => {
+  ): string {
     let result = ""
     if (objectives.trim()) {
       result += `Objectives: ${objectives.trim()}\n`
@@ -63,7 +79,10 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
     return result.trim()
   }
 
-  const handleBlur = () => {
+  /**
+   * On blur, store the final string in starExampleX.task
+   */
+  function handleBlur() {
     const finalString = buildTaskString(
       objectivesValue,
       responsibilitiesValue,
@@ -72,8 +91,16 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
     setValue(`${exampleKey}.task`, finalString, { shouldDirty: true })
   }
 
+  // Derive example "One" or "Two"
+  const exampleNumber = exampleKey === "starExample1" ? "One" : "Two"
+
   return (
     <div className="space-y-4">
+      <h2 className="text-lg font-semibold">
+        STAR Example {exampleNumber}: Task
+      </h2>
+
+      {/* Objectives */}
       <FormField
         name="dummy-task1"
         render={() => (
@@ -92,6 +119,7 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
         )}
       />
 
+      {/* Responsibilities */}
       <FormField
         name="dummy-task2"
         render={() => (
@@ -110,6 +138,7 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
         )}
       />
 
+      {/* Constraints */}
       <FormField
         name="dummy-task3"
         render={() => (

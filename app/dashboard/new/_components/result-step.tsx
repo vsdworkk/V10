@@ -2,21 +2,25 @@
 @description
 Client sub-component for the "Result" portion of a STAR example.
 Prompts user for:
-1) Outcome
-2) Impact
-3) Quantification
+1. Outcome
+2. Impact
+3. Quantification
+
 We combine them into a single labeled string, storing it at starExampleX.result.
 
 Key Features:
 - React Hook Form context
 - Three sub-fields
 - Single string output on blur
+- Now includes an h2 heading for "STAR Example One: Result" or
+  "STAR Example Two: Result"
+
+@notes
 */
 
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
 import { useState } from "react"
 import {
   FormField,
@@ -28,22 +32,37 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 
+/**
+@interface ResultStepProps
+@exampleKey: "starExample1" | "starExample2"
+*/
 interface ResultStepProps {
   exampleKey: "starExample1" | "starExample2"
 }
 
+/**
+@function ResultStep
+Collects the user's inputs for the final "Result" portion:
+1. Outcome
+2. Impact
+3. Quantification
+
+Then merges them into a single labeled text block for starExampleX.result.
+We also display "STAR Example One: Result" or "STAR Example Two: Result"
+as a heading at the top.
+*/
 export default function ResultStep({ exampleKey }: ResultStepProps) {
-  const { setValue } = useFormContext<PitchWizardFormData>()
+  const { setValue } = useFormContext()
 
   const [outcomeValue, setOutcomeValue] = useState("")
   const [impactValue, setImpactValue] = useState("")
   const [quantValue, setQuantValue] = useState("")
 
-  const buildResultString = (
+  function buildResultString(
     outcome: string,
     impact: string,
     quantification: string
-  ) => {
+  ): string {
     let result = ""
     if (outcome.trim()) {
       result += `Outcome: ${outcome.trim()}\n`
@@ -57,7 +76,7 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
     return result.trim()
   }
 
-  const handleBlur = () => {
+  function handleBlur() {
     const finalString = buildResultString(
       outcomeValue,
       impactValue,
@@ -66,8 +85,16 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
     setValue(`${exampleKey}.result`, finalString, { shouldDirty: true })
   }
 
+  // "One" or "Two"
+  const exampleNumber = exampleKey === "starExample1" ? "One" : "Two"
+
   return (
     <div className="space-y-4">
+      <h2 className="text-lg font-semibold">
+        STAR Example {exampleNumber}: Result
+      </h2>
+
+      {/* Outcome */}
       <FormField
         name="dummy-result1"
         render={() => (
@@ -86,6 +113,7 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
         )}
       />
 
+      {/* Impact */}
       <FormField
         name="dummy-result2"
         render={() => (
@@ -104,6 +132,7 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
         )}
       />
 
+      {/* Quantification */}
       <FormField
         name="dummy-result3"
         render={() => (
@@ -111,7 +140,7 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
             <FormLabel>Quantification</FormLabel>
             <FormControl>
               <Input
-                placeholder="If possible, provide measurable details, e.g. 'Increased efficiency by 20%'"
+                placeholder="If possible, provide measurable details (e.g. 'Increased efficiency by 20%')"
                 value={quantValue}
                 onChange={e => setQuantValue(e.target.value)}
                 onBlur={handleBlur}

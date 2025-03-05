@@ -2,21 +2,25 @@
 @description
 Client sub-component for the "Action" portion of a STAR example.
 Prompts user for:
-1) Approach
-2) Skills used
-3) Collaboration
+1. Approach
+2. Skills used
+3. Collaboration
+
 We combine them into a single labeled string, storing it at starExampleX.action.
 
 Key Features:
 - React Hook Form context
 - Three sub-fields
 - Single string output on blur
+- Now includes an h2 heading indicating whether this is "STAR Example One: Action"
+  or "STAR Example Two: Action" based on exampleKey.
+
+@notes
 */
 
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
 import { useState } from "react"
 import {
   FormField,
@@ -28,22 +32,35 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
+/**
+@interface ActionStepProps
+@exampleKey indicates whether it's starExample1 or starExample2
+*/
 interface ActionStepProps {
   exampleKey: "starExample1" | "starExample2"
 }
 
+/**
+@function ActionStep
+Combines sub-fields (approach, skills used, collaboration) into a single
+string for the "Action" portion of a STAR example. We set the result in
+starExampleX.action on blur.
+
+We also include a heading that says, for example, "STAR Example One: Action" or
+"STAR Example Two: Action."
+*/
 export default function ActionStep({ exampleKey }: ActionStepProps) {
-  const { setValue } = useFormContext<PitchWizardFormData>()
+  const { setValue } = useFormContext()
 
   const [approachValue, setApproachValue] = useState("")
   const [skillsValue, setSkillsValue] = useState("")
   const [collabValue, setCollabValue] = useState("")
 
-  const buildActionString = (
+  function buildActionString(
     approach: string,
     skills: string,
     collaboration: string
-  ) => {
+  ): string {
     let result = ""
     if (approach.trim()) {
       result += `Approach: ${approach.trim()}\n`
@@ -57,7 +74,7 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
     return result.trim()
   }
 
-  const handleBlur = () => {
+  function handleBlur() {
     const finalString = buildActionString(
       approachValue,
       skillsValue,
@@ -66,8 +83,16 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
     setValue(`${exampleKey}.action`, finalString, { shouldDirty: true })
   }
 
+  // Derive "One" or "Two"
+  const exampleNumber = exampleKey === "starExample1" ? "One" : "Two"
+
   return (
     <div className="space-y-4">
+      <h2 className="text-lg font-semibold">
+        STAR Example {exampleNumber}: Action
+      </h2>
+
+      {/* Approach */}
       <FormField
         name="dummy-action1"
         render={() => (
@@ -86,6 +111,7 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
         )}
       />
 
+      {/* Skills Used */}
       <FormField
         name="dummy-action2"
         render={() => (
@@ -93,7 +119,7 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
             <FormLabel>Skills Used</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="List the particular skills, techniques, or methods you applied..."
+                placeholder="List the skills, techniques, or methods you applied..."
                 value={skillsValue}
                 onChange={e => setSkillsValue(e.target.value)}
                 onBlur={handleBlur}
@@ -104,6 +130,7 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
         )}
       />
 
+      {/* Collaboration */}
       <FormField
         name="dummy-action3"
         render={() => (
