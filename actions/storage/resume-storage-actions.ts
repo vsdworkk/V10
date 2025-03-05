@@ -40,6 +40,70 @@ interface ParseResumeOutput {
 }
 
 /**
+@interface UploadResumeOutput
+Defines the shape of the data returned by uploadResumeStorage
+*/
+interface UploadResumeOutput {
+  path: string
+}
+
+/**
+@function uploadResumeStorage
+@description
+Uploads a resume file (PDF, DOC, or DOCX) to Supabase Storage. 
+The file is stored in a bucket with a path based on the user ID.
+@param {File} file - The resume file to upload
+@param {string} userId - The ID of the user who owns the resume
+@returns {Promise<ActionState<UploadResumeOutput>>} - Contains `path` indicating where the file was stored
+*/
+export async function uploadResumeStorage(
+  file: File,
+  userId: string
+): Promise<ActionState<UploadResumeOutput>> {
+  try {
+    // Initialize the Supabase client with service role
+    const supabase = createClient(SUPABASE_URL as string, SUPABASE_SERVICE_ROLE_KEY as string, {
+      auth: { persistSession: false }
+    })
+
+    // Determine the file extension
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || ''
+    if (!['pdf', 'doc', 'docx'].includes(fileExtension)) {
+      throw new Error("Unsupported file type. Only PDF, DOC, or DOCX files are allowed.")
+    }
+
+    // Define the bucket and path where the file will be stored
+    const bucket = 'resumes'
+    const fileName = `${Date.now()}-${file.name}`
+    const path = `${userId}/${fileName}`
+
+    // Upload the file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type
+      })
+
+    if (error) {
+      throw new Error(`Failed to upload file to Supabase: ${error.message}`)
+    }
+
+    return {
+      isSuccess: true,
+      message: "Resume uploaded successfully",
+      data: { path: data?.path || path }
+    }
+  } catch (error) {
+    console.error("Error uploading resume:", error)
+    return {
+      isSuccess: false,
+      message: (error as Error).message || "Failed to upload resume file"
+    }
+  }
+}
+
+/**
 @function parseResumeStorageAction
 @description
 Downloads a resume file from Supabase Storage at the given path, determines whether
