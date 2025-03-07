@@ -50,8 +50,10 @@ import ReviewStep from "./review-step"
 
 // UI / hooks
 import { Button } from "@/components/ui/button"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Save } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
+
+import type { SelectPitch } from "@/db/schema/pitches-schema"
 
 /**
  * STAR sub-schema for a single example:
@@ -99,6 +101,7 @@ export type PitchWizardFormData = z.infer<typeof pitchWizardSchema>
 
 interface PitchWizardProps {
   userId: string
+  pitchData?: SelectPitch
 }
 
 /**
@@ -108,7 +111,7 @@ interface PitchWizardProps {
  * an animated spinner during final pitch generation, then proceeds
  * to the final review step. No manual "Generate Final Pitch" button is used.
  */
-export default function PitchWizard({ userId }: PitchWizardProps) {
+export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const { toast } = useToast()
   const router = useRouter()
 
@@ -116,11 +119,44 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const totalSteps = 12
 
+  // Helper function to convert numeric pitch word limit to string format
+  const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
+    if (limit <= 500) return "<500";
+    if (limit <= 650) return "<650";
+    if (limit <= 750) return "<750";
+    return "<1000";
+  }
+
+  // Helper function to ensure roleLevel is one of the valid enum values
+  const validateRoleLevel = (level: string): "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1" => {
+    const validLevels = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"];
+    return validLevels.includes(level) ? level as any : "APS1";
+  }
+
   // React Hook Form setup
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
     mode: "onChange",
-    defaultValues: {
+    defaultValues: pitchData ? {
+      userId,
+      roleName: pitchData.roleName,
+      roleLevel: validateRoleLevel(pitchData.roleLevel),
+      pitchWordLimit: formatPitchWordLimit(pitchData.pitchWordLimit),
+      roleDescription: pitchData.roleDescription || "",
+      yearsExperience: pitchData.yearsExperience,
+      relevantExperience: pitchData.relevantExperience,
+      resumePath: pitchData.resumePath || "",
+      albertGuidance: "",
+      starExample1: pitchData.starExample1 as any || {
+        situation: "",
+        task: "",
+        action: "",
+        result: ""
+      },
+      starExample2: pitchData.starExample2 as any,
+      pitchContent: pitchData.pitchContent || "",
+      selectedFile: null
+    } : {
       userId,
       roleName: "",
       roleLevel: "APS1",
@@ -408,6 +444,58 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
   })
 
   /**
+   * @function saveAndClose
+   * Saves the current pitch data as a draft and redirects to the dashboard.
+   * This allows users to save their progress and continue later.
+   */
+  const saveAndClose = useCallback(async () => {
+    const data = methods.getValues();
+    const numeric = parseInt(data.pitchWordLimit.replace("<", ""), 10) || 500;
+
+    const payload = {
+      userId,
+      roleName: data.roleName || "Untitled Pitch",
+      roleLevel: data.roleLevel,
+      pitchWordLimit: numeric,
+      roleDescription: data.roleDescription || "",
+      yearsExperience: data.yearsExperience || "",
+      relevantExperience: data.relevantExperience || "",
+      resumePath: data.resumePath || null,
+      starExample1: data.starExample1 || { situation: "", task: "", action: "", result: "" },
+      starExample2: data.starExample2,
+      pitchContent: data.pitchContent || "",
+      status: "draft"
+    };
+
+    try {
+      const res = await fetch("/api/pitchWizard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server responded with: ${text}`);
+      }
+
+      toast({
+        title: "Draft Saved",
+        description: "Your pitch has been saved as a draft. You can resume it later."
+      });
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save draft",
+        variant: "destructive"
+      });
+    }
+  }, [currentStep, methods, router, toast, userId]);
+
+  /**
    * @function renderStep
    * Renders the appropriate sub-component based on currentStep.
    */
@@ -481,16 +569,22 @@ export default function PitchWizard({ userId }: PitchWizardProps) {
               Back
             </Button>
           )}
-          {currentStep < 12 && (
-            <Button onClick={goNext}>
-              Next
+          <div className="flex space-x-2 ml-auto">
+            <Button variant="outline" onClick={saveAndClose}>
+              <Save className="h-4 w-4 mr-2" />
+              Save and Close
             </Button>
-          )}
-          {currentStep === 12 && (
-            <Button type="button" onClick={onSubmit}>
-              Submit
-            </Button>
-          )}
+            {currentStep < 12 && (
+              <Button onClick={goNext}>
+                Next
+              </Button>
+            )}
+            {currentStep === 12 && (
+              <Button type="button" onClick={onSubmit}>
+                Submit
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </FormProvider>

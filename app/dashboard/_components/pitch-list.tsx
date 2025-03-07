@@ -23,11 +23,12 @@
 "use client"
 
 import Link from "next/link"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import { useMemo, useEffect } from "react"
 import { useCachedData } from "@/lib/hooks/use-cached-data"
+import { PlayCircle, Edit } from "lucide-react"
 
 /**
  * @interface PitchListProps
@@ -113,14 +114,27 @@ export default function PitchList({ pitches }: PitchListProps) {
                 <p className="text-muted-foreground text-sm">
                   Last Updated: {new Date(pitch.updatedAt).toLocaleString()}
                 </p>
+              </CardContent>
 
-                {/* Link to a pitch detail/edit page */}
+              <CardFooter className="flex gap-2">
+                {/* Resume button for draft pitches */}
+                {pitch.status === "draft" && (
+                  <Link href={`/dashboard/new/${pitch.id}`}>
+                    <Button variant="secondary" size="sm">
+                      <PlayCircle className="h-4 w-4 mr-2" />
+                      Resume
+                    </Button>
+                  </Link>
+                )}
+                
+                {/* Edit button for all pitches */}
                 <Link href={`/dashboard/${pitch.id}`}>
                   <Button variant="outline" size="sm">
+                    <Edit className="h-4 w-4 mr-2" />
                     Edit Pitch
                   </Button>
                 </Link>
-              </CardContent>
+              </CardFooter>
             </Card>
           ))}
         </div>
