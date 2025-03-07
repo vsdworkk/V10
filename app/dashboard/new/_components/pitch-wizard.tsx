@@ -37,6 +37,7 @@ import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 
 // Step components
 import RoleStep from "./role-step"
@@ -50,8 +51,9 @@ import ReviewStep from "./review-step"
 
 // UI / hooks
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Save } from "lucide-react"
+import { RefreshCw, Save, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 
@@ -105,13 +107,22 @@ interface PitchWizardProps {
   pitchData?: SelectPitch
 }
 
-/**
- * @function PitchWizard
- * The main multi-step wizard for collecting pitch data. Automatically
- * generates the final pitch after the last relevant STAR step. Displays
- * an animated spinner during final pitch generation, then proceeds
- * to the final review step. No manual "Generate Final Pitch" button is used.
- */
+// Step titles for the progress indicator
+const stepTitles = [
+  "Role Information",
+  "Experience",
+  "Guidance",
+  "Situation (Example 1)",
+  "Task (Example 1)",
+  "Action (Example 1)",
+  "Result (Example 1)",
+  "Situation (Example 2)",
+  "Task (Example 2)",
+  "Action (Example 2)",
+  "Result (Example 2)",
+  "Review & Submit"
+]
+
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const { toast } = useToast()
   const router = useRouter()
@@ -122,74 +133,89 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
   // Helper function to convert numeric pitch word limit to string format
   const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
-    if (limit <= 500) return "<500";
-    if (limit <= 650) return "<650";
-    if (limit <= 750) return "<750";
-    return "<1000";
+    if (limit < 500) return "<500"
+    if (limit < 650) return "<650"
+    if (limit < 750) return "<750"
+    return "<1000"
   }
 
   // Helper function to ensure roleLevel is one of the valid enum values
   const validateRoleLevel = (level: string): "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1" => {
-    const validLevels = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"];
-    return validLevels.includes(level) ? level as any : "APS1";
+    const validLevels = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]
+    return validLevels.includes(level) ? (level as any) : "APS4"
   }
 
-  // React Hook Form setup
+  // Initialize form with default values or existing pitch data
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
-    mode: "onChange",
-    defaultValues: pitchData ? {
-      userId,
-      roleName: pitchData.roleName,
-      roleLevel: validateRoleLevel(pitchData.roleLevel),
-      pitchWordLimit: formatPitchWordLimit(pitchData.pitchWordLimit),
-      roleDescription: pitchData.roleDescription || "",
-      yearsExperience: pitchData.yearsExperience,
-      relevantExperience: pitchData.relevantExperience,
-      resumePath: pitchData.resumePath || "",
-      albertGuidance: "",
-      starExample1: pitchData.starExample1 as any || {
-        situation: "",
-        task: "",
-        action: "",
-        result: ""
-      },
-      starExample2: pitchData.starExample2 as any,
-      pitchContent: pitchData.pitchContent || "",
-      selectedFile: null
-    } : {
-      userId,
-      roleName: "",
-      roleLevel: "APS1",
-      pitchWordLimit: "<500",
-      roleDescription: "",
-      yearsExperience: "",
-      relevantExperience: "",
-      resumePath: "",
-      albertGuidance: "",
-      starExample1: {
-        situation: "",
-        task: "",
-        action: "",
-        result: ""
-      },
-      starExample2: undefined,
-      pitchContent: "",
-      selectedFile: null
-    }
+    defaultValues: pitchData
+      ? {
+          userId: pitchData.userId,
+          roleName: pitchData.roleName,
+          organisationName: pitchData.organisationName || "",
+          roleLevel: validateRoleLevel(pitchData.roleLevel),
+          pitchWordLimit: formatPitchWordLimit(pitchData.pitchWordLimit),
+          roleDescription: pitchData.roleDescription || "",
+          yearsExperience: pitchData.yearsExperience,
+          relevantExperience: pitchData.relevantExperience,
+          resumePath: pitchData.resumePath || "",
+          albertGuidance: pitchData.pitchContent || "", // Using pitchContent as albertGuidance
+          starExample1: pitchData.starExample1 as any || {
+            situation: "",
+            task: "",
+            action: "",
+            result: ""
+          },
+          starExample2: pitchData.starExample2 ? (pitchData.starExample2 as any) : undefined,
+          pitchContent: pitchData.pitchContent || "",
+          selectedFile: null
+        }
+      : {
+          userId,
+          roleName: "",
+          organisationName: "",
+          roleLevel: "APS4",
+          pitchWordLimit: "<650",
+          roleDescription: "",
+          yearsExperience: "",
+          relevantExperience: "",
+          resumePath: "",
+          albertGuidance: "",
+          starExample1: {
+            situation: "",
+            task: "",
+            action: "",
+            result: ""
+          },
+          starExample2: undefined,
+          pitchContent: "",
+          selectedFile: null
+        }
   })
 
   // State for final pitch generation UI
   const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   // Helper: watch pitchWordLimit, convert to a numeric so we can do <650 checks
   const watchWordLimit = methods.watch("pitchWordLimit")
 
   // A function to parse "<500" -> 500, "<650" -> 650, etc.
   function numericLimit(): number {
-    const str = watchWordLimit || "<500"
-    return parseInt(str.replace("<", ""), 10)
+    const limit = watchWordLimit || "<500"
+    switch (limit) {
+      case "<500":
+        return 500
+      case "<650":
+        return 650
+      case "<750":
+        return 750
+      case "<1000":
+        return 1000
+      default:
+        return 650
+    }
   }
 
   // If user chooses a limit < 650, we remove starExample2 from form data
@@ -380,6 +406,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
     // Otherwise, just increment
     setCurrentStep(s => Math.min(s + 1, totalSteps))
+    markStepCompleted(currentStep)
   }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch])
 
   /**
@@ -498,6 +525,13 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     }
   }, [currentStep, methods, router, toast, userId]);
 
+  // Mark current step as completed when moving to next step
+  const markStepCompleted = (step: number) => {
+    if (!completedSteps.includes(step)) {
+      setCompletedSteps(prev => [...prev, step]);
+    }
+  };
+
   /**
    * @function renderStep
    * Renders the appropriate sub-component based on currentStep.
@@ -540,15 +574,18 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    */
   if (isGeneratingFinalPitch) {
     return (
-      <div className="flex flex-col items-center space-y-2 py-4">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          Generating your final pitch with Albert...
+      <div className="flex flex-col items-center space-y-4 py-8 bg-white rounded-lg shadow-sm border p-6">
+        <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        </div>
+        <h3 className="text-xl font-medium">Creating Your Pitch</h3>
+        <p className="text-muted-foreground text-center max-w-md">
+          Albert is generating your final pitch based on your inputs. This may take a moment...
         </p>
 
         {finalPitchError && (
-          <div className="rounded-md border border-red-300 bg-red-50 p-3 text-red-700 mt-2">
-            <p className="text-sm font-semibold">Error:</p>
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive mt-4 w-full max-w-md">
+            <p className="text-sm font-semibold">Error Occurred:</p>
             <p className="text-sm">{finalPitchError}</p>
           </div>
         )}
@@ -558,35 +595,118 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold">
-          Create New Pitch (Step {currentStep} of {totalSteps})
-        </h2>
+      <div className="space-y-8">
+        {/* Progress indicator */}
+        <div className="w-full bg-muted/30 p-4 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold">
+              Create New Pitch
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              Step {currentStep} of {totalSteps}
+            </span>
+          </div>
+          
+          <div className="relative">
+            {/* Progress bar */}
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300 ease-in-out"
+                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              />
+            </div>
+            
+            {/* Step indicators */}
+            <div className="flex justify-between mt-2">
+              {Array.from({ length: totalSteps }).map((_, index) => {
+                const stepNumber = index + 1;
+                const isActive = currentStep === stepNumber;
+                const isCompleted = completedSteps.includes(stepNumber);
+                
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <div 
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                        isActive ? "bg-primary text-primary-foreground ring-4 ring-primary/20" : 
+                        isCompleted ? "bg-primary/80 text-primary-foreground" : 
+                        "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : stepNumber}
+                    </div>
+                    {index < 3 && (
+                      <span className="text-xs mt-1 hidden md:block">
+                        {stepTitles[index].split(' ')[0]}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-        <div>{renderStep()}</div>
+        {/* Current step title */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h3 className="text-lg font-medium mb-6 pb-2 border-b">
+            {stepTitles[currentStep - 1]}
+          </h3>
 
-        {/* Wizard navigation buttons at the bottom */}
-        <div className="flex justify-between pt-4">
-          {currentStep > 1 && (
-            <Button variant="outline" onClick={goBack}>
-              Back
-            </Button>
-          )}
-          <div className="flex space-x-2 ml-auto">
-            <Button variant="outline" onClick={saveAndClose}>
-              <Save className="h-4 w-4 mr-2" />
-              Save and Close
-            </Button>
-            {currentStep < 12 && (
-              <Button onClick={goNext}>
-                Next
+          {/* Step content with animation */}
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderStep()}
+          </motion.div>
+
+          {/* Wizard navigation buttons at the bottom */}
+          <div className="flex justify-between pt-8 mt-6 border-t">
+            {currentStep > 1 ? (
+              <Button 
+                variant="outline" 
+                onClick={goBack}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
               </Button>
+            ) : (
+              <div></div> // Empty div to maintain flex spacing
             )}
-            {currentStep === 12 && (
-              <Button type="button" onClick={onSubmit}>
-                Submit
+            
+            <div className="flex space-x-3 ml-auto">
+              <Button 
+                variant="outline" 
+                onClick={saveAndClose}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Save and Close
               </Button>
-            )}
+              
+              {currentStep < totalSteps ? (
+                <Button 
+                  onClick={goNext}
+                  className="flex items-center gap-2"
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  type="button" 
+                  onClick={onSubmit}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Submit Pitch
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
