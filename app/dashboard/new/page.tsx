@@ -22,6 +22,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
+import ProgressBarWrapper from "@/app/dashboard/new/_components/progress-bar-wrapper"
 
 export default async function CreateNewPitchPage() {
   // Check if the user is authenticated
@@ -35,8 +36,10 @@ export default async function CreateNewPitchPage() {
   // Render the client-side wizard, passing the userId
   return (
     <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+      <ProgressBarWrapper />
+      
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Create New Pitch</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Role Details</h1>
         <p className="text-muted-foreground mt-2">
           Follow the steps below to create a tailored pitch for your APS application.
         </p>

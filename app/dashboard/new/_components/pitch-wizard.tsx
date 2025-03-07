@@ -56,6 +56,7 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
 import type { SelectPitch } from "@/db/schema/pitches-schema"
+import { useStepContext } from "./progress-bar-wrapper"
 
 /**
  * STAR sub-schema for a single example:
@@ -126,10 +127,11 @@ const stepTitles = [
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const { toast } = useToast()
   const router = useRouter()
-
-  // There can be up to 12 steps in total
-  const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 12
+  const { setCurrentStep, setTotalSteps } = useStepContext()
+  const [currentStepLocal, setCurrentStepLocal] = useState(1)
+  const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
+  const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   // Helper function to convert numeric pitch word limit to string format
   const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
@@ -193,16 +195,11 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         }
   })
 
-  // State for final pitch generation UI
-  const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
-  const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
-  const [completedSteps, setCompletedSteps] = useState<number[]>([])
-
   // Helper: watch pitchWordLimit, convert to a numeric so we can do <650 checks
   const watchWordLimit = methods.watch("pitchWordLimit")
-
+  
   // A function to parse "<500" -> 500, "<650" -> 650, etc.
-  function numericLimit(): number {
+  const numericLimit = () => {
     const limit = watchWordLimit || "<500"
     switch (limit) {
       case "<500":
@@ -218,61 +215,61 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     }
   }
 
+  // Calculate total steps based on word limit
+  const totalSteps = numericLimit() >= 650 ? 12 : 8
+  
+  // For convenience, alias the local state to the name used throughout the component
+  const currentStep = currentStepLocal
+  
+  // Update the context whenever local state changes
+  useEffect(() => {
+    setCurrentStep(currentStep)
+    setTotalSteps(totalSteps)
+  }, [currentStep, totalSteps, setCurrentStep, setTotalSteps])
+
   // If user chooses a limit < 650, we remove starExample2 from form data
   useEffect(() => {
     if (numericLimit() < 650) {
-      methods.setValue("starExample2", undefined)
+      const currentData = methods.getValues()
+      if (currentData.starExample2) {
+        methods.setValue("starExample2", undefined)
+      }
     }
   }, [watchWordLimit, methods])
 
   /**
    * @function autoUploadResume
-   * If the user selected a file in Step 2, we automatically upload it
-   * to Supabase when they proceed to Step 3. On success, we store the
-   * returned path in resumePath. Then we clear selectedFile from form data.
+   * Automatically uploads the resume when moving from Step 2 -> Step 3.
+   * This is called in the goNext function.
    */
   const autoUploadResume = async () => {
-    const file = methods.getValues("selectedFile")
-    const currentUserId = methods.getValues("userId") || "unknown"
+    const selectedFile = methods.getValues("selectedFile")
+    if (!selectedFile) return
 
-    if (!file) return
+    const formData = new FormData()
+    formData.append("file", selectedFile)
+    formData.append("userId", userId)
 
     try {
-      const formData = new FormData()
-      formData.append("userId", currentUserId)
-      formData.append("file", file)
-
-      const res = await fetch("/api/resume-upload", {
+      const res = await fetch("/api/upload", {
         method: "POST",
         body: formData
       })
 
       if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || "Resume upload failed")
+        throw new Error("Failed to upload resume")
       }
 
       const data = await res.json()
-      if (!data.path) {
-        throw new Error("No path returned from server")
-      }
-
-      // Store path in resumePath
-      methods.setValue("resumePath", data.path, {
-        shouldDirty: true,
-        shouldTouch: true
-      })
-      // Clear selectedFile so it doesn't upload again on back-and-forth
-      methods.setValue("selectedFile", null)
-
+      methods.setValue("resumePath", data.path)
       toast({
         title: "Resume Uploaded",
-        description: "We have stored your resume in Supabase."
+        description: "Your resume has been uploaded successfully."
       })
     } catch (error: any) {
       toast({
-        title: "Error Uploading Resume",
-        description: error.message,
+        title: "Upload Failed",
+        description: error.message || "Failed to upload resume",
         variant: "destructive"
       })
     }
@@ -280,154 +277,170 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
   /**
    * @function generateFinalPitch
-   * Automatically called once the user finishes the last relevant STAR step
-   * (Step 7 if pitchWordLimit < 650, otherwise Step 11).
-   * Calls /api/finalPitch with the user's data. On success, updates
-   * pitchContent. On failure, sets finalPitchError.
+   * Generates the final pitch using Albert AI.
+   * This is called automatically after completing the last STAR step.
    */
-  const generateFinalPitch = useCallback(async () => {
+  const generateFinalPitch = async () => {
+    setIsGeneratingFinalPitch(true)
     setFinalPitchError(null)
 
-    const {
-      roleName,
-      roleLevel,
-      pitchWordLimit,
-      roleDescription,
-      yearsExperience,
-      relevantExperience,
-      starExample1,
-      starExample2
-    } = methods.getValues()
-
     try {
-      setIsGeneratingFinalPitch(true)
-
-      const bodyData = {
-        roleName,
-        roleLevel,
-        pitchWordLimit,
-        roleDescription: roleDescription || "",
-        yearsExperience,
-        relevantExperience,
-        starExample1,
-        // Only include starExample2 if pitchWordLimit >= 650
-        starExample2: numericLimit() >= 650 ? starExample2 : undefined
-      }
-
-      const res = await fetch("/api/finalPitch", {
+      const formData = methods.getValues()
+      const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData)
+        body: JSON.stringify({
+          userId,
+          roleName: formData.roleName,
+          organisationName: formData.organisationName,
+          roleLevel: formData.roleLevel,
+          pitchWordLimit: numericLimit(),
+          roleDescription: formData.roleDescription,
+          yearsExperience: formData.yearsExperience,
+          relevantExperience: formData.relevantExperience,
+          resumePath: formData.resumePath,
+          starExample1: formData.starExample1,
+          starExample2: formData.starExample2
+        })
       })
 
       if (!res.ok) {
-        const errText = await res.text()
-        throw new Error(errText || "Failed to fetch final pitch")
+        const errorText = await res.text()
+        throw new Error(`Failed to generate pitch: ${errorText}`)
       }
 
-      const result = await res.json()
-      if (!result.isSuccess) {
-        throw new Error(result.message || "Error generating final pitch")
-      }
-
-      // Save final pitch text
-      methods.setValue("pitchContent", result.data, { shouldDirty: true })
+      const data = await res.json()
+      methods.setValue("pitchContent", data.pitch)
     } catch (error: any) {
-      setFinalPitchError(error.message)
+      setFinalPitchError(error.message || "Failed to generate pitch")
+      console.error("Error generating pitch:", error)
     } finally {
       setIsGeneratingFinalPitch(false)
     }
-  }, [methods])
+  }
+
+  // Mark current step as completed when moving to next step
+  const markStepCompleted = (step: number) => {
+    if (!completedSteps.includes(step)) {
+      setCompletedSteps(prev => [...prev, step]);
+    }
+  };
 
   /**
    * @function goNext
-   * Moves to the next step in the wizard. Performs any step-specific
-   * logic or validation. If finishing Step 2, tries to auto-upload resume.
-   * If finishing last STAR step, auto-generates final pitch.
+   * Advances to the next step in the wizard.
+   * Handles special cases:
+   * - Uploading resume when leaving Step 2
+   * - Generating final pitch after last STAR step
+   * - Skipping starExample2 steps if pitchWordLimit < 650
    */
   const goNext = useCallback(async () => {
-    type FieldName = keyof PitchWizardFormData
-
-    // Minimal per-step validation
-    const fieldsToValidate: Record<number, FieldName[]> = {
-      1: ["roleName", "roleLevel", "pitchWordLimit", "roleDescription"],
-      2: ["yearsExperience", "relevantExperience"],
-      3: [],
-      4: [],
-      5: [],
-      6: [],
-      7: [],
-      8: [],
-      9: [],
-      10: [],
-      11: [],
-      12: []
-    }
-
-    const currentFields = fieldsToValidate[currentStep] || []
-    const isValid = await methods.trigger(currentFields)
-
+    const isValid = await methods.trigger()
     if (!isValid) {
-      // Gather validation errors for the current step
-      const { errors } = methods.formState
-      const currentStepErrors = Object.entries(errors)
-        .filter(([key]) => currentFields.includes(key as FieldName))
-        .map(([_, err]) => err?.message)
-        .filter(Boolean)
-
-      if (currentStepErrors.length > 0) {
-        toast({
-          title: "Validation Error",
-          description: currentStepErrors.join(", "),
-          variant: "destructive"
-        })
-        return
-      }
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before proceeding.",
+        variant: "destructive"
+      })
+      return
     }
 
-    // Step 2 -> Step 3: Attempt resume upload if user selected a file
+    // Special case: Upload resume when leaving Step 2
     if (currentStep === 2) {
       await autoUploadResume()
     }
 
-    // If finishing Step 7 with limit < 650, auto-generate final pitch -> jump to step 12
+    // Special case: Generate final pitch after last STAR step for Example 1
+    // if the word limit is < 650
     if (currentStep === 7 && numericLimit() < 650) {
       await generateFinalPitch()
-      setCurrentStep(12)
+      setCurrentStepLocal(12)
       return
     }
 
-    // If finishing Step 11, auto-generate final pitch -> step 12
+    // Special case: Generate final pitch after last STAR step for Example 2
     if (currentStep === 11) {
       await generateFinalPitch()
-      setCurrentStep(12)
+      setCurrentStepLocal(12)
       return
     }
 
     // Otherwise, just increment
-    setCurrentStep(s => Math.min(s + 1, totalSteps))
+    setCurrentStepLocal(s => Math.min(s + 1, totalSteps))
     markStepCompleted(currentStep)
-  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch])
+  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps])
 
   /**
    * @function goBack
-   * Decrements the step counter unless we're already at the first step.
-   * Useful in case the user wants to review or correct previous info.
+   * Goes back to the previous step in the wizard.
    */
   const goBack = useCallback(() => {
-    setCurrentStep(s => Math.max(s - 1, 1))
+    setCurrentStepLocal(s => Math.max(s - 1, 1))
   }, [])
 
   /**
-   * @function onSubmit
-   * Called at the final step (step 12) to save the pitch into the DB as either
-   * "final" if we have pitch content, or "draft" if for some reason pitchContent
-   * was missing. We POST to /api/pitchWizard, then redirect to the dashboard.
+   * @function saveAndClose
+   * Saves the current state as a draft and redirects to the dashboard.
    */
-  const onSubmit = methods.handleSubmit(async (data) => {
-    const pitchStatus = data.pitchContent ? "final" : "draft"
-    const numeric = parseInt(data.pitchWordLimit.replace("<", ""), 10) || 500
+  const saveAndClose = useCallback(async () => {
+    const data = methods.getValues()
+    const numeric = numericLimit()
 
+    // Convert the form data to the format expected by the API
+    const payload = {
+      userId,
+      roleName: data.roleName,
+      organisationName: data.organisationName || null,
+      roleLevel: data.roleLevel,
+      pitchWordLimit: numeric,
+      roleDescription: data.roleDescription || "",
+      yearsExperience: data.yearsExperience,
+      relevantExperience: data.relevantExperience,
+      resumePath: data.resumePath || null,
+      starExample1: data.starExample1,
+      starExample2: data.starExample2,
+      pitchContent: data.pitchContent || "",
+      status: "draft"
+    }
+
+    try {
+      const res = await fetch("/api/pitchWizard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(`Server responded with: ${text}`)
+      }
+
+      toast({
+        title: "Draft Saved",
+        description: "Your pitch draft has been saved."
+      })
+
+      // Redirect to dashboard
+      router.push("/dashboard")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save draft",
+        variant: "destructive"
+      })
+    }
+  }, [methods, userId, router, toast, numericLimit])
+
+  /**
+   * @function onSubmit
+   * Submits the final pitch.
+   */
+  const onSubmit = useCallback(async () => {
+    const data = methods.getValues()
+    const numeric = numericLimit()
+    const pitchStatus = "final"
+
+    // Convert the form data to the format expected by the API
     const payload = {
       userId,
       roleName: data.roleName,
@@ -470,67 +483,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         variant: "destructive"
       })
     }
-  })
-
-  /**
-   * @function saveAndClose
-   * Saves the current pitch data as a draft and redirects to the dashboard.
-   * This allows users to save their progress and continue later.
-   */
-  const saveAndClose = useCallback(async () => {
-    const data = methods.getValues();
-    const numeric = parseInt(data.pitchWordLimit.replace("<", ""), 10) || 500;
-
-    const payload = {
-      userId,
-      roleName: data.roleName || "Untitled Pitch",
-      organisationName: data.organisationName || null,
-      roleLevel: data.roleLevel,
-      pitchWordLimit: numeric,
-      roleDescription: data.roleDescription || "",
-      yearsExperience: data.yearsExperience || "",
-      relevantExperience: data.relevantExperience || "",
-      resumePath: data.resumePath || null,
-      starExample1: data.starExample1 || { situation: "", task: "", action: "", result: "" },
-      starExample2: data.starExample2,
-      pitchContent: data.pitchContent || "",
-      status: "draft"
-    };
-
-    try {
-      const res = await fetch("/api/pitchWizard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Server responded with: ${text}`);
-      }
-
-      toast({
-        title: "Draft Saved",
-        description: "Your pitch has been saved as a draft. You can resume it later."
-      });
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save draft",
-        variant: "destructive"
-      });
-    }
-  }, [currentStep, methods, router, toast, userId]);
-
-  // Mark current step as completed when moving to next step
-  const markStepCompleted = (step: number) => {
-    if (!completedSteps.includes(step)) {
-      setCompletedSteps(prev => [...prev, step]);
-    }
-  };
+  }, [methods, userId, router, toast, numericLimit])
 
   /**
    * @function renderStep
@@ -596,57 +549,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
-        {/* Progress indicator */}
-        <div className="w-full bg-muted/30 p-4 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-semibold">
-              Create New Pitch
-            </h2>
-            <span className="text-sm text-muted-foreground">
-              Step {currentStep} of {totalSteps}
-            </span>
-          </div>
-          
-          <div className="relative">
-            {/* Progress bar */}
-            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300 ease-in-out"
-                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-              />
-            </div>
-            
-            {/* Step indicators */}
-            <div className="flex justify-between mt-2">
-              {Array.from({ length: totalSteps }).map((_, index) => {
-                const stepNumber = index + 1;
-                const isActive = currentStep === stepNumber;
-                const isCompleted = completedSteps.includes(stepNumber);
-                
-                return (
-                  <div key={index} className="flex flex-col items-center">
-                    <div 
-                      className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                        isActive ? "bg-primary text-primary-foreground ring-4 ring-primary/20" : 
-                        isCompleted ? "bg-primary/80 text-primary-foreground" : 
-                        "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {isCompleted ? <CheckCircle2 className="h-3 w-3" /> : stepNumber}
-                    </div>
-                    {index < 3 && (
-                      <span className="text-xs mt-1 hidden md:block">
-                        {stepTitles[index].split(' ')[0]}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
         {/* Current step title */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-medium mb-6 pb-2 border-b">

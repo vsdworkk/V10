@@ -236,25 +236,6 @@ export default function RoleStep() {
                       Choose the maximum word count for your pitch
                     </FormDescription>
                     <FormMessage />
-
-                    {/* Show dynamic text based on selection */}
-                    {pitchLimitChoice && (
-                      <div className={cn(
-                        "mt-3 p-2 rounded-md text-sm flex items-center gap-2",
-                        pitchLimitChoice === "<500" ? "bg-blue-50 text-blue-700" :
-                        pitchLimitChoice === "<650" ? "bg-green-50 text-green-700" :
-                        pitchLimitChoice === "<750" ? "bg-amber-50 text-amber-700" :
-                        "bg-purple-50 text-purple-700"
-                      )}>
-                        <Info className="h-4 w-4" />
-                        <span>
-                          {pitchLimitChoice === "<500" && "Concise pitch, ideal for entry-level positions."}
-                          {pitchLimitChoice === "<650" && "Balanced pitch with room for key achievements."}
-                          {pitchLimitChoice === "<750" && "Detailed pitch with space for multiple examples."}
-                          {pitchLimitChoice === "<1000" && "Comprehensive pitch for senior positions."}
-                        </span>
-                      </div>
-                    )}
                   </FormItem>
                 )}
               />
@@ -268,7 +249,7 @@ export default function RoleStep() {
         <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
           <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
             <Info className="h-5 w-5 text-primary/80" />
-            <h3 className="font-medium">Additional Information</h3>
+            <h3 className="font-medium">Role Information</h3>
           </div>
           <CardContent className="p-4 pt-5">
             <FormField
@@ -276,13 +257,12 @@ export default function RoleStep() {
               name="roleDescription"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Paste or type the official role description here..."
                       {...field}
                       value={field.value || ""}
-                      className="min-h-[120px] bg-background"
+                      className="h-[80px] min-h-[80px] bg-background"
                     />
                   </FormControl>
                   <FormDescription>
