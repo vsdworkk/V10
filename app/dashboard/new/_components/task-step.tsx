@@ -74,6 +74,7 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Task</h2>
       <FormField
         name="dummy-task1"
         render={() => (

@@ -107,6 +107,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Situation</h2>
       {/* Context */}
       <FormField
         name="dummy" // a placeholder to keep Shadcn form structure

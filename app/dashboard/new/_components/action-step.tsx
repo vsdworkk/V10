@@ -68,6 +68,7 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Action</h2>
       <FormField
         name="dummy-action1"
         render={() => (

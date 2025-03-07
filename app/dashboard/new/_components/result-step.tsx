@@ -68,6 +68,7 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
 
   return (
     <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Result</h2>
       <FormField
         name="dummy-result1"
         render={() => (
