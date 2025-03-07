@@ -172,6 +172,7 @@ export default function RoleStep() {
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        value={field.value}
                       >
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Select APS level" />
@@ -220,6 +221,7 @@ export default function RoleStep() {
                           field.onChange(String(val));
                         }}
                         defaultValue={field.value}
+                        value={field.value}
                       >
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Select a limit" />

@@ -85,20 +85,20 @@ const starSchema = z.object({
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
   roleName: z.string().min(2, "Role Name must be at least 2 characters."),
-  organisationName: z.string().optional().nullable(),
+  organisationName: z.string().optional(),
   roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
   pitchWordLimit: z.enum(["<500", "<650", "<750", "<1000"]),
-  roleDescription: z.string().optional().nullable(),
+  roleDescription: z.string().optional(),
   yearsExperience: z.string().nonempty("Years of experience is required."),
   relevantExperience: z
     .string()
     .min(10, "Please provide a bit more detail on your experience."),
-  resumePath: z.string().optional().nullable(),
-  albertGuidance: z.string().optional().nullable(),
+  resumePath: z.string().optional(),
+  albertGuidance: z.string().optional(),
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional(),
-  pitchContent: z.string().optional().nullable(),
-  selectedFile: z.any().optional().nullable()
+  pitchContent: z.string().optional(),
+  selectedFile: z.any().optional()
 })
 
 export type PitchWizardFormData = z.infer<typeof pitchWizardSchema>
@@ -176,8 +176,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           userId,
           roleName: "",
           organisationName: "",
-          roleLevel: "APS4",
-          pitchWordLimit: "<650",
+          roleLevel: "APS4", // Default role level
+          pitchWordLimit: "<650", // Default word limit
           roleDescription: "",
           yearsExperience: "",
           relevantExperience: "",
@@ -192,7 +192,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           starExample2: undefined,
           pitchContent: "",
           selectedFile: null
-        }
+        },
+    mode: "onChange" // Enable validation as fields change
   })
 
   // Helper: watch pitchWordLimit, convert to a numeric so we can do <650 checks
@@ -335,7 +336,36 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    * - Skipping starExample2 steps if pitchWordLimit < 650
    */
   const goNext = useCallback(async () => {
-    const isValid = await methods.trigger()
+    // Only validate the fields for the current step
+    let isValid = false;
+    
+    if (currentStep === 1) {
+      // Validate only Role step fields
+      isValid = await methods.trigger(["roleName", "roleLevel", "pitchWordLimit"]);
+    } else if (currentStep === 2) {
+      // Validate only Experience step fields
+      isValid = await methods.trigger(["yearsExperience", "relevantExperience"]);
+    } else if (currentStep === 4 || currentStep === 8) {
+      // Validate only Situation step fields
+      const exampleKey = currentStep === 4 ? "starExample1.situation" : "starExample2.situation";
+      isValid = await methods.trigger(exampleKey);
+    } else if (currentStep === 5 || currentStep === 9) {
+      // Validate only Task step fields
+      const exampleKey = currentStep === 5 ? "starExample1.task" : "starExample2.task";
+      isValid = await methods.trigger(exampleKey);
+    } else if (currentStep === 6 || currentStep === 10) {
+      // Validate only Action step fields
+      const exampleKey = currentStep === 6 ? "starExample1.action" : "starExample2.action";
+      isValid = await methods.trigger(exampleKey);
+    } else if (currentStep === 7 || currentStep === 11) {
+      // Validate only Result step fields
+      const exampleKey = currentStep === 7 ? "starExample1.result" : "starExample2.result";
+      isValid = await methods.trigger(exampleKey);
+    } else {
+      // For other steps, no validation needed
+      isValid = true;
+    }
+    
     if (!isValid) {
       toast({
         title: "Validation Error",
