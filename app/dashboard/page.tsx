@@ -2,7 +2,7 @@
  * @description
  * This server page displays all pitches belonging to the authenticated user.
  * It fetches data from the database using a server action, then passes it
- * to a client component (`pitch-list.tsx`) for rendering.
+ * to a client component (`pitch-table.tsx`) for rendering.
  *
  * Key features:
  * - Auth check using Clerk's `auth()`
@@ -13,7 +13,7 @@
  * @dependencies
  * - `@clerk/nextjs/server` for user authentication
  * - `@/actions/db/pitches-actions` for accessing pitch records
- * - `pitch-list.tsx` client component for rendering the list
+ * - `pitch-table.tsx` client component for rendering the list
  *
  * @notes
  * - Relies on `dashboard/layout.tsx` to display a sidebar
@@ -26,28 +26,37 @@
 import { auth } from "@clerk/nextjs/server"
 import { getAllPitchesForUserAction } from "@/actions/db/pitches-actions"
 import { Suspense } from "react"
-import PitchList from "@/app/dashboard/_components/pitch-list"
+import PitchTable from "@/app/dashboard/_components/pitch-table"
 import { Skeleton } from "@/components/ui/skeleton"
 
 /**
- * PitchListSkeleton component for showing a loading state
+ * PitchTableSkeleton component for showing a loading state
  */
-function PitchListSkeleton() {
+function PitchTableSkeleton() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-32" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-lg border p-4">
-            <Skeleton className="h-6 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2 mb-4" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-3/4 mb-4" />
-            <Skeleton className="h-8 w-24" />
+      <Skeleton className="h-4 w-full max-w-md mb-4" />
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-10 w-24" />
+      </div>
+      <div className="border rounded-md">
+        <div className="grid grid-cols-4 gap-4 p-4 border-b">
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-20" />
+        </div>
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="grid grid-cols-4 gap-4 p-4 border-b">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-8" />
           </div>
         ))}
       </div>
@@ -56,9 +65,9 @@ function PitchListSkeleton() {
 }
 
 /**
- * PitchListFetcher component that fetches and renders the pitch list
+ * PitchTableFetcher component that fetches and renders the pitch table
  */
-async function PitchListFetcher() {
+async function PitchTableFetcher() {
   const { userId } = await auth()
   
   // This should never happen since the layout already checks for auth,
@@ -85,7 +94,7 @@ async function PitchListFetcher() {
     )
   }
 
-  return <PitchList pitches={pitchesRes.data} />
+  return <PitchTable pitches={pitchesRes.data} />
 }
 
 /**
@@ -94,16 +103,16 @@ async function PitchListFetcher() {
  * Server component that fetches all of a user's pitches and renders them
  * in a client component. If the user is not authenticated, redirects to /login.
  *
- * @returns JSX Element displaying pitch list or an error message
+ * @returns JSX Element displaying pitch table or an error message
  *
  * @notes
  * - Utilizes Suspense for loading states.
- * - The actual UI rendering is deferred to `pitch-list.tsx`.
+ * - The actual UI rendering is deferred to `pitch-table.tsx`.
  */
 export default async function DashboardPage() {
   return (
-    <Suspense fallback={<PitchListSkeleton />}>
-      <PitchListFetcher />
+    <Suspense fallback={<PitchTableSkeleton />}>
+      <PitchTableFetcher />
     </Suspense>
   )
 }

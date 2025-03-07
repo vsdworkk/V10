@@ -23,6 +23,7 @@
 "use server"
 
 import Link from "next/link"
+import { FileText, Plus } from "lucide-react"
 
 /**
  * @interface DashboardSidebarProps
@@ -44,19 +45,25 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
   // or fetch user data to display in the sidebar.
 
   return (
-    <div className="w-64 flex-shrink-0 border-r bg-card p-4">
-      <nav className="space-y-2">
+    <div className="w-64 flex-shrink-0 border-r bg-white p-0">
+      <div className="p-6 border-b">
+        <h1 className="text-xl font-bold">Pitch Manager</h1>
+      </div>
+
+      <nav className="p-4 space-y-1">
         <Link
           href="/dashboard"
-          className="block rounded px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
         >
+          <FileText className="h-4 w-4" />
           All Pitches
         </Link>
 
         <Link
           href="/dashboard/new"
-          className="block rounded px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
         >
+          <Plus className="h-4 w-4" />
           Create New Pitch
         </Link>
       </nav>
