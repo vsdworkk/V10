@@ -17,7 +17,8 @@ export default function PitchTable({ pitches }: PitchTableProps) {
   // Filter pitches based on search query
   const filteredPitches = pitches.filter(pitch => 
     pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase())
+    pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (pitch.organisationName && pitch.organisationName.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   return (
@@ -56,7 +57,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       <div className="border rounded-md">
         <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 border-b font-medium text-gray-500">
           <div>ROLE</div>
-          <div>COMPANY</div>
+          <div>ORGANISATION</div>
           <div>STATUS</div>
           <div>EXPORT</div>
         </div>
@@ -75,7 +76,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                   </Link>
                 </div>
                 <div>
-                  {pitch.roleDescription || "Not specified"}
+                  {pitch.organisationName || "Not specified"}
                 </div>
                 <div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

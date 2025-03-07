@@ -70,7 +70,7 @@ const starSchema = z.object({
  * @description
  * pitchWizardSchema:
  *  - userId (set by server)
- *  - roleName, roleLevel, pitchWordLimit, roleDescription
+ *  - roleName, organisationName, roleLevel, pitchWordLimit, roleDescription
  *  - yearsExperience, relevantExperience
  *  - resumePath (Populated after upload)
  *  - albertGuidance (Auto-filled from Step 3)
@@ -82,6 +82,7 @@ const starSchema = z.object({
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
   roleName: z.string().min(2, "Role Name must be at least 2 characters."),
+  organisationName: z.string().optional().nullable(),
   roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
   pitchWordLimit: z.enum(["<500", "<650", "<750", "<1000"]),
   roleDescription: z.string().optional().nullable(),
@@ -403,6 +404,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const payload = {
       userId,
       roleName: data.roleName,
+      organisationName: data.organisationName || null,
       roleLevel: data.roleLevel,
       pitchWordLimit: numeric,
       roleDescription: data.roleDescription || "",
@@ -455,6 +457,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const payload = {
       userId,
       roleName: data.roleName || "Untitled Pitch",
+      organisationName: data.organisationName || null,
       roleLevel: data.roleLevel,
       pitchWordLimit: numeric,
       roleDescription: data.roleDescription || "",

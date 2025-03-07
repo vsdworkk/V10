@@ -3,6 +3,7 @@
 Client sub-component for wizard Step 1: Role Information.
 Collects:
  - roleName
+ - organisationName
  - roleLevel (now APS1, APS2, APS3, APS4, APS5, APS6, EL1)
  - pitchWordLimit (dropdown with <500, <650, <750, <1000>)
  - roleDescription (optional)
@@ -46,6 +47,7 @@ import { Textarea } from "@/components/ui/textarea"
 @description
 Wizard step to capture role-level info:
  - Role Name
+ - Organisation Name
  - Role Level (APS1...EL1)
  - Word Limit (<500...<1000)
  - Optional Role Description
@@ -69,6 +71,25 @@ export default function RoleStep() {
               <Input
                 {...field}
                 placeholder="e.g. Administrative Officer"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Organisation Name */}
+      <FormField
+        control={control}
+        name="organisationName"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Organisation Name</FormLabel>
+            <FormControl>
+              <Input
+                {...field}
+                placeholder="e.g. Department of Finance"
+                value={field.value ?? ""}
               />
             </FormControl>
             <FormMessage />

@@ -42,13 +42,19 @@ export async function createPitchAction(
   pitchData: InsertPitch
 ): Promise<ActionState<SelectPitch>> {
   try {
+    // Remove organisationName field if it exists since the column doesn't exist yet
+    const { organisationName, ...dataToInsert } = pitchData as any;
+    
     // Drizzle returns an array of inserted rows. We only expect one here.
-    const [newPitch] = await db.insert(pitchesTable).values(pitchData).returning()
+    const [newPitch] = await db.insert(pitchesTable).values(dataToInsert).returning()
+
+    // Add organisationName back to the returned data for UI consistency
+    const pitchWithOrg = { ...newPitch, organisationName: null };
 
     return {
       isSuccess: true,
       message: "Pitch created successfully",
-      data: newPitch
+      data: pitchWithOrg as SelectPitch
     }
   } catch (error) {
     console.error("Error creating pitch:", error)
@@ -91,10 +97,13 @@ export async function getPitchByIdAction(
       }
     }
 
+    // Add organisationName to the pitch for UI consistency
+    const pitchWithOrg = { ...pitch, organisationName: null };
+
     return {
       isSuccess: true,
       message: "Pitch retrieved successfully",
-      data: pitch
+      data: pitchWithOrg as SelectPitch
     }
   } catch (error) {
     console.error("Error fetching pitch by ID:", error)
@@ -124,9 +133,12 @@ export async function updatePitchAction(
   userId: string
 ): Promise<ActionState<SelectPitch>> {
   try {
+    // Remove organisationName field if it exists since the column doesn't exist yet
+    const { organisationName, ...dataToUpdate } = updatedData as any;
+    
     const [updatedPitch] = await db
       .update(pitchesTable)
-      .set(updatedData)
+      .set(dataToUpdate)
       .where(
         and(
           eq(pitchesTable.id, id),
@@ -142,10 +154,13 @@ export async function updatePitchAction(
       }
     }
 
+    // Add organisationName back to the returned data for UI consistency
+    const pitchWithOrg = { ...updatedPitch, organisationName: organisationName || null };
+
     return {
       isSuccess: true,
       message: "Pitch updated successfully",
-      data: updatedPitch
+      data: pitchWithOrg as SelectPitch
     }
   } catch (error) {
     console.error("Error updating pitch:", error)
@@ -177,10 +192,16 @@ export async function getAllPitchesForUserAction(
       .where(eq(pitchesTable.userId, userId))
       .orderBy(desc(pitchesTable.createdAt))
 
+    // Add organisationName to each pitch for UI consistency
+    const pitchesWithOrg = pitches.map(pitch => ({
+      ...pitch,
+      organisationName: null
+    }));
+
     return {
       isSuccess: true,
       message: "Pitches retrieved successfully",
-      data: pitches
+      data: pitchesWithOrg as SelectPitch[]
     }
   } catch (error) {
     console.error("Error fetching all pitches for user:", error)

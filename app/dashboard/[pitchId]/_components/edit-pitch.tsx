@@ -63,6 +63,7 @@ const editPitchSchema = z.object({
   id: z.string().uuid(),
   userId: z.string(),
   roleName: z.string().min(2),
+  organisationName: z.string().optional().nullable(),
   roleLevel: z.string().nonempty(),
   pitchWordLimit: z.number().min(100).max(2000),
   roleDescription: z.string().optional().nullable(),
@@ -91,6 +92,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
       id: pitch.id,
       userId: pitch.userId,
       roleName: pitch.roleName,
+      organisationName: pitch.organisationName ?? "",
       roleLevel: pitch.roleLevel,
       pitchWordLimit: pitch.pitchWordLimit,
       roleDescription: pitch.roleDescription ?? "",
@@ -212,6 +214,21 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     <FormLabel>Role Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. Administrative Officer" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Organisation Name */}
+              <FormField
+                control={methods.control}
+                name="organisationName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organisation Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Department of Finance" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

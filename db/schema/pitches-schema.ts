@@ -8,6 +8,7 @@
  * - id: Unique UUID primary key
  * - userId: Foreign key referencing "profilesTable.userId" (cascades on delete)
  * - roleName: APS role name (text)
+ * - organisationName: Name of the organization/company (text)
  * - roleLevel: APS role level (text; e.g. "Junior", "Mid-level", "Senior", etc.)
  * - pitchWordLimit: The user's chosen word limit for the pitch (integer)
  * - roleDescription: Optional text describing the job or role
@@ -73,6 +74,12 @@ export const pitchesTable = pgTable("pitches", {
    * Name of the APS role being applied for (free-text).
    */
   roleName: text("role_name").notNull(),
+
+  /**
+   * @description
+   * Name of the organization/company the role is for (free-text).
+   */
+  organisationName: text("organisation_name"),
 
   /**
    * @description
