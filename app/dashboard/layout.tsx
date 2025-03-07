@@ -18,6 +18,7 @@
  * - Future steps will fill in the actual pitch routes in the main area.
  * - Currently, the sidebar is minimal and references placeholders.
  * - If you want to rely solely on the `middleware.ts` for route protection, you could remove the redirect logic here, but this double-check helps ensure security.
+ * - OPTIMIZATION: We perform a single auth check here and pass the userId to children components to avoid redundant auth checks.
  */
 
 "use server"
@@ -58,7 +59,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <DashboardSidebar />
+      <DashboardSidebar userId={userId} />
 
       <main className="flex-1 p-6">{children}</main>
     </div>

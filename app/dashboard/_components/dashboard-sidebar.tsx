@@ -13,16 +13,24 @@
  *   no external dependencies.
  *
  * @notes
- * - It’s a server component for now; any future interactive or dynamic
+ * - It's a server component for now; any future interactive or dynamic
  *   behavior may require converting it to a client component if needed.
  * - The actual routes (/dashboard, /dashboard/new) will be implemented
  *   in later steps (5, 6, etc.).
+ * - OPTIMIZATION: Now accepts userId as a prop to avoid redundant auth checks.
  */
 
 "use server"
 
 import Link from "next/link"
-import { auth } from "@clerk/nextjs/server"
+
+/**
+ * @interface DashboardSidebarProps
+ * Defines the props for the DashboardSidebar component.
+ */
+interface DashboardSidebarProps {
+  userId: string
+}
 
 /**
  * @function DashboardSidebar
@@ -31,10 +39,7 @@ import { auth } from "@clerk/nextjs/server"
  * - We'll rely on Clerk for user info if we need to conditionally display items.
  * - For now, we just show a static list of links for pitch management.
  */
-export default async function DashboardSidebar() {
-  // Example: If we needed user info
-  const { userId } = await auth()
-
+export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
   // We won't do anything special yet, but you could check user membership here
   // or fetch user data to display in the sidebar.
 

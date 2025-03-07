@@ -15,6 +15,7 @@ import {
 import { motion } from "framer-motion"
 import { Menu, Receipt, X } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const navLinks = [
@@ -29,10 +30,16 @@ const signedInLinks = [{ href: "/dashboard", label: "Dashboard" }]
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const router = useRouter()
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
+
+  // Prefetch the dashboard route when component mounts
+  useEffect(() => {
+    router.prefetch('/dashboard')
+  }, [router])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,6 +94,7 @@ export default function Header() {
                 key={link.href}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onMouseEnter={() => router.prefetch(link.href)}
               >
                 <Link
                   href={link.href}
@@ -180,6 +188,7 @@ export default function Header() {
                     href={link.href}
                     className="block hover:underline"
                     onClick={toggleMenu}
+                    onMouseEnter={() => router.prefetch(link.href)}
                   >
                     {link.label}
                   </Link>

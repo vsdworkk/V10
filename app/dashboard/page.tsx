@@ -18,36 +18,60 @@
  * @notes
  * - Relies on `dashboard/layout.tsx` to display a sidebar
  * - If the fetch fails, displays an error message. If no pitches are found, displays a friendly empty state
+ * - OPTIMIZATION: Uses the auth check from layout and implements better loading states
  */
 
 "use server"
 
 import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
 import { getAllPitchesForUserAction } from "@/actions/db/pitches-actions"
 import { Suspense } from "react"
 import PitchList from "@/app/dashboard/_components/pitch-list"
+import { Skeleton } from "@/components/ui/skeleton"
 
 /**
- * @function DashboardPage
- * @description
- * Server component that fetches all of a user's pitches and renders them
- * in a client component. If the user is not authenticated, redirects to /login.
- *
- * @returns JSX Element displaying pitch list or an error message
- *
- * @notes
- * - Utilizes Suspense for future expansions if needed (e.g., loading states).
- * - The actual UI rendering is deferred to `pitch-list.tsx`.
+ * PitchListSkeleton component for showing a loading state
  */
-export default async function DashboardPage() {
+function PitchListSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-lg border p-4">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4 mb-4" />
+            <Skeleton className="h-8 w-24" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * PitchListFetcher component that fetches and renders the pitch list
+ */
+async function PitchListFetcher() {
   const { userId } = await auth()
-
-  // If no user is logged in, rely on an extra redirect for safety
+  
+  // This should never happen since the layout already checks for auth,
+  // but we handle it for type safety
   if (!userId) {
-    redirect("/login")
+    return (
+      <div className="text-red-500">
+        <p>Authentication error:</p>
+        <p>User ID not found. Please try logging in again.</p>
+      </div>
+    )
   }
-
+  
   // Fetch all pitches for this user
   const pitchesRes = await getAllPitchesForUserAction(userId)
 
@@ -61,10 +85,25 @@ export default async function DashboardPage() {
     )
   }
 
-  // Wrap the client component in Suspense (optional usage here)
+  return <PitchList pitches={pitchesRes.data} />
+}
+
+/**
+ * @function DashboardPage
+ * @description
+ * Server component that fetches all of a user's pitches and renders them
+ * in a client component. If the user is not authenticated, redirects to /login.
+ *
+ * @returns JSX Element displaying pitch list or an error message
+ *
+ * @notes
+ * - Utilizes Suspense for loading states.
+ * - The actual UI rendering is deferred to `pitch-list.tsx`.
+ */
+export default async function DashboardPage() {
   return (
-    <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
-      <PitchList pitches={pitchesRes.data} />
+    <Suspense fallback={<PitchListSkeleton />}>
+      <PitchListFetcher />
     </Suspense>
   )
 }

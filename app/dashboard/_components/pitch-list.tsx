@@ -8,10 +8,12 @@
  * - Displays pitches in a responsive card grid
  * - Button for creating a new pitch (`/dashboard/new`)
  * - Button/link for editing an existing pitch (`/dashboard/[pitchId]`)
+ * - Uses client-side caching for better performance on subsequent loads
  *
  * @dependencies
  * - Next.js Link for navigation
  * - Shadcn UI components (Card, Button) for consistent design
+ * - useCachedData hook for data caching
  *
  * @notes
  * - If no pitches are found, displays an empty state message
@@ -24,7 +26,8 @@ import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
+import { useCachedData } from "@/lib/hooks/use-cached-data"
 
 /**
  * @interface PitchListProps
@@ -45,17 +48,35 @@ interface PitchListProps {
  *
  * @notes
  * - If pitches is empty, shows a friendly "no pitches found" message.
+ * - Uses client-side caching for better performance on subsequent loads.
  */
 export default function PitchList({ pitches }: PitchListProps) {
+  // Use our cached data hook to store the pitches in client-side cache
+  const { data: cachedPitches, refetch } = useCachedData<SelectPitch[]>(
+    'user-pitches',
+    async () => pitches,
+    { enabled: false } // Don't fetch on mount, we already have the data
+  )
+
+  // Update cache when props change
+  useEffect(() => {
+    if (pitches) {
+      refetch()
+    }
+  }, [pitches, refetch])
+
+  // Use cached data if available, otherwise use props
+  const pitchesToDisplay = cachedPitches || pitches
+
   // Optional: sorting or filtering logic can happen here
   const sortedPitches = useMemo(() => {
     // Example: sort by updatedAt descending
-    return pitches.slice().sort((a, b) => {
+    return pitchesToDisplay.slice().sort((a, b) => {
       const dateA = new Date(a.updatedAt).getTime()
       const dateB = new Date(b.updatedAt).getTime()
       return dateB - dateA
     })
-  }, [pitches])
+  }, [pitchesToDisplay])
 
   return (
     <div className="space-y-4">
