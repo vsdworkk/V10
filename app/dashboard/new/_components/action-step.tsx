@@ -60,6 +60,10 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
   ])
   const [openStep, setOpenStep] = useState<string | undefined>(steps[0]?.id)
   
+  // Maximum number of steps allowed
+  const MAX_STEPS = 5;
+  const hasReachedMaxSteps = steps.length >= MAX_STEPS;
+  
   // Create a function to build the combined action string from all steps
   const buildActionString = (actionSteps: ActionStep[]) => {
     return actionSteps
@@ -105,6 +109,8 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
 
   // Handle adding a new step
   const handleAddStep = () => {
+    if (hasReachedMaxSteps) return;
+    
     const newStep: ActionStep = {
       id: uuidv4(),
       title: "",
@@ -129,36 +135,52 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold mb-4">Action Steps</h2>
-      <div className="text-sm text-muted-foreground mb-4">
-        Add sequential steps to document your actions clearly and concisely.
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">Action Steps</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          Document your actions in sequential steps. Add each step one by one, filling in the details and saving before moving to the next.
+        </p>
       </div>
       
-      <Accordion
-        type="single"
-        collapsible
-        value={openStep}
-        onValueChange={handleValueChange}
-        className="space-y-4"
-      >
-        {steps.map((step) => (
-          <StepItem
-            key={step.id}
-            step={step}
-            onSave={handleSaveStep}
-          />
-        ))}
-      </Accordion>
+      <div className="bg-muted/40 p-4 rounded-lg">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm font-medium">Steps</span>
+          <span className="text-xs text-muted-foreground">
+            {steps.length} of {MAX_STEPS} steps used
+          </span>
+        </div>
+        
+        <Accordion
+          type="single"
+          collapsible
+          value={openStep}
+          onValueChange={handleValueChange}
+          className="space-y-3"
+        >
+          {steps.map((step) => (
+            <StepItem
+              key={step.id}
+              step={step}
+              onSave={handleSaveStep}
+            />
+          ))}
+        </Accordion>
+        
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleAddStep}
+          className="w-full mt-4"
+          disabled={hasReachedMaxSteps}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {hasReachedMaxSteps ? "Maximum Steps Reached" : "Add Step"}
+        </Button>
+      </div>
       
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={handleAddStep}
-        className="w-full mt-4"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Step
-      </Button>
+      <div className="text-xs text-muted-foreground italic">
+        Note: Only one step can be edited at a time. Save each step before proceeding to the next.
+      </div>
     </div>
   )
 }
@@ -183,13 +205,10 @@ function StepItem({ step, onSave }: StepItemProps) {
         "px-4 py-3 hover:no-underline", 
         isComplete ? "text-green-600" : ""
       )}>
-        <div className="flex items-center text-left">
-          <div className="flex-1">
-            {isComplete && title ? title : `Step ${step.position}`}
+        <div className="flex items-center text-left w-full">
+          <div className="flex-1 font-medium">
+            Step {step.position} {isComplete && <Check className="inline h-4 w-4 text-green-600 ml-1" />}
           </div>
-          {isComplete && (
-            <Check className="h-4 w-4 text-green-600 ml-2 mr-4" />
-          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="p-4 pt-2">
