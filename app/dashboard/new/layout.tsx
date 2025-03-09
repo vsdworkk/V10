@@ -22,6 +22,7 @@
 
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
+import Link from "next/link"
 
 /**
  * @interface PitchWizardLayoutProps
@@ -67,7 +68,7 @@ export default async function PitchWizardLayout({
       <div className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-5xl mx-auto py-4 px-4 sm:px-6">
           <div className="flex items-center">
-            <a 
+            <Link 
               href="/dashboard" 
               className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
@@ -86,7 +87,7 @@ export default async function PitchWizardLayout({
                 <path d="M19 12H5"/>
               </svg>
               Back to Dashboard
-            </a>
+            </Link>
           </div>
         </div>
       </div>
