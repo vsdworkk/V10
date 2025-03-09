@@ -92,7 +92,7 @@ export default function RoleStep() {
           <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
             <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-primary/80" />
-              <h3 className="font-medium">Role Details</h3>
+              <h3 className="font-medium">Role Name</h3>
             </div>
             <CardContent className="p-4 pt-5">
               <FormField
@@ -100,7 +100,6 @@ export default function RoleStep() {
                 name="roleName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role Name</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -124,7 +123,7 @@ export default function RoleStep() {
           <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
             <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary/80" />
-              <h3 className="font-medium">Organization</h3>
+              <h3 className="font-medium">Organisation Name</h3>
             </div>
             <CardContent className="p-4 pt-5">
               <FormField
@@ -132,7 +131,6 @@ export default function RoleStep() {
                 name="organisationName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Organisation Name</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -159,7 +157,7 @@ export default function RoleStep() {
           <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
             <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
               <Scale className="h-5 w-5 text-primary/80" />
-              <h3 className="font-medium">Classification</h3>
+              <h3 className="font-medium">Role Level</h3>
             </div>
             <CardContent className="p-4 pt-5">
               <FormField
@@ -167,7 +165,6 @@ export default function RoleStep() {
                 name="roleLevel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role Level</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -204,7 +201,7 @@ export default function RoleStep() {
           <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
             <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary/80" />
-              <h3 className="font-medium">Word Limit</h3>
+              <h3 className="font-medium">Pitch Word Limit</h3>
             </div>
             <CardContent className="p-4 pt-5">
               <FormField
@@ -212,7 +209,6 @@ export default function RoleStep() {
                 name="pitchWordLimit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pitch Word Limit</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={(val) => {
@@ -251,7 +247,7 @@ export default function RoleStep() {
         <Card className="overflow-hidden border-muted/60 hover:border-primary/60 transition-colors">
           <div className="bg-muted/30 p-3 border-b flex items-center gap-2">
             <Info className="h-5 w-5 text-primary/80" />
-            <h3 className="font-medium">Role Information</h3>
+            <h3 className="font-medium">Role Description</h3>
           </div>
           <CardContent className="p-4 pt-5">
             <FormField
