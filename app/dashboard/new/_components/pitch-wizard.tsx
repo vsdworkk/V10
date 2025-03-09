@@ -287,7 +287,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
     try {
       const formData = methods.getValues()
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/finalPitch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -311,7 +311,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       }
 
       const data = await res.json()
-      methods.setValue("pitchContent", data.pitch)
+      
+      if (!data.isSuccess) {
+        throw new Error(data.message || "Failed to generate pitch")
+      }
+      
+      methods.setValue("pitchContent", data.data)
     } catch (error: any) {
       setFinalPitchError(error.message || "Failed to generate pitch")
       console.error("Error generating pitch:", error)
