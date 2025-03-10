@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import { debounce } from "lodash"
 
 // Step components
 import RoleStep from "./role-step"
@@ -57,6 +58,7 @@ import { cn } from "@/lib/utils"
 
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import { useStepContext } from "./progress-bar-wrapper"
+import { autoSavePitchAction } from "@/actions/db/pitches-actions"
 
 /**
  * STAR sub-schema for a single example:
@@ -159,6 +161,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
 
   // Helper function to convert numeric pitch word limit to string format
   const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
@@ -352,7 +357,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   /**
    * @function autoUploadResume
    * Automatically uploads the resume when moving from Step 2 -> Step 3.
-   * This is called in the goNext function.
+   * This is called in the handleNext function.
    */
   const autoUploadResume = async () => {
     const selectedFile = methods.getValues("selectedFile")
@@ -444,23 +449,126 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   };
 
   /**
-   * @function goNext
-   * Advances to the next step in the wizard.
-   * Handles special cases:
-   * - Uploading resume when leaving Step 2
-   * - Generating final pitch after last STAR step
-   * - Skipping starExample2 steps if pitchWordLimit < 650
+   * @function autoSavePitch
+   * @description
+   * Automatically saves the current state of the pitch wizard form.
+   * Called when progressing between steps or when form data changes significantly.
    */
-  const goNext = useCallback(async () => {
-    // Only validate the fields for the current step
-    let isValid = false;
+  const autoSavePitch = useCallback(async () => {
+    const data = methods.getValues()
+    const numeric = numericLimit()
+    
+    // Don't save if the form is invalid - this prevents saving incomplete data
+    if (!data.roleName || !data.roleLevel) {
+      return
+    }
+
+    setIsSaving(true)
+    
+    try {
+      // Convert the form data to the format expected by the API
+      const payload = {
+        userId,
+        roleName: data.roleName,
+        organisationName: data.organisationName || null,
+        roleLevel: data.roleLevel,
+        pitchWordLimit: numeric,
+        roleDescription: data.roleDescription || "",
+        yearsExperience: data.yearsExperience || "",
+        relevantExperience: data.relevantExperience || "",
+        resumePath: data.resumePath || null,
+        starExample1: data.starExample1 || null,
+        starExample2: data.starExample2 || null,
+        albertGuidance: data.albertGuidance || "",
+        pitchContent: data.pitchContent || "",
+        status: "draft" as const
+      }
+
+      const result = await autoSavePitchAction(pitchId, payload, userId)
+      
+      if (result.isSuccess) {
+        // If this is a new pitch, store the new ID
+        if (!pitchId && result.data?.id) {
+          setPitchId(result.data.id)
+        }
+        
+        setLastSaved(new Date())
+      }
+    } catch (error) {
+      console.error("Error auto-saving pitch:", error)
+      // Don't show a toast for autosave failures to avoid disrupting the user
+    } finally {
+      // Hide the saving indicator after a short delay
+      setTimeout(() => {
+        setIsSaving(false)
+      }, 1000)
+    }
+  }, [methods, userId, pitchId, numericLimit])
+
+  // Auto-save when moving between steps
+  const goToStep = useCallback(async (step: number) => {
+    // Auto-save before changing steps (if we're not going to the first step)
+    if (currentStepLocal > 1) {
+      await autoSavePitch()
+    }
+    
+    setCurrentStepLocal(step)
+    setCurrentStep(step)
+    window.scrollTo(0, 0)
+  }, [setCurrentStep, currentStepLocal, autoSavePitch])
+
+  // Auto-save every 1 minute if the form has changed
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (methods.formState.isDirty) {
+        autoSavePitch()
+      }
+    }, 60000) // 1 minute
+    
+    return () => clearInterval(timer)
+  }, [methods.formState.isDirty, autoSavePitch])
+
+  // Create a debounced version of autoSavePitch
+  const debouncedAutoSave = useCallback(
+    debounce(() => {
+      autoSavePitch()
+    }, 2000), // 2 second delay
+    [autoSavePitch]
+  )
+
+  // Watch for changes to form values and trigger autosave
+  useEffect(() => {
+    const subscription = methods.watch((value, { name, type }) => {
+      // Only trigger autosave for significant changes
+      if (type === 'change' && name) {
+        debouncedAutoSave()
+      }
+    })
+    
+    // Cleanup subscription on unmount
+    return () => subscription.unsubscribe()
+  }, [methods, debouncedAutoSave])
+
+  /**
+   * @function handleNext
+   * Validates the current step and moves to the next step if valid.
+   */
+  const handleNext = useCallback(async () => {
+    // Get the current step for validation
+    const currentStep = currentStepLocal
+    
+    // Validate appropriate fields based on the current step
+    let isValid = false
     
     if (currentStep === 1) {
-      // Validate only Role step fields
-      isValid = await methods.trigger(["roleName", "roleLevel", "pitchWordLimit"]);
+      // Validate only RoleStep fields
+      isValid = await methods.trigger(["roleName", "roleLevel", "pitchWordLimit"])
     } else if (currentStep === 2) {
-      // Validate only Experience step fields
-      isValid = await methods.trigger(["yearsExperience", "relevantExperience"]);
+      // Validate only ExperienceStep fields
+      isValid = await methods.trigger(["yearsExperience", "relevantExperience"])
+    } else if (currentStep === 3) {
+      // No validation needed for GuidanceStep
+      isValid = true
     } else if (currentStep === 4 || currentStep === 8) {
       // Validate only Situation step fields
       const exampleKey = currentStep === 4 ? "starExample1.situation" : "starExample2.situation";
@@ -500,29 +608,31 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     // if the word limit is < 650
     if (currentStep === 7 && numericLimit() < 650) {
       await generateFinalPitch()
-      setCurrentStepLocal(12)
+      goToStep(12) // Skip to review
       return
     }
 
     // Special case: Generate final pitch after last STAR step for Example 2
     if (currentStep === 11) {
       await generateFinalPitch()
-      setCurrentStepLocal(12)
+      goToStep(12) // Go to review
       return
     }
 
     // Otherwise, just increment
-    setCurrentStepLocal(s => Math.min(s + 1, totalSteps))
+    const nextStep = Math.min(currentStep + 1, totalSteps)
+    goToStep(nextStep)
     markStepCompleted(currentStep)
-  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps])
+  }, [currentStepLocal, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps, goToStep, markStepCompleted])
 
   /**
    * @function goBack
    * Goes back to the previous step in the wizard.
    */
   const goBack = useCallback(() => {
-    setCurrentStepLocal(s => Math.max(s - 1, 1))
-  }, [])
+    const prevStep = Math.max(currentStepLocal - 1, 1)
+    goToStep(prevStep)
+  }, [currentStepLocal, goToStep])
 
   /**
    * @function saveAndClose
@@ -710,12 +820,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         {/* Current step title */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-medium mb-6 pb-2 border-b">
-            {stepTitles[currentStep - 1]}
+            {stepTitles[currentStepLocal - 1]}
           </h3>
 
           {/* Step content with animation */}
           <motion.div
-            key={currentStep}
+            key={currentStepLocal}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -726,18 +836,29 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
           {/* Wizard navigation buttons at the bottom */}
           <div className="flex justify-between pt-8 mt-6 border-t">
-            {currentStep > 1 ? (
-              <Button 
-                variant="outline" 
-                onClick={goBack}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            ) : (
-              <div></div> // Empty div to maintain flex spacing
-            )}
+            <div className="flex items-center">
+              {currentStepLocal > 1 ? (
+                <Button
+                  variant="outline"
+                  onClick={goBack}
+                  className="flex items-center gap-2"
+                  disabled={isGeneratingFinalPitch}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+              ) : (
+                <div></div> // Empty div to maintain flex spacing
+              )}
+              
+              {/* Autosave indicator */}
+              <div className="ml-4 text-sm text-muted-foreground">
+                {isSaving && <span>Saving...</span>}
+                {lastSaved && !isSaving && (
+                  <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
+                )}
+              </div>
+            </div>
             
             <div className="flex space-x-3 ml-auto">
               <Button 
@@ -749,20 +870,31 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 Save and Close
               </Button>
               
-              {currentStep < totalSteps ? (
+              {currentStepLocal < totalSteps ? (
                 <Button 
-                  onClick={goNext}
+                  onClick={handleNext}
                   className="flex items-center gap-2"
+                  disabled={isGeneratingFinalPitch}
                 >
-                  Next
-                  <ArrowRight className="h-4 w-4" />
+                  {isGeneratingFinalPitch ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               ) : (
-                <Button 
-                  type="button" 
+                <Button
                   onClick={onSubmit}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                  disabled={isGeneratingFinalPitch}
                 >
+                  <CheckCircle2 className="h-4 w-4" />
                   Submit Pitch
                 </Button>
               )}

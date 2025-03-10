@@ -256,3 +256,90 @@ export async function deletePitchAction(
     }
   }
 }
+
+/**
+ * @function autoSavePitchAction
+ * @description
+ * Automatically saves the pitch progress as a draft. Designed for frequent autosaving
+ * without requiring user confirmation.
+ *
+ * @param id - string: The pitch ID to update (if exists)
+ * @param pitchData - Partial<InsertPitch>: The pitch data to save
+ * @param userId - string: The user ID to which the pitch must belong
+ * @returns Promise<ActionState<SelectPitch>> - Success with the updated pitch, or a new pitch if id is not provided
+ */
+export async function autoSavePitchAction(
+  id: string | undefined,
+  pitchData: Partial<InsertPitch>,
+  userId: string
+): Promise<ActionState<SelectPitch>> {
+  try {
+    // Ensure the status is set to draft for autosaves
+    const dataToSave = {
+      ...pitchData,
+      userId,
+      status: "draft" as const // Use 'as const' to correctly type the status enum value
+    };
+
+    let result;
+
+    // If we have an ID, update the existing pitch
+    if (id) {
+      // Check if the pitch exists and belongs to the user
+      const [existingPitch] = await db
+        .select()
+        .from(pitchesTable)
+        .where(
+          and(
+            eq(pitchesTable.id, id),
+            eq(pitchesTable.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingPitch) {
+        return {
+          isSuccess: false,
+          message: "Pitch not found or does not belong to this user"
+        };
+      }
+
+      // Update the existing pitch
+      const [updatedPitch] = await db
+        .update(pitchesTable)
+        .set(dataToSave)
+        .where(
+          and(
+            eq(pitchesTable.id, id),
+            eq(pitchesTable.userId, userId)
+          )
+        )
+        .returning();
+
+      return {
+        isSuccess: true,
+        message: "Pitch progress saved",
+        data: updatedPitch
+      };
+    } 
+    // Otherwise, create a new pitch
+    else {
+      const [newPitch] = await db
+        .insert(pitchesTable)
+        .values(dataToSave as InsertPitch)
+        .returning();
+
+      return {
+        isSuccess: true,
+        message: "New pitch created",
+        data: newPitch
+      };
+    }
+  } catch (error) {
+    console.error("Error autosaving pitch:", error);
+    return {
+      isSuccess: false,
+      message: "Failed to save pitch progress"
+    };
+  }
+}
