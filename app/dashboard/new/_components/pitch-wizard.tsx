@@ -61,12 +61,39 @@ import { useStepContext } from "./progress-bar-wrapper"
 /**
  * STAR sub-schema for a single example:
  * Each field must be at least 5 characters (enforced in sub-steps).
+ * Matches the StarSchema interface in the database schema.
  */
 const starSchema = z.object({
+  // Required main STAR fields
   situation: z.string().min(5, "Situation must be at least 5 characters."),
   task: z.string().min(5, "Task must be at least 5 characters."),
   action: z.string().min(5, "Action must be at least 5 characters."),
-  result: z.string().min(5, "Result must be at least 5 characters.")
+  result: z.string().min(5, "Result must be at least 5 characters."),
+  
+  // Optional detailed sub-fields for each STAR component
+  situationDetails: z.object({
+    context: z.string().optional(),
+    challenge: z.string().optional(),
+    background: z.string().optional()
+  }).optional(),
+  
+  taskDetails: z.object({
+    objective: z.string().optional(),
+    requirements: z.string().optional(),
+    constraints: z.string().optional()
+  }).optional(),
+  
+  actionDetails: z.object({
+    steps: z.array(z.string()).optional(),
+    skills: z.array(z.string()).optional(),
+    approach: z.string().optional()
+  }).optional(),
+  
+  resultDetails: z.object({
+    metrics: z.string().optional(),
+    impact: z.string().optional(),
+    learnings: z.string().optional()
+  }).optional()
 })
 
 /**
@@ -161,7 +188,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           yearsExperience: pitchData.yearsExperience,
           relevantExperience: pitchData.relevantExperience,
           resumePath: pitchData.resumePath || "",
-          albertGuidance: pitchData.pitchContent || "", // Using pitchContent as albertGuidance
+          albertGuidance: pitchData.albertGuidance || "",
           starExample1: pitchData.starExample1 as any || {
             situation: "",
             task: "",
@@ -199,10 +226,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // Helper: watch pitchWordLimit, convert to a numeric so we can do <650 checks
   const watchWordLimit = methods.watch("pitchWordLimit")
   
-  // A function to parse "<500" -> 500, "<650" -> 650, etc.
+  // Convert the string format to a numeric value for comparisons
   const numericLimit = () => {
-    const limit = watchWordLimit || "<500"
-    switch (limit) {
+    switch (watchWordLimit) {
       case "<500":
         return 500
       case "<650":
@@ -227,6 +253,91 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     setCurrentStep(currentStep)
     setTotalSteps(totalSteps)
   }, [currentStep, totalSteps, setCurrentStep, setTotalSteps])
+  
+  // Determine the initial step based on the existing pitch data
+  useEffect(() => {
+    if (pitchData) {
+      // Initialize completed steps based on filled data
+      const newCompletedSteps: number[] = []
+      
+      // Step 1: Role Information
+      if (pitchData.roleName && pitchData.roleLevel) {
+        newCompletedSteps.push(1)
+      }
+      
+      // Step 2: Experience
+      if (pitchData.yearsExperience && pitchData.relevantExperience) {
+        newCompletedSteps.push(2)
+      }
+      
+      // Step 3: Guidance
+      if (pitchData.albertGuidance) {
+        newCompletedSteps.push(3)
+      }
+      
+      // STAR Example 1 steps
+      if (pitchData.starExample1) {
+        const star1 = pitchData.starExample1 as any
+        if (star1.situation) newCompletedSteps.push(4)
+        if (star1.task) newCompletedSteps.push(5)
+        if (star1.action) newCompletedSteps.push(6)
+        if (star1.result) newCompletedSteps.push(7)
+      }
+      
+      // STAR Example 2 steps (if needed)
+      if (pitchData.pitchWordLimit >= 650 && pitchData.starExample2) {
+        const star2 = pitchData.starExample2 as any
+        if (star2.situation) newCompletedSteps.push(8)
+        if (star2.task) newCompletedSteps.push(9)
+        if (star2.action) newCompletedSteps.push(10)
+        if (star2.result) newCompletedSteps.push(11)
+      }
+      
+      // Final step
+      if (pitchData.pitchContent) {
+        newCompletedSteps.push(12)
+      }
+      
+      setCompletedSteps(newCompletedSteps)
+      
+      // Determine the appropriate starting step
+      // If they have completed all steps, start at the review step
+      if (pitchData.pitchContent) {
+        setCurrentStepLocal(12)
+      } 
+      // If they have completed STAR Example 1, but need Example 2
+      else if (pitchData.pitchWordLimit >= 650 && 
+               pitchData.starExample1 && 
+               (pitchData.starExample1 as any).result && 
+               (!pitchData.starExample2 || !(pitchData.starExample2 as any).situation)) {
+        setCurrentStepLocal(8)
+      }
+      // If they have started but not completed STAR Example 1
+      else if (pitchData.starExample1) {
+        const star1 = pitchData.starExample1 as any
+        if (!star1.situation) setCurrentStepLocal(4)
+        else if (!star1.task) setCurrentStepLocal(5)
+        else if (!star1.action) setCurrentStepLocal(6)
+        else if (!star1.result) setCurrentStepLocal(7)
+      }
+      // If they have guidance but haven't started STAR examples
+      else if (pitchData.albertGuidance) {
+        setCurrentStepLocal(4)
+      }
+      // If they have experience info but no guidance
+      else if (pitchData.yearsExperience && pitchData.relevantExperience) {
+        setCurrentStepLocal(3)
+      }
+      // If they have role info but no experience
+      else if (pitchData.roleName && pitchData.roleLevel) {
+        setCurrentStepLocal(2)
+      }
+      // Otherwise start at the beginning
+      else {
+        setCurrentStepLocal(1)
+      }
+    }
+  }, [pitchData])
 
   // If user chooses a limit < 650, we remove starExample2 from form data
   useEffect(() => {
@@ -422,7 +533,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const numeric = numericLimit()
 
     // Convert the form data to the format expected by the API
-    const payload = {
+    const payload: any = {
       userId,
       roleName: data.roleName,
       organisationName: data.organisationName || null,
@@ -434,8 +545,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       resumePath: data.resumePath || null,
       starExample1: data.starExample1,
       starExample2: data.starExample2,
+      albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent || "",
       status: "draft"
+    }
+
+    // If we're editing an existing pitch, include the ID
+    if (pitchData?.id) {
+      payload.id = pitchData.id
     }
 
     try {
@@ -464,7 +581,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         variant: "destructive"
       })
     }
-  }, [methods, userId, router, toast, numericLimit])
+  }, [methods, userId, router, toast, numericLimit, pitchData])
 
   /**
    * @function onSubmit
@@ -476,7 +593,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const pitchStatus = "final"
 
     // Convert the form data to the format expected by the API
-    const payload = {
+    const payload: any = {
       userId,
       roleName: data.roleName,
       organisationName: data.organisationName || null,
@@ -488,8 +605,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       resumePath: data.resumePath || null,
       starExample1: data.starExample1,
       starExample2: data.starExample2,
+      albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent || "",
       status: pitchStatus
+    }
+
+    // If we're editing an existing pitch, include the ID
+    if (pitchData?.id) {
+      payload.id = pitchData.id
     }
 
     try {
@@ -518,7 +641,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         variant: "destructive"
       })
     }
-  }, [methods, userId, router, toast, numericLimit])
+  }, [methods, userId, router, toast, numericLimit, pitchData])
 
   /**
    * @function renderStep

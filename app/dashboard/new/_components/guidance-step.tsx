@@ -1,15 +1,13 @@
 /**
 @description
 Client sub-component for wizard Step 3: Automatic Albert Guidance.
-Upon loading, this component automatically calls the AI endpoint "/api/albertGuidance"
-to get role-specific suggestions that the user can refer to before filling out the STAR
-examples. The guidance is displayed in a large Card component. If there is any error,
+Modified to only generate guidance once and store it in the database.
+The guidance is displayed in a large Card component. If there is any error,
 it is shown to the user.
 @notes
-- The user now has a "Retry" button if the initial fetch fails
-- We store the returned guidance in the form's "albertGuidance" field so it persists if
-  the user navigates away and returns to this step.
-- The component now tracks changes to input fields using a hash and refreshes guidance when needed
+- The user can manually refresh the guidance using the "Refresh" button
+- We store the returned guidance in both the form's "albertGuidance" field and the database
+- We don't automatically regenerate guidance if it's already available
 */
 
 "use client"
@@ -21,10 +19,12 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
+import { useParams } from "next/navigation"
 
 export default function GuidanceStep() {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
+  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
+  const params = useParams()
 
   // We watch these fields to build the request for guidance:
   const roleName = watch("roleName")
@@ -42,12 +42,45 @@ export default function GuidanceStep() {
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState<number>(0)
   
-  // Use a key string to detect changes
+  // Use a key string to detect changes - only used for manual refresh
   const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}`
   const lastFetchKeyRef = useRef<string>("")
   
-  // Flag to force re-fetching when the component mounts in a new step navigation
+  // Flag to track if we've initialized this component
   const [hasInitialized, setHasInitialized] = useState(false)
+
+  // Function to save the guidance to the database
+  const saveGuidanceToDatabase = async (guidance: string) => {
+    try {
+      const pitchId = params?.pitchId
+      if (!pitchId) {
+        // For new pitches (no ID yet), we'll store the guidance in the form
+        // and it will be saved when the pitch is first created
+        console.log("No pitch ID available yet. Guidance will be saved with the new pitch.")
+        return
+      }
+  
+      // For existing pitches, update the albertGuidance field
+      const formData = getValues()
+      const payload = {
+        id: pitchId as string,
+        userId: formData.userId,
+        albertGuidance: guidance
+      }
+  
+      const response = await fetch(`/api/pitches/${pitchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      
+      if (!response.ok) {
+        console.error("Failed to save guidance to database:", await response.text())
+      }
+    } catch (error) {
+      console.error("Error saving guidance to database:", error)
+    }
+  }
 
   const fetchGuidance = useCallback(async () => {
     if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
@@ -94,6 +127,10 @@ export default function GuidanceStep() {
 
       // Store the returned guidance in form state
       setValue("albertGuidance", data.data, { shouldDirty: true })
+      
+      // Save to database
+      await saveGuidanceToDatabase(data.data)
+      
       setRetryCount(0) // Reset retry count on success
       
       // Update the last fetch key
@@ -112,45 +149,19 @@ export default function GuidanceStep() {
     } finally {
       setLoading(false)
     }
-  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, toast, formDataKey])
+  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, formDataKey, toast])
 
-  // Run when the component mounts to set up initialization
+  // Run once when the component mounts
   useEffect(() => {
-    setHasInitialized(true)
-    // Force clear guidance if we have never initialized before
-    // This ensures that when navigating to the step, we always fetch fresh guidance
-    if (!hasInitialized && !loading) {
-      setValue("albertGuidance", "", { shouldDirty: false })
+    if (!hasInitialized) {
+      setHasInitialized(true)
+      
+      // Only fetch guidance if we don't already have it
+      if (!albertGuidance && !loading) {
+        void fetchGuidance()
+      }
     }
-  }, [])
-
-  // Check data and fetch guidance when needed
-  useEffect(() => {
-    // Don't run on first render
-    if (!hasInitialized) return
-
-    const dataChanged = lastFetchKeyRef.current !== formDataKey
-    const needsInitialFetch = !albertGuidance && !loading
-    const needsRefresh = dataChanged && !loading
-
-    if ((needsInitialFetch || needsRefresh) && retryCount === 0) {
-      console.log("Fetching guidance because:", { 
-        needsInitialFetch, 
-        needsRefresh, 
-        dataChanged,
-        lastKey: lastFetchKeyRef.current,
-        currentKey: formDataKey
-      })
-      void fetchGuidance()
-    }
-  }, [
-    albertGuidance, 
-    formDataKey, 
-    fetchGuidance, 
-    loading, 
-    retryCount, 
-    hasInitialized
-  ])
+  }, [hasInitialized, albertGuidance, loading, fetchGuidance])
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1)

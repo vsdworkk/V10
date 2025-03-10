@@ -1,21 +1,27 @@
 /**
 @description
 Client sub-component for the "Action" portion of a STAR example.
-Allows users to add multiple sequential action steps with only one expanded at a time.
-Each step can be saved and collapsed individually.
+Updated to use the new StarSchema structure with detailed sub-fields.
+This component uses an accordion to allow the user to add multiple steps
+and describe each one in detail. The steps are stored both in the main action field
+and in the actionDetails.steps array.
 
 Key Features:
 - React Hook Form context
-- Sequential steps (Step 1, Step 2, etc.)
-- Accordion UI with single-expansion behavior
-- Individual save button per step
+- Multiple steps with add/edit functionality
+- Stores data in both the main action field and in the actionDetails sub-object
+- Example ID (starExample1 or starExample2) is determined by props
+@notes
+The action step is more complex than other steps as it allows for multiple
+nested items rather than just text fields.
 */
 
 "use client"
 
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
-import { useState, useRef } from "react"
+import { useState, useEffect } from "react"
+import { v4 as uuidv4 } from "uuid"
 import {
   FormField,
   FormItem,
@@ -25,69 +31,153 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from "@/components/ui/accordion"
 import { Plus, Check } from "lucide-react"
-import { v4 as uuidv4 } from "uuid"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent
+} from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-
-interface ActionStep {
-  id: string;
-  title: string;
-  description: string;
-  position: number;
-  isCompleted: boolean;
-}
+import type { ActionStep } from "@/types/action-steps-types"
 
 interface ActionStepProps {
   exampleKey: "starExample1" | "starExample2"
 }
 
 export default function ActionStep({ exampleKey }: ActionStepProps) {
-  const { setValue, getValues } = useFormContext<PitchWizardFormData>()
-  const [steps, setSteps] = useState<ActionStep[]>([
-    {
-      id: uuidv4(),
-      title: "",
-      description: "",
-      position: 1,
-      isCompleted: false
+  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+  
+  // State for our accordion steps
+  const [steps, setSteps] = useState<ActionStep[]>([])
+  const [openStep, setOpenStep] = useState<string | undefined>(undefined)
+  
+  // Watch the current values from the form
+  const storedAction = watch(`${exampleKey}.action`)
+  const storedDetails = watch(`${exampleKey}.actionDetails`)
+  
+  // Maximum steps limit
+  const MAX_STEPS = 5
+  const hasReachedMaxSteps = steps.length >= MAX_STEPS
+  
+  // Initial setup to create a default step if none exists
+  useEffect(() => {
+    if (steps.length === 0) {
+      // If we have structured details with steps, convert them to our UI format
+      if (storedDetails?.steps?.length) {
+        const parsedSteps = storedDetails.steps.map((stepText, index) => {
+          const parts = stepText.split('\n');
+          let title = "";
+          let description = "";
+          
+          // Process the text to extract title and description
+          parts.forEach(part => {
+            if (part.startsWith("What: ")) {
+              title = part.replace("What: ", "").trim();
+            } else if (part.startsWith("How: ") || part.startsWith("Outcome: ")) {
+              description += part + "\n";
+            }
+          });
+          
+          return {
+            id: uuidv4(),
+            title,
+            description: description.trim(),
+            position: index + 1,
+            isCompleted: Boolean(title && description)
+          };
+        });
+        
+        if (parsedSteps.length > 0) {
+          setSteps(parsedSteps);
+          return;
+        }
+      }
+      // Otherwise, try to parse from the combined string (legacy support)
+      else if (storedAction) {
+        try {
+          const sections = storedAction.split('--');
+          if (sections.length > 1) {
+            const parsedSteps = sections.map((section, index) => {
+              const lines = section.trim().split('\n');
+              let title = "";
+              let description = "";
+              
+              lines.forEach(line => {
+                if (line.startsWith("Step ") && line.includes(":")) {
+                  title = line.split(":")[1].trim();
+                } else {
+                  description += line + "\n";
+                }
+              });
+              
+              return {
+                id: uuidv4(),
+                title,
+                description: description.trim(),
+                position: index + 1,
+                isCompleted: Boolean(title && description)
+              };
+            });
+            
+            if (parsedSteps.length > 0) {
+              setSteps(parsedSteps);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing action steps:", e);
+        }
+      }
+      
+      // If we couldn't parse existing data, create a default step
+      setSteps([
+        {
+          id: uuidv4(),
+          title: "",
+          description: "",
+          position: 1,
+          isCompleted: false
+        }
+      ]);
     }
-  ])
-  const [openStep, setOpenStep] = useState<string | undefined>(steps[0]?.id)
+  }, [steps.length, storedAction, storedDetails]);
   
-  // Maximum number of steps allowed
-  const MAX_STEPS = 5;
-  const hasReachedMaxSteps = steps.length >= MAX_STEPS;
+  // Function to build the final action string and update form values
+  const updateActionValue = (updatedSteps: ActionStep[]) => {
+    // Build the combined string for the main action field
+    let finalActionText = "";
+    const validSteps = updatedSteps.filter(step => step.title.trim() || step.description.trim());
+    
+    validSteps.forEach((step, index) => {
+      finalActionText += `Step ${step.position}: ${step.title.trim()}\n`;
+      if (step.description.trim()) {
+        finalActionText += `${step.description.trim()}`;
+      }
+      
+      // Add separator between steps
+      if (index < validSteps.length - 1) {
+        finalActionText += "\n--\n";
+      }
+    });
+
+    // Create an array of step details for the structured data
+    const stepDetails = validSteps.map(step => {
+      let stepText = `What: ${step.title.trim()}`;
+      if (step.description.trim()) {
+        stepText += `\n${step.description.trim()}`;
+      }
+      return stepText;
+    });
+    
+    // Store both the main action field and the detailed sub-fields
+    setValue(`${exampleKey}.action`, finalActionText, { shouldDirty: true });
+    setValue(`${exampleKey}.actionDetails`, {
+      steps: stepDetails,
+      approach: stepDetails.join("\n\n"), // Store a combined approach as well
+    }, { shouldDirty: true });
+  }
   
-  // Create a function to build the combined action string from all steps
-  const buildActionString = (actionSteps: ActionStep[]) => {
-    return actionSteps
-      .filter(step => step.isCompleted && (step.title || step.description))
-      .sort((a, b) => a.position - b.position)
-      .map(step => {
-        let stepText = `Step ${step.position}`;
-        if (step.title) {
-          stepText += `: ${step.title}`;
-        }
-        if (step.description) {
-          stepText += `\n${step.description}`;
-        }
-        return stepText;
-      })
-      .join("\n\n");
-  };
-
-  // When any step is saved, update the form data
-  const updateFormValue = (updatedSteps: ActionStep[]) => {
-    const actionString = buildActionString(updatedSteps);
-    setValue(`${exampleKey}.action`, actionString, { shouldDirty: true });
-  };
-
   // Handle saving a step
   const handleSaveStep = (stepId: string, title: string, description: string) => {
     const updatedSteps = steps.map(step => {
@@ -96,15 +186,17 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
           ...step,
           title,
           description,
-          isCompleted: true
+          isCompleted: Boolean(title.trim() && description.trim())
         };
       }
       return step;
     });
     
     setSteps(updatedSteps);
-    updateFormValue(updatedSteps);
-    setOpenStep(undefined); // Close the step after saving
+    updateActionValue(updatedSteps);
+    
+    // Close the accordion after saving
+    setOpenStep(undefined);
   };
 
   // Handle adding a new step
@@ -187,6 +279,21 @@ function StepItem({ step, onSave }: StepItemProps) {
   const [howDidYouDoIt, setHowDidYouDoIt] = useState(step.description);
   const [outcome, setOutcome] = useState("");
   const isComplete = step.isCompleted;
+  
+  // Parse existing description if it exists
+  useEffect(() => {
+    if (step.description) {
+      const parts = step.description.split('\n');
+      
+      parts.forEach(part => {
+        if (part.startsWith("How: ")) {
+          setHowDidYouDoIt(part.replace("How: ", "").trim());
+        } else if (part.startsWith("Outcome: ")) {
+          setOutcome(part.replace("Outcome: ", "").trim());
+        }
+      });
+    }
+  }, [step.description]);
   
   const handleSave = () => {
     // Combine the description from both fields

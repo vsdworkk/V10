@@ -1,16 +1,16 @@
 /**
 @description
 Client sub-component to capture the "Situation" portion of a STAR example.
+Updated to use the new StarSchema structure with detailed sub-fields.
 It prompts the user for three smaller pieces of data:
-1) Where and when
-2) Description of situation/challenge
-3) Why it mattered
-Each field is stored temporarily, and onBlur we concatenate them (with labels)
-and place the final string into starExampleX.situation in the wizard form state.
+1) Where and when (context)
+2) Description of situation/challenge (challenge)
+3) Why it mattered (background)
+Each field is stored in both the main situation field and in the situationDetails object.
 
 Key Features:
 - Uses React Hook Form context
-- Builds a single string from multiple smaller fields
+- Stores data in both the main situation field and in the situationDetails sub-object
 - Example ID (starExample1 or starExample2) is determined by props
 
 @dependencies
@@ -32,7 +32,6 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 interface SituationStepProps {
@@ -46,70 +45,97 @@ interface SituationStepProps {
 /**
  * @function SituationStep
  * Renders three text fields for the user to fill out:
- * 1) Where and when
- * 2) Description of situation/challenge
- * 3) Why it mattered
+ * 1) Where and when (context)
+ * 2) Description of situation/challenge (challenge)
+ * 3) Why it mattered (background)
  *
- * On blur, we combine them into a single labeled string, storing it at:
- *   starExampleX.situation
+ * Stores data in both the main situation field (for backward compatibility)
+ * and in the situationDetails sub-object (for structured data).
  */
 export default function SituationStep({ exampleKey }: SituationStepProps) {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
+  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
 
   // Local state for the smaller sub-fields
-  const [whereWhenValue, setWhereWhenValue] = useState("")
-  const [descriptionValue, setDescriptionValue] = useState("")
-  const [whyMatteredValue, setWhyMatteredValue] = useState("")
+  const [contextValue, setContextValue] = useState("")
+  const [challengeValue, setChallengeValue] = useState("")
+  const [backgroundValue, setBackgroundValue] = useState("")
 
-  // Watch the current combined situation from the form
-  // so that if we come back to this step, we can parse it out (optional).
-  // But for now, we are focusing on combining data from local sub-fields.
+  // Watch the current values from the form
   const storedSituation = watch(`${exampleKey}.situation`)
+  const storedDetails = watch(`${exampleKey}.situationDetails`)
 
   /**
    * A helper that builds the final single string with labels
    * e.g. "Where and when: x\nDescription: y\nWhy it mattered: z"
+   * This maintains compatibility with existing code
    */
   const buildSituationString = (
-    whereWhen: string,
-    description: string,
-    whyMattered: string
+    context: string,
+    challenge: string,
+    background: string
   ): string => {
     let result = ""
-    if (whereWhen.trim()) {
-      result += `Where and when: ${whereWhen.trim()}\n`
+    if (context.trim()) {
+      result += `Where and when: ${context.trim()}\n`
     }
-    if (description.trim()) {
-      result += `Description: ${description.trim()}\n`
+    if (challenge.trim()) {
+      result += `Description: ${challenge.trim()}\n`
     }
-    if (whyMattered.trim()) {
-      result += `Why it mattered: ${whyMattered.trim()}`
+    if (background.trim()) {
+      result += `Why it mattered: ${background.trim()}`
     }
     return result.trim()
   }
 
   /**
-   * Handler to update the form state whenever a user
-   * blurs (i.e., leaves) an input field.
+   * Handler to update the form state with both the combined string
+   * and the structured sub-fields
    */
   const handleBlur = () => {
+    // Create the combined string for backward compatibility
     const finalString = buildSituationString(
-      whereWhenValue,
-      descriptionValue,
-      whyMatteredValue
+      contextValue,
+      challengeValue,
+      backgroundValue
     )
-    // Store in form
+    
+    // Store both the main situation field and the detailed sub-fields
     setValue(`${exampleKey}.situation`, finalString, { shouldDirty: true })
+    setValue(`${exampleKey}.situationDetails`, {
+      context: contextValue,
+      challenge: challengeValue,
+      background: backgroundValue
+    }, { shouldDirty: true })
   }
 
-  // If you'd like to parse the existing form data back into local states
-  // you could do so in a useEffect, but it's optional. For now, we just start blank.
+  // Initialize local state from existing form data if available
+  useEffect(() => {
+    // If we have structured details, use those
+    if (storedDetails) {
+      setContextValue(storedDetails.context || "")
+      setChallengeValue(storedDetails.challenge || "")
+      setBackgroundValue(storedDetails.background || "")
+    } 
+    // Otherwise, try to parse from the combined string (legacy support)
+    else if (storedSituation) {
+      const lines = storedSituation.split('\n')
+      lines.forEach(line => {
+        if (line.startsWith('Where and when:')) {
+          setContextValue(line.replace('Where and when:', '').trim())
+        } else if (line.startsWith('Description:')) {
+          setChallengeValue(line.replace('Description:', '').trim())
+        } else if (line.startsWith('Why it mattered:')) {
+          setBackgroundValue(line.replace('Why it mattered:', '').trim())
+        }
+      })
+    }
+  }, [storedSituation, storedDetails, exampleKey])
 
   return (
     <div className="space-y-4">
-      {/* Where and when */}
+      {/* Context (Where and when) */}
       <FormField
-        name="dummy" // a placeholder to keep Shadcn form structure
+        name={`${exampleKey}.situationDetails.context`}
         render={() => (
           <FormItem>
             <FormLabel>Where and when did this experience occur?</FormLabel>
@@ -118,8 +144,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={whereWhenValue}
-                onChange={e => setWhereWhenValue(e.target.value)}
+                value={contextValue}
+                onChange={e => setContextValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -128,9 +154,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Description */}
+      {/* Challenge (Description) */}
       <FormField
-        name="dummy2"
+        name={`${exampleKey}.situationDetails.challenge`}
         render={() => (
           <FormItem>
             <FormLabel>Briefly describe the situation or challenge you faced.</FormLabel>
@@ -139,8 +165,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={descriptionValue}
-                onChange={e => setDescriptionValue(e.target.value)}
+                value={challengeValue}
+                onChange={e => setChallengeValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -149,9 +175,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Why it mattered */}
+      {/* Background (Why it mattered) */}
       <FormField
-        name="dummy3"
+        name={`${exampleKey}.situationDetails.background`}
         render={() => (
           <FormItem>
             <FormLabel>Why was this a problem or why did it matter?</FormLabel>
@@ -160,8 +186,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={whyMatteredValue}
-                onChange={e => setWhyMatteredValue(e.target.value)}
+                value={backgroundValue}
+                onChange={e => setBackgroundValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

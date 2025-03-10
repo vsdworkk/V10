@@ -3,6 +3,7 @@
  * @description
  * An API route for updating an existing pitch by ID. Expects a PATCH request.
  * The request body should contain updated pitch data. We enforce user ownership.
+ * This simplified version is primarily used for updating the albertGuidance field.
  *
  * Key features:
  * - Checks if user is authenticated
@@ -15,9 +16,9 @@
  * - updatePitchAction from "@/actions/db/pitches-actions"
  *
  * @notes
- * The route is accessible at /api/pitchWizard/[pitchId] for PATCH requests.
+ * The route is accessible at /api/pitches/[pitchId] for PATCH requests.
  * Example usage:
- *   fetch("/api/pitchWizard/<pitchId>", {
+ *   fetch("/api/pitches/<pitchId>", {
  *     method: "PATCH",
  *     body: JSON.stringify({...}),
  *   })
@@ -29,34 +30,20 @@ import { updatePitchAction } from "@/actions/db/pitches-actions"
 import { z } from "zod"
 
 /**
- * We'll define a subset of pitch fields we allow for updates.
- * For flexibility, we can allow all the same fields we used for creation.
+ * A minimal schema for updating the albertGuidance field.
  */
 const updatePitchSchema = z.object({
   id: z.string().uuid().optional(),
   userId: z.string().optional(),
-  roleName: z.string().min(2),
-  roleLevel: z.string().nonempty(),
-  pitchWordLimit: z.number().min(100).max(2000),
-  roleDescription: z.string().optional().nullable(),
-  yearsExperience: z.string().nonempty(),
-  relevantExperience: z.string().min(10),
-  resumePath: z.string().optional().nullable(),
-  // We store star examples as JSON
-  starExample1: z.any().optional(),
-  starExample2: z.any().optional(),
-  albertGuidance: z.string().optional().nullable(),
-  pitchContent: z.string().optional().nullable()
+  albertGuidance: z.string().optional()
 })
 
 /**
- * A dynamic route handler for /api/pitchWizard/[pitchId].
+ * A dynamic route handler for /api/pitches/[pitchId].
  * We only define a PATCH method here to handle pitch updates.
- * NOTE: We mark "params" as Promise<{ pitchId: string }> and then await it.
  */
 export async function PATCH(
   request: NextRequest,
-  // Workaround #1: Next.js expects params to be a Promise in Next 15+.
   { params }: { params: Promise<{ pitchId: string }> }
 ) {
   try {
@@ -69,7 +56,7 @@ export async function PATCH(
     // Extract the pitchId from params
     const { pitchId } = await params
     
-    console.log(`PATCH /api/pitchWizard/${pitchId}: Processing update request`);
+    console.log(`PATCH /api/pitches/${pitchId}: Processing update request`);
     
     // Parse the request body
     const body = await request.json()
@@ -81,31 +68,31 @@ export async function PATCH(
     try {
       updatePitchSchema.parse(body)
     } catch (err) {
-      console.error(`PATCH /api/pitchWizard/${pitchId}: Validation error:`, err);
+      console.error(`PATCH /api/pitches/${pitchId}: Validation error:`, err);
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
     }
     
-    console.log(`PATCH /api/pitchWizard/${pitchId}: Calling updatePitchAction`);
+    console.log(`PATCH /api/pitches/${pitchId}: Calling updatePitchAction`);
     
     // Call our server action to update the pitch
     const result = await updatePitchAction(pitchId, body, userId)
     
     if (!result.isSuccess) {
-      console.error(`PATCH /api/pitchWizard/${pitchId}: Update failed:`, result.message);
+      console.error(`PATCH /api/pitches/${pitchId}: Update failed:`, result.message);
       return NextResponse.json({ error: result.message }, { status: 500 })
     }
     
-    console.log(`PATCH /api/pitchWizard/${pitchId}: Update successful`);
+    console.log(`PATCH /api/pitches/${pitchId}: Update successful`);
     
     return NextResponse.json({ 
       message: "Pitch updated successfully", 
       data: result.data 
     })
   } catch (error: any) {
-    console.error("Error in PATCH /api/pitchWizard/[pitchId]:", error)
+    console.error("Error in PATCH /api/pitches/[pitchId]:", error)
     return NextResponse.json(
       { error: error.message || "An unexpected error occurred" },
       { status: 500 }
     )
   }
-}
+} 

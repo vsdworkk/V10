@@ -98,7 +98,9 @@ export default function PitchList({ pitches }: PitchListProps) {
           {sortedPitches.map(pitch => (
             <Card key={pitch.id}>
               <CardHeader>
-                <CardTitle>{pitch.roleName}</CardTitle>
+                <Link href={pitch.status === "draft" ? `/dashboard/new/${pitch.id}` : `/dashboard/${pitch.id}`}>
+                  <CardTitle className="hover:text-blue-600 transition-colors">{pitch.roleName}</CardTitle>
+                </Link>
                 <CardDescription>
                   Status: <span className="capitalize">{pitch.status}</span>
                 </CardDescription>
@@ -128,10 +130,10 @@ export default function PitchList({ pitches }: PitchListProps) {
                 )}
                 
                 {/* Edit button for all pitches */}
-                <Link href={`/dashboard/${pitch.id}`}>
+                <Link href={pitch.status === "draft" ? `/dashboard/new/${pitch.id}` : `/dashboard/${pitch.id}`}>
                   <Button variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit Pitch
+                    {pitch.status === "draft" ? "Continue" : "Edit Pitch"}
                   </Button>
                 </Link>
               </CardFooter>

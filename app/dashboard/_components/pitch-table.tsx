@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SelectPitch } from "@/db/schema/pitches-schema"
-import { Download, Filter } from "lucide-react"
+import { Download, Filter, PlayCircle, Edit } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -59,7 +59,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           <div>ROLE</div>
           <div>ORGANISATION</div>
           <div>STATUS</div>
-          <div>EXPORT</div>
+          <div>ACTIONS</div>
         </div>
 
         {filteredPitches.length === 0 ? (
@@ -71,7 +71,10 @@ export default function PitchTable({ pitches }: PitchTableProps) {
             {filteredPitches.map((pitch) => (
               <div key={pitch.id} className="grid grid-cols-4 gap-4 p-2.5 items-center hover:bg-gray-50 transition-colors">
                 <div>
-                  <Link href={`/dashboard/${pitch.id}`} className="font-medium hover:underline text-blue-600">
+                  <Link 
+                    href={pitch.status === "draft" ? `/dashboard/new/${pitch.id}` : `/dashboard/${pitch.id}`} 
+                    className="font-medium hover:underline text-blue-600"
+                  >
                     {pitch.roleName}
                   </Link>
                 </div>
@@ -87,8 +90,24 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                     {pitch.status === "draft" ? "Draft" : "Completed"}
                   </span>
                 </div>
-                <div>
-                  <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-gray-100 rounded-full">
+                <div className="flex gap-2">
+                  {pitch.status === "draft" ? (
+                    <Link href={`/dashboard/new/${pitch.id}`}>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                        <PlayCircle className="h-4 w-4" />
+                        <span className="text-xs">Resume</span>
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href={`/dashboard/${pitch.id}`}>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600 hover:text-gray-700 hover:bg-gray-50">
+                        <Edit className="h-4 w-4" />
+                        <span className="text-xs">Edit</span>
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  <Button variant="ghost" size="sm" className="p-1 h-auto hover:bg-gray-100 rounded-full">
                     <Download className="h-4 w-4 text-gray-500" />
                   </Button>
                 </div>
