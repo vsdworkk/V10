@@ -116,11 +116,11 @@ const stepTitles = [
   "Situation",
   "Task",
   "Action",
-  "Result (Example 1)",
+  "Result",
   "Situation",
   "Task",
   "Action",
-  "Result (Example 2)",
+  "Result",
   "Review & Submit"
 ]
 
