@@ -2,9 +2,9 @@
 @description
 Client sub-component to capture the "Situation" portion of a STAR example.
 It prompts the user for three smaller pieces of data:
-1) Context
-2) Challenge
-3) Who was involved
+1) Where and when
+2) Description of situation/challenge
+3) Why it mattered
 Each field is stored temporarily, and onBlur we concatenate them (with labels)
 and place the final string into starExampleX.situation in the wizard form state.
 
@@ -46,9 +46,9 @@ interface SituationStepProps {
 /**
  * @function SituationStep
  * Renders three text fields for the user to fill out:
- * 1) Context
- * 2) Challenge
- * 3) Who was involved
+ * 1) Where and when
+ * 2) Description of situation/challenge
+ * 3) Why it mattered
  *
  * On blur, we combine them into a single labeled string, storing it at:
  *   starExampleX.situation
@@ -57,9 +57,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
 
   // Local state for the smaller sub-fields
-  const [contextValue, setContextValue] = useState("")
-  const [challengeValue, setChallengeValue] = useState("")
-  const [involvedValue, setInvolvedValue] = useState("")
+  const [whereWhenValue, setWhereWhenValue] = useState("")
+  const [descriptionValue, setDescriptionValue] = useState("")
+  const [whyMatteredValue, setWhyMatteredValue] = useState("")
 
   // Watch the current combined situation from the form
   // so that if we come back to this step, we can parse it out (optional).
@@ -68,22 +68,22 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
   /**
    * A helper that builds the final single string with labels
-   * e.g. "Context: x\nChallenge: y\nWho was involved: z"
+   * e.g. "Where and when: x\nDescription: y\nWhy it mattered: z"
    */
   const buildSituationString = (
-    context: string,
-    challenge: string,
-    involved: string
+    whereWhen: string,
+    description: string,
+    whyMattered: string
   ): string => {
     let result = ""
-    if (context.trim()) {
-      result += `Context: ${context.trim()}\n`
+    if (whereWhen.trim()) {
+      result += `Where and when: ${whereWhen.trim()}\n`
     }
-    if (challenge.trim()) {
-      result += `Challenge: ${challenge.trim()}\n`
+    if (description.trim()) {
+      result += `Description: ${description.trim()}\n`
     }
-    if (involved.trim()) {
-      result += `Who was involved: ${involved.trim()}`
+    if (whyMattered.trim()) {
+      result += `Why it mattered: ${whyMattered.trim()}`
     }
     return result.trim()
   }
@@ -94,9 +94,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
    */
   const handleBlur = () => {
     const finalString = buildSituationString(
-      contextValue,
-      challengeValue,
-      involvedValue
+      whereWhenValue,
+      descriptionValue,
+      whyMatteredValue
     )
     // Store in form
     setValue(`${exampleKey}.situation`, finalString, { shouldDirty: true })
@@ -107,18 +107,19 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Situation</h2>
-      {/* Context */}
+      {/* Where and when */}
       <FormField
         name="dummy" // a placeholder to keep Shadcn form structure
         render={() => (
           <FormItem>
-            <FormLabel>Context</FormLabel>
+            <FormLabel>Where and when did this experience occur?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "In my role at ABC Corp in 2024."
+            </div>
             <FormControl>
               <Textarea
-                placeholder="Describe the overall context or environment..."
-                value={contextValue}
-                onChange={e => setContextValue(e.target.value)}
+                value={whereWhenValue}
+                onChange={e => setWhereWhenValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -127,17 +128,19 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Challenge */}
+      {/* Description */}
       <FormField
         name="dummy2"
         render={() => (
           <FormItem>
-            <FormLabel>Challenge</FormLabel>
+            <FormLabel>Briefly describe the situation or challenge you faced.</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "Our team faced a software problem just weeks before launching an important product."
+            </div>
             <FormControl>
               <Textarea
-                placeholder="What challenge or obstacle did you face?"
-                value={challengeValue}
-                onChange={e => setChallengeValue(e.target.value)}
+                value={descriptionValue}
+                onChange={e => setDescriptionValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -146,17 +149,19 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Who was involved */}
+      {/* Why it mattered */}
       <FormField
         name="dummy3"
         render={() => (
           <FormItem>
-            <FormLabel>Who was involved?</FormLabel>
+            <FormLabel>Why was this a problem or why did it matter?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "The issue could delay the launch and significantly increase costs."
+            </div>
             <FormControl>
-              <Input
-                placeholder="List key participants, stakeholders, or teams..."
-                value={involvedValue}
-                onChange={e => setInvolvedValue(e.target.value)}
+              <Textarea
+                value={whyMatteredValue}
+                onChange={e => setWhyMatteredValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

@@ -2,9 +2,8 @@
 @description
 Client sub-component to capture the "Task" portion of a STAR example.
 Prompts user for:
-1) Objectives
-2) Responsibilities
-3) Constraints
+1) Responsibility in addressing the issue
+2) How completing the task would help solve the problem
 On blur, we combine these strings with labels, storing them in starExampleX.task.
 
 Key Features:
@@ -27,7 +26,6 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
 interface TaskStepProps {
@@ -40,51 +38,46 @@ interface TaskStepProps {
 export default function TaskStep({ exampleKey }: TaskStepProps) {
   const { setValue } = useFormContext<PitchWizardFormData>()
 
-  const [objectivesValue, setObjectivesValue] = useState("")
-  const [responsibilitiesValue, setResponsibilitiesValue] = useState("")
-  const [constraintsValue, setConstraintsValue] = useState("")
+  const [responsibilityValue, setResponsibilityValue] = useState("")
+  const [helpSolveValue, setHelpSolveValue] = useState("")
 
   // Helper to build final labeled string
   const buildTaskString = (
-    objectives: string,
-    responsibilities: string,
-    constraints: string
+    responsibility: string,
+    helpSolve: string
   ) => {
     let result = ""
-    if (objectives.trim()) {
-      result += `Objectives: ${objectives.trim()}\n`
+    if (responsibility.trim()) {
+      result += `Responsibility: ${responsibility.trim()}\n`
     }
-    if (responsibilities.trim()) {
-      result += `Responsibilities: ${responsibilities.trim()}\n`
-    }
-    if (constraints.trim()) {
-      result += `Constraints: ${constraints.trim()}`
+    if (helpSolve.trim()) {
+      result += `How it would help: ${helpSolve.trim()}`
     }
     return result.trim()
   }
 
   const handleBlur = () => {
     const finalString = buildTaskString(
-      objectivesValue,
-      responsibilitiesValue,
-      constraintsValue
+      responsibilityValue,
+      helpSolveValue
     )
     setValue(`${exampleKey}.task`, finalString, { shouldDirty: true })
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Task</h2>
       <FormField
         name="dummy-task1"
         render={() => (
           <FormItem>
-            <FormLabel>Objectives</FormLabel>
+            <FormLabel>What was your responsibility in addressing this issue?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "I was responsible for quickly finding out why the software errors were happening and then developing a fix before the scheduled product launch."
+            </div>
             <FormControl>
               <Textarea
-                placeholder="What were you trying to accomplish?"
-                value={objectivesValue}
-                onChange={e => setObjectivesValue(e.target.value)}
+                value={responsibilityValue}
+                onChange={e => setResponsibilityValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -97,30 +90,14 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
         name="dummy-task2"
         render={() => (
           <FormItem>
-            <FormLabel>Responsibilities</FormLabel>
+            <FormLabel>How would completing this task help solve the problem or tackle the challenge?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "By identifying and resolving the software issue promptly, we would avoid costly delays and maintain our reputation with key clients."
+            </div>
             <FormControl>
               <Textarea
-                placeholder="What specific tasks or duties fell under your role?"
-                value={responsibilitiesValue}
-                onChange={e => setResponsibilitiesValue(e.target.value)}
-                onBlur={handleBlur}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        name="dummy-task3"
-        render={() => (
-          <FormItem>
-            <FormLabel>Constraints</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="Were there any time/budget/resource constraints?"
-                value={constraintsValue}
-                onChange={e => setConstraintsValue(e.target.value)}
+                value={helpSolveValue}
+                onChange={e => setHelpSolveValue(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

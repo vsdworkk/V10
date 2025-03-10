@@ -136,20 +136,12 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h2 className="text-xl font-semibold">Action Steps</h2>
-        <p className="text-sm text-muted-foreground mt-2">
+        <p className="text-sm text-muted-foreground">
           Document your actions in sequential steps. Add each step one by one, filling in the details and saving before moving to the next.
         </p>
       </div>
       
       <div className="bg-muted/40 p-4 rounded-lg">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-medium">Steps</span>
-          <span className="text-xs text-muted-foreground">
-            {steps.length} of {MAX_STEPS} steps used
-          </span>
-        </div>
-        
         <Accordion
           type="single"
           collapsible
@@ -191,12 +183,19 @@ interface StepItemProps {
 }
 
 function StepItem({ step, onSave }: StepItemProps) {
-  const [title, setTitle] = useState(step.title);
-  const [description, setDescription] = useState(step.description);
+  const [whatDidYouDo, setWhatDidYouDo] = useState(step.title);
+  const [howDidYouDoIt, setHowDidYouDoIt] = useState(step.description);
+  const [outcome, setOutcome] = useState("");
   const isComplete = step.isCompleted;
   
   const handleSave = () => {
-    onSave(step.id, title, description);
+    // Combine the description from both fields
+    const combinedDescription = [
+      howDidYouDoIt.trim() ? `How: ${howDidYouDoIt}` : "",
+      outcome.trim() ? `Outcome: ${outcome}` : ""
+    ].filter(Boolean).join("\n");
+    
+    onSave(step.id, whatDidYouDo, combinedDescription);
   };
   
   return (
@@ -205,7 +204,7 @@ function StepItem({ step, onSave }: StepItemProps) {
         "px-4 py-3 hover:no-underline", 
         isComplete ? "text-green-600" : ""
       )}>
-        <div className="flex items-center text-left w-full">
+        <div className="flex items-center justify-between text-left w-full">
           <div className="flex-1 font-medium">
             Step {step.position} {isComplete && <Check className="inline h-4 w-4 text-green-600 ml-1" />}
           </div>
@@ -214,17 +213,18 @@ function StepItem({ step, onSave }: StepItemProps) {
       <AccordionContent className="p-4 pt-2">
         <div className="space-y-4">
           <FormField
-            name={`step-${step.id}-title`}
+            name={`step-${step.id}-what`}
             render={() => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>What did you specifically do in this step?</FormLabel>
+                <div className="text-sm text-muted-foreground mb-2">
+                  • Example: "I spoke with industry experts to get different viewpoints."
+                </div>
                 <FormControl>
                   <Textarea
-                    placeholder="What did you do? (e.g., 'Implemented automated testing')"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    rows={1}
-                    className="resize-none"
+                    value={whatDidYouDo}
+                    onChange={e => setWhatDidYouDo(e.target.value)}
+                    rows={2}
                   />
                 </FormControl>
                 <FormMessage />
@@ -233,16 +233,38 @@ function StepItem({ step, onSave }: StepItemProps) {
           />
           
           <FormField
-            name={`step-${step.id}-description`}
+            name={`step-${step.id}-how`}
             render={() => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>How did you do it? (tools, methods, or skills)</FormLabel>
+                <div className="text-sm text-muted-foreground mb-2">
+                  • Example: "I arranged interviews and reviewed recent industry reports."
+                </div>
                 <FormControl>
                   <Textarea
-                    placeholder="Describe the actions you took in detail..."
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    rows={4}
+                    value={howDidYouDoIt}
+                    onChange={e => setHowDidYouDoIt(e.target.value)}
+                    rows={3}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            name={`step-${step.id}-outcome`}
+            render={() => (
+              <FormItem>
+                <FormLabel>What was the outcome of this step? (optional)</FormLabel>
+                <div className="text-sm text-muted-foreground mb-2">
+                  • Example: "I gathered valuable insights that helped shape our final solution."
+                </div>
+                <FormControl>
+                  <Textarea
+                    value={outcome}
+                    onChange={e => setOutcome(e.target.value)}
+                    rows={2}
                   />
                 </FormControl>
                 <FormMessage />
@@ -252,13 +274,13 @@ function StepItem({ step, onSave }: StepItemProps) {
           
           <Button 
             type="button" 
-            onClick={handleSave}
-            className="w-full mt-2"
+            onClick={handleSave} 
+            className="w-full"
           >
-            Save
+            Save Step
           </Button>
         </div>
       </AccordionContent>
     </AccordionItem>
-  );
+  )
 }
