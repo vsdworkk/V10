@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     const pitchData = {
       userId: body.userId,
       roleName: body.roleName,
+      organisationName: body.organisationName || null,
       roleLevel: body.roleLevel,
       pitchWordLimit: body.pitchWordLimit || 500,
       roleDescription: body.roleDescription || "",

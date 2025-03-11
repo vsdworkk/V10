@@ -26,7 +26,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Your Pitches</h2>
 
-        <Link href="/dashboard/new">
+        <Link href="/dashboard/new?new=true">
           <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
             <span className="mr-2">+</span> Create New Pitch
           </Button>

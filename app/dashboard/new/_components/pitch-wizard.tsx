@@ -159,6 +159,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
 
   // Helper function to convert numeric pitch word limit to string format
   const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
@@ -349,6 +350,31 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     }
   }, [watchWordLimit, methods])
 
+  // Load pitch ID from local storage on component mount
+  useEffect(() => {
+    // Only try to load from localStorage if we don't already have a pitchId from props
+    if (!pitchId && typeof window !== 'undefined') {
+      const storedPitchId = localStorage.getItem('currentPitchId');
+      if (storedPitchId) {
+        setPitchId(storedPitchId);
+      }
+    }
+    
+    // Cleanup function to handle unexpected navigation away
+    return () => {
+      // If the user navigates away without completing or explicitly saving,
+      // we should clean up the stored ID to prevent confusion on next visit
+      if (typeof window !== 'undefined' && currentStep < totalSteps) {
+        // Only clear if we're not at the final step (which would indicate completion)
+        // This prevents clearing when the form is actually submitted
+        const shouldClear = !document.hidden; // Only clear if the tab is visible (not a refresh)
+        if (shouldClear) {
+          localStorage.removeItem('currentPitchId');
+        }
+      }
+    };
+  }, [pitchId, currentStep, totalSteps]);
+
   /**
    * @function autoUploadResume
    * Automatically uploads the resume when moving from Step 2 -> Step 3.
@@ -444,12 +470,80 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   };
 
   /**
+   * @function saveCurrentState
+   * Saves the current state of the form to the database
+   * Returns the pitch ID if successful
+   */
+  const saveCurrentState = useCallback(async (): Promise<string | undefined> => {
+    const data = methods.getValues();
+    const numeric = numericLimit();
+
+    // Convert the form data to the format expected by the API
+    const payload: any = {
+      userId,
+      roleName: data.roleName || "",
+      organisationName: data.organisationName || null,
+      roleLevel: data.roleLevel || "",
+      pitchWordLimit: numeric,
+      roleDescription: data.roleDescription || "",
+      yearsExperience: data.yearsExperience || "",
+      relevantExperience: data.relevantExperience || "",
+      resumePath: data.resumePath || null,
+      starExample1: data.starExample1 || null,
+      starExample2: data.starExample2 || null,
+      albertGuidance: data.albertGuidance || "",
+      pitchContent: data.pitchContent || "",
+      status: "draft"
+    };
+
+    // If we have a pitch ID (either from props or from previous save), include it
+    if (pitchId) {
+      payload.id = pitchId;
+    }
+
+    try {
+      const res = await fetch("/api/pitchWizard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server responded with: ${text}`);
+      }
+
+      const result = await res.json();
+      
+      // Store the pitch ID in state and localStorage
+      if (result.data?.id) {
+        setPitchId(result.data.id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentPitchId', result.data.id);
+        }
+        return result.data.id;
+      }
+      
+      return undefined;
+    } catch (error: any) {
+      console.error("Error saving pitch state:", error);
+      toast({
+        title: "Auto-save Error",
+        description: "Failed to save your progress. You can continue, but your data may not be saved.",
+        variant: "destructive"
+      });
+      return undefined;
+    }
+  }, [methods, userId, pitchId, numericLimit, toast]);
+
+  /**
    * @function goNext
    * Advances to the next step in the wizard.
    * Handles special cases:
    * - Uploading resume when leaving Step 2
    * - Generating final pitch after last STAR step
    * - Skipping starExample2 steps if pitchWordLimit < 650
+   * - Saving current state to database
    */
   const goNext = useCallback(async () => {
     // Only validate the fields for the current step
@@ -491,6 +585,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       return
     }
 
+    // Save the current state to the database
+    await saveCurrentState();
+
     // Special case: Upload resume when leaving Step 2
     if (currentStep === 2) {
       await autoUploadResume()
@@ -514,7 +611,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     // Otherwise, just increment
     setCurrentStepLocal(s => Math.min(s + 1, totalSteps))
     markStepCompleted(currentStep)
-  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps])
+  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps, saveCurrentState])
 
   /**
    * @function goBack
@@ -529,59 +626,24 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    * Saves the current state as a draft and redirects to the dashboard.
    */
   const saveAndClose = useCallback(async () => {
-    const data = methods.getValues()
-    const numeric = numericLimit()
-
-    // Convert the form data to the format expected by the API
-    const payload: any = {
-      userId,
-      roleName: data.roleName,
-      organisationName: data.organisationName || null,
-      roleLevel: data.roleLevel,
-      pitchWordLimit: numeric,
-      roleDescription: data.roleDescription || "",
-      yearsExperience: data.yearsExperience,
-      relevantExperience: data.relevantExperience,
-      resumePath: data.resumePath || null,
-      starExample1: data.starExample1,
-      starExample2: data.starExample2,
-      albertGuidance: data.albertGuidance || "",
-      pitchContent: data.pitchContent || "",
-      status: "draft"
-    }
-
-    // If we're editing an existing pitch, include the ID
-    if (pitchData?.id) {
-      payload.id = pitchData.id
-    }
-
     try {
-      const res = await fetch("/api/pitchWizard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`Server responded with: ${text}`)
-      }
-
+      await saveCurrentState();
+      
       toast({
         title: "Draft Saved",
         description: "Your pitch draft has been saved."
-      })
+      });
 
       // Redirect to dashboard
-      router.push("/dashboard")
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to save draft",
         variant: "destructive"
-      })
+      });
     }
-  }, [methods, userId, router, toast, numericLimit, pitchData])
+  }, [saveCurrentState, router, toast]);
 
   /**
    * @function onSubmit
@@ -606,13 +668,13 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       starExample1: data.starExample1,
       starExample2: data.starExample2,
       albertGuidance: data.albertGuidance || "",
-      pitchContent: data.pitchContent || "",
+      pitchContent: data.pitchContent,
       status: pitchStatus
     }
 
     // If we're editing an existing pitch, include the ID
-    if (pitchData?.id) {
-      payload.id = pitchData.id
+    if (pitchId) {
+      payload.id = pitchId
     }
 
     try {
@@ -627,21 +689,26 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         throw new Error(`Server responded with: ${text}`)
       }
 
+      // Clear the stored pitch ID since we're done with this pitch
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('currentPitchId');
+      }
+
       toast({
-        title: pitchStatus === "final" ? "Final Pitch Saved" : "Draft Pitch Saved",
-        description: `Your pitch is now stored with status "${pitchStatus}".`
+        title: "Success",
+        description: "Your pitch has been finalized."
       })
 
-      // Redirect to dashboard instead of resetting the form
+      // Redirect to dashboard
       router.push("/dashboard")
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create pitch",
+        description: error.message || "Failed to submit pitch",
         variant: "destructive"
       })
     }
-  }, [methods, userId, router, toast, numericLimit, pitchData])
+  }, [methods, userId, router, toast, numericLimit, pitchId])
 
   /**
    * @function renderStep
