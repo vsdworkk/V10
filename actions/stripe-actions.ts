@@ -4,10 +4,12 @@ Contains server actions related to Stripe.
 
 import {
   updateProfileAction,
-  updateProfileByStripeCustomerIdAction
+  updateProfileByStripeCustomerIdAction,
+  getProfileByUserIdAction
 } from "@/actions/db/profiles-actions"
 import { SelectProfile } from "@/db/schema"
 import { stripe } from "@/lib/stripe"
+import { ActionState } from "@/types"
 import Stripe from "stripe"
 
 type MembershipStatus = SelectProfile["membership"]
@@ -110,5 +112,62 @@ export const manageSubscriptionStatusChange = async (
     throw error instanceof Error
       ? error
       : new Error("Failed to update subscription status")
+  }
+}
+
+/**
+ * Creates a Stripe customer portal session for the given user
+ * @param userId The ID of the user
+ * @param returnUrl The URL to redirect to after the customer portal session
+ * @returns An ActionState with the URL to redirect to
+ */
+export async function createCustomerPortalSessionAction(
+  userId: string,
+  returnUrl: string = "/dashboard"
+): Promise<ActionState<{ url: string }>> {
+  try {
+    if (!userId) {
+      return { 
+        isSuccess: false, 
+        message: "User ID is required" 
+      }
+    }
+
+    // Get the user's profile to retrieve their Stripe customer ID
+    const profileResult = await getProfileByUserIdAction(userId)
+    
+    if (!profileResult.isSuccess || !profileResult.data) {
+      return { 
+        isSuccess: false, 
+        message: "User profile not found" 
+      }
+    }
+
+    const { stripeCustomerId } = profileResult.data
+
+    if (!stripeCustomerId) {
+      return { 
+        isSuccess: false, 
+        message: "User does not have a Stripe customer ID" 
+      }
+    }
+
+    // Create a customer portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: returnUrl
+    })
+
+    return {
+      isSuccess: true,
+      message: "Customer portal session created successfully",
+      data: { url: session.url }
+    }
+  } catch (error) {
+    console.error("Error creating customer portal session:", error)
+    return { 
+      isSuccess: false, 
+      message: "Failed to create customer portal session" 
+    }
   }
 }

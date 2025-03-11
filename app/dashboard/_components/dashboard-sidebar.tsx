@@ -24,6 +24,8 @@
 
 import Link from "next/link"
 import { FileText, Plus } from "lucide-react"
+import ManageBillingButton from "./manage-billing-button"
+import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 
 /**
  * @interface DashboardSidebarProps
@@ -41,8 +43,9 @@ interface DashboardSidebarProps {
  * - For now, we just show a static list of links for pitch management.
  */
 export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
-  // We won't do anything special yet, but you could check user membership here
-  // or fetch user data to display in the sidebar.
+  // Get the user's profile to check if they have a Stripe customer ID
+  const profileResult = await getProfileByUserIdAction(userId)
+  const hasStripeCustomerId = profileResult.isSuccess && profileResult.data?.stripeCustomerId
 
   return (
     <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
@@ -66,6 +69,13 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
           <Plus className="h-4 w-4" />
           Create New Pitch
         </Link>
+
+        {/* Only show the Manage Billing button if the user has a Stripe customer ID */}
+        {hasStripeCustomerId && (
+          <div className="pt-2 mt-2 border-t">
+            <ManageBillingButton />
+          </div>
+        )}
       </nav>
     </div>
   )
