@@ -152,11 +152,18 @@ export async function createCustomerPortalSessionAction(
       }
     }
 
-    // Create a customer portal session
-    const session = await stripe.billingPortal.sessions.create({
+    // Create a customer portal session with a timeout to prevent hanging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Stripe API request timed out")), 10000);
+    });
+
+    const sessionPromise = stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
       return_url: returnUrl
-    })
+    });
+
+    // Race the Stripe API call against a timeout
+    const session = await Promise.race([sessionPromise, timeoutPromise]) as Stripe.BillingPortal.Session;
 
     return {
       isSuccess: true,
@@ -167,7 +174,7 @@ export async function createCustomerPortalSessionAction(
     console.error("Error creating customer portal session:", error)
     return { 
       isSuccess: false, 
-      message: "Failed to create customer portal session" 
+      message: error instanceof Error ? error.message : "Failed to create customer portal session" 
     }
   }
 }

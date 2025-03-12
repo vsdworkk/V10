@@ -23,8 +23,7 @@
 "use server"
 
 import Link from "next/link"
-import { FileText, Plus } from "lucide-react"
-import ManageBillingButton from "./manage-billing-button"
+import { FileText, Plus, Settings } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 
 /**
@@ -70,10 +69,15 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
           Create New Pitch
         </Link>
 
-        {/* Only show the Manage Billing button if the user has a Stripe customer ID */}
         {hasStripeCustomerId && (
           <div className="pt-2 mt-2 border-t">
-            <ManageBillingButton />
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Link>
           </div>
         )}
       </nav>

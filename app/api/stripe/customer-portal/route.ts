@@ -8,6 +8,9 @@ import { createCustomerPortalSessionAction } from "@/actions/stripe-actions"
 import { auth } from "@clerk/nextjs/server"
 import { NextRequest, NextResponse } from "next/server"
 
+// Set cache control headers to prevent caching of this API route
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     // Get the user ID from Clerk
