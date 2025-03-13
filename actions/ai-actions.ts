@@ -23,6 +23,7 @@
 "use server"
 import { ActionState } from "@/types"
 import OpenAI from "openai"
+import { StarSchema, ActionStep } from "@/db/schema/pitches-schema"
 
 /**
  * @interface GeneratePitchParams
@@ -36,13 +37,13 @@ export interface GeneratePitchParams {
   roleDescription?: string
   yearsExperience: string
   relevantExperience: string
-  starExample1?: {
+  starExample1?: StarSchema | {
     situation: string
     task: string
     action: string
     result: string
   }
-  starExample2?: {
+  starExample2?: StarSchema | {
     situation: string
     task: string
     action: string
@@ -231,23 +232,127 @@ The pitch should be under ${pitchData.pitchWordLimit} words.
 `
 
   if (pitchData.starExample1) {
-    prompt += `
+    // Check if we're using the new nested structure
+    if (typeof pitchData.starExample1 === 'object' && 
+        'situation' in pitchData.starExample1 && 
+        typeof pitchData.starExample1.situation === 'object') {
+      
+      // Extract situation data from nested structure with type assertion
+      const situation = pitchData.starExample1.situation as StarSchema['situation'];
+      const situationText = [
+        situation["where-and-when-did-this-experience-occur"] || "",
+        situation["briefly-describe-the-situation-or-challenge-you-faced"] || "",
+        situation["why-was-this-a-problem-or-why-did-it-matter"] || ""
+      ].filter(Boolean).join("\n");
+      
+      // Extract task data from nested structure with type assertion
+      const task = pitchData.starExample1.task as StarSchema['task'];
+      const taskText = [
+        task["what-was-your-responsibility-in-addressing-this-issue"] || "",
+        task["how-would-completing-this-task-help-solve-the-problem"] || "",
+        task["what-constraints-or-requirements-did-you-need-to-consider"] || ""
+      ].filter(Boolean).join("\n");
+      
+      // Extract action data from nested structure
+      const action = pitchData.starExample1.action;
+      let actionText = "";
+      if (action && typeof action === 'object' && 'steps' in action && Array.isArray(action.steps)) {
+        actionText = action.steps.map((step: ActionStep, index: number) => {
+          return `Step ${index + 1}: ${step["what-did-you-specifically-do-in-this-step"] || ""}\n` +
+                 `How: ${step["how-did-you-do-it-tools-methods-or-skills"] || ""}\n` +
+                 (step["what-was-the-outcome-of-this-step-optional"] ? 
+                  `Outcome: ${step["what-was-the-outcome-of-this-step-optional"]}` : "");
+        }).join("\n\n");
+      }
+      
+      // Extract result data from nested structure with type assertion
+      const result = pitchData.starExample1.result as StarSchema['result'];
+      const resultText = [
+        result["what-positive-outcome-did-you-achieve"] || "",
+        result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || "",
+        result["what-did-you-learn-from-this-experience"] || ""
+      ].filter(Boolean).join("\n");
+      
+      prompt += `
 Here's my first STAR example:
-Situation: ${pitchData.starExample1.situation}
-Task: ${pitchData.starExample1.task}
-Action: ${pitchData.starExample1.action}
-Result: ${pitchData.starExample1.result}
-`
+Situation: ${situationText}
+Task: ${taskText}
+Action: ${actionText}
+Result: ${resultText}
+`;
+    }
+    // Legacy format support
+    else if (typeof pitchData.starExample1 === 'object') {
+      prompt += `
+Here's my first STAR example:
+Situation: ${pitchData.starExample1.situation || ""}
+Task: ${pitchData.starExample1.task || ""}
+Action: ${pitchData.starExample1.action || ""}
+Result: ${pitchData.starExample1.result || ""}
+`;
+    }
   }
 
   if (pitchData.starExample2) {
-    prompt += `
+    // Check if we're using the new nested structure
+    if (typeof pitchData.starExample2 === 'object' && 
+        'situation' in pitchData.starExample2 && 
+        typeof pitchData.starExample2.situation === 'object') {
+      
+      // Extract situation data from nested structure with type assertion
+      const situation = pitchData.starExample2.situation as StarSchema['situation'];
+      const situationText = [
+        situation["where-and-when-did-this-experience-occur"] || "",
+        situation["briefly-describe-the-situation-or-challenge-you-faced"] || "",
+        situation["why-was-this-a-problem-or-why-did-it-matter"] || ""
+      ].filter(Boolean).join("\n");
+      
+      // Extract task data from nested structure with type assertion
+      const task = pitchData.starExample2.task as StarSchema['task'];
+      const taskText = [
+        task["what-was-your-responsibility-in-addressing-this-issue"] || "",
+        task["how-would-completing-this-task-help-solve-the-problem"] || "",
+        task["what-constraints-or-requirements-did-you-need-to-consider"] || ""
+      ].filter(Boolean).join("\n");
+      
+      // Extract action data from nested structure
+      const action = pitchData.starExample2.action;
+      let actionText = "";
+      if (action && typeof action === 'object' && 'steps' in action && Array.isArray(action.steps)) {
+        actionText = action.steps.map((step: ActionStep, index: number) => {
+          return `Step ${index + 1}: ${step["what-did-you-specifically-do-in-this-step"] || ""}\n` +
+                 `How: ${step["how-did-you-do-it-tools-methods-or-skills"] || ""}\n` +
+                 (step["what-was-the-outcome-of-this-step-optional"] ? 
+                  `Outcome: ${step["what-was-the-outcome-of-this-step-optional"]}` : "");
+        }).join("\n\n");
+      }
+      
+      // Extract result data from nested structure with type assertion
+      const result = pitchData.starExample2.result as StarSchema['result'];
+      const resultText = [
+        result["what-positive-outcome-did-you-achieve"] || "",
+        result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || "",
+        result["what-did-you-learn-from-this-experience"] || ""
+      ].filter(Boolean).join("\n");
+      
+      prompt += `
 Here's my second STAR example:
-Situation: ${pitchData.starExample2.situation}
-Task: ${pitchData.starExample2.task}
-Action: ${pitchData.starExample2.action}
-Result: ${pitchData.starExample2.result}
-`
+Situation: ${situationText}
+Task: ${taskText}
+Action: ${actionText}
+Result: ${resultText}
+`;
+    }
+    // Legacy format support
+    else if (typeof pitchData.starExample2 === 'object') {
+      prompt += `
+Here's my second STAR example:
+Situation: ${pitchData.starExample2.situation || ""}
+Task: ${pitchData.starExample2.task || ""}
+Action: ${pitchData.starExample2.action || ""}
+Result: ${pitchData.starExample2.result || ""}
+`;
+    }
   }
 
   prompt += `

@@ -60,40 +60,42 @@ import { useStepContext } from "./progress-bar-wrapper"
 
 /**
  * STAR sub-schema for a single example:
- * Each field must be at least 5 characters (enforced in sub-steps).
+ * Each field has its own nested structure with specific questions as kebab-case fields.
  * Matches the StarSchema interface in the database schema.
  */
+const actionStepSchema = z.object({
+  stepNumber: z.number(),
+  "what-did-you-specifically-do-in-this-step": z.string(),
+  "how-did-you-do-it-tools-methods-or-skills": z.string(),
+  "what-was-the-outcome-of-this-step-optional": z.string().optional()
+})
+
 const starSchema = z.object({
-  // Required main STAR fields
-  situation: z.string().min(5, "Situation must be at least 5 characters."),
-  task: z.string().min(5, "Task must be at least 5 characters."),
-  action: z.string().min(5, "Action must be at least 5 characters."),
-  result: z.string().min(5, "Result must be at least 5 characters."),
+  // Situation section with specific question fields
+  situation: z.object({
+    "where-and-when-did-this-experience-occur": z.string().min(5, "Please provide where and when this occurred."),
+    "briefly-describe-the-situation-or-challenge-you-faced": z.string().min(5, "Please describe the situation or challenge."),
+    "why-was-this-a-problem-or-why-did-it-matter": z.string().min(5, "Please explain why this mattered.")
+  }),
   
-  // Optional detailed sub-fields for each STAR component
-  situationDetails: z.object({
-    context: z.string().optional(),
-    challenge: z.string().optional(),
-    background: z.string().optional()
-  }).optional(),
+  // Task section with specific question fields
+  task: z.object({
+    "what-was-your-responsibility-in-addressing-this-issue": z.string().min(5, "Please describe your responsibility."),
+    "how-would-completing-this-task-help-solve-the-problem": z.string().min(5, "Please explain how this would help."),
+    "what-constraints-or-requirements-did-you-need-to-consider": z.string().min(5, "Please describe any constraints.")
+  }),
   
-  taskDetails: z.object({
-    objective: z.string().optional(),
-    requirements: z.string().optional(),
-    constraints: z.string().optional()
-  }).optional(),
+  // Action section with an array of steps
+  action: z.object({
+    steps: z.array(actionStepSchema).min(1, "Please add at least one action step.")
+  }),
   
-  actionDetails: z.object({
-    steps: z.array(z.string()).optional(),
-    skills: z.array(z.string()).optional(),
-    approach: z.string().optional()
-  }).optional(),
-  
-  resultDetails: z.object({
-    metrics: z.string().optional(),
-    impact: z.string().optional(),
-    learnings: z.string().optional()
-  }).optional()
+  // Result section with specific question fields
+  result: z.object({
+    "what-positive-outcome-did-you-achieve": z.string().min(5, "Please describe the outcome you achieved."),
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().min(5, "Please explain the benefits."),
+    "what-did-you-learn-from-this-experience": z.string().min(5, "Please share what you learned.")
+  })
 })
 
 /**

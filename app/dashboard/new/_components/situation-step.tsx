@@ -1,16 +1,15 @@
 /**
 @description
 Client sub-component to capture the "Situation" portion of a STAR example.
-Updated to use the new StarSchema structure with detailed sub-fields.
-It prompts the user for three smaller pieces of data:
-1) Where and when (context)
-2) Description of situation/challenge (challenge)
-3) Why it mattered (background)
-Each field is stored in both the main situation field and in the situationDetails object.
+Updated to use the new nested StarSchema structure with kebab-case question fields.
+It prompts the user for three specific questions:
+1) Where and when did this experience occur?
+2) Briefly describe the situation or challenge you faced.
+3) Why was this a problem or why did it matter?
 
 Key Features:
 - Uses React Hook Form context
-- Stores data in both the main situation field and in the situationDetails sub-object
+- Stores data directly in nested structure with kebab-case question names
 - Example ID (starExample1 or starExample2) is determined by props
 
 @dependencies
@@ -33,6 +32,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { isString, parseLegacySituation } from "@/types"
 
 interface SituationStepProps {
   /**
@@ -44,98 +44,59 @@ interface SituationStepProps {
 
 /**
  * @function SituationStep
- * Renders three text fields for the user to fill out:
- * 1) Where and when (context)
- * 2) Description of situation/challenge (challenge)
- * 3) Why it mattered (background)
+ * Renders three text fields for the user to fill out based on specific questions:
+ * 1) Where and when did this experience occur?
+ * 2) Briefly describe the situation or challenge you faced.
+ * 3) Why was this a problem or why did it matter?
  *
- * Stores data in both the main situation field (for backward compatibility)
- * and in the situationDetails sub-object (for structured data).
+ * Stores data directly in the new nested structure format.
  */
 export default function SituationStep({ exampleKey }: SituationStepProps) {
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
 
-  // Local state for the smaller sub-fields
-  const [contextValue, setContextValue] = useState("")
-  const [challengeValue, setChallengeValue] = useState("")
-  const [backgroundValue, setBackgroundValue] = useState("")
+  // Local state for the question fields
+  const [whereAndWhen, setWhereAndWhen] = useState("")
+  const [situationOrChallenge, setSituationOrChallenge] = useState("")
+  const [whyItMattered, setWhyItMattered] = useState("")
 
-  // Watch the current values from the form
+  // Watch the current values from the form - this needs to be adapted for the new structure
   const storedSituation = watch(`${exampleKey}.situation`)
-  const storedDetails = watch(`${exampleKey}.situationDetails`)
-
+  
   /**
-   * A helper that builds the final single string with labels
-   * e.g. "Where and when: x\nDescription: y\nWhy it mattered: z"
-   * This maintains compatibility with existing code
-   */
-  const buildSituationString = (
-    context: string,
-    challenge: string,
-    background: string
-  ): string => {
-    let result = ""
-    if (context.trim()) {
-      result += `Where and when: ${context.trim()}\n`
-    }
-    if (challenge.trim()) {
-      result += `Description: ${challenge.trim()}\n`
-    }
-    if (background.trim()) {
-      result += `Why it mattered: ${background.trim()}`
-    }
-    return result.trim()
-  }
-
-  /**
-   * Handler to update the form state with both the combined string
-   * and the structured sub-fields
+   * Handler to update the form state with the new nested structure
    */
   const handleBlur = () => {
-    // Create the combined string for backward compatibility
-    const finalString = buildSituationString(
-      contextValue,
-      challengeValue,
-      backgroundValue
-    )
-    
-    // Store both the main situation field and the detailed sub-fields
-    setValue(`${exampleKey}.situation`, finalString, { shouldDirty: true })
-    setValue(`${exampleKey}.situationDetails`, {
-      context: contextValue,
-      challenge: challengeValue,
-      background: backgroundValue
+    setValue(`${exampleKey}.situation`, {
+      "where-and-when-did-this-experience-occur": whereAndWhen,
+      "briefly-describe-the-situation-or-challenge-you-faced": situationOrChallenge,
+      "why-was-this-a-problem-or-why-did-it-matter": whyItMattered
     }, { shouldDirty: true })
   }
 
   // Initialize local state from existing form data if available
   useEffect(() => {
-    // If we have structured details, use those
-    if (storedDetails) {
-      setContextValue(storedDetails.context || "")
-      setChallengeValue(storedDetails.challenge || "")
-      setBackgroundValue(storedDetails.background || "")
-    } 
-    // Otherwise, try to parse from the combined string (legacy support)
-    else if (storedSituation) {
-      const lines = storedSituation.split('\n')
-      lines.forEach(line => {
-        if (line.startsWith('Where and when:')) {
-          setContextValue(line.replace('Where and when:', '').trim())
-        } else if (line.startsWith('Description:')) {
-          setChallengeValue(line.replace('Description:', '').trim())
-        } else if (line.startsWith('Why it mattered:')) {
-          setBackgroundValue(line.replace('Why it mattered:', '').trim())
-        }
-      })
+    if (storedSituation) {
+      // For the new structure, extract values from the nested object
+      if (typeof storedSituation === 'object') {
+        setWhereAndWhen(storedSituation["where-and-when-did-this-experience-occur"] || "")
+        setSituationOrChallenge(storedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || "")
+        setWhyItMattered(storedSituation["why-was-this-a-problem-or-why-did-it-matter"] || "")
+      } 
+      // Legacy support for old structure - use our utility function to parse legacy format
+      else if (isString(storedSituation)) {
+        const parsedSituation = parseLegacySituation(storedSituation);
+        setWhereAndWhen(parsedSituation["where-and-when-did-this-experience-occur"] || "");
+        setSituationOrChallenge(parsedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || "");
+        setWhyItMattered(parsedSituation["why-was-this-a-problem-or-why-did-it-matter"] || "");
+      }
     }
-  }, [storedSituation, storedDetails, exampleKey])
+  }, [storedSituation, exampleKey])
 
   return (
     <div className="space-y-4">
-      {/* Context (Where and when) */}
+      {/* Where and when */}
       <FormField
-        name={`${exampleKey}.situationDetails.context`}
+        name={`${exampleKey}.situation.where-and-when-did-this-experience-occur`}
         render={() => (
           <FormItem>
             <FormLabel>Where and when did this experience occur?</FormLabel>
@@ -144,8 +105,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={contextValue}
-                onChange={e => setContextValue(e.target.value)}
+                value={whereAndWhen}
+                onChange={e => setWhereAndWhen(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -154,9 +115,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Challenge (Description) */}
+      {/* Situation or Challenge */}
       <FormField
-        name={`${exampleKey}.situationDetails.challenge`}
+        name={`${exampleKey}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
         render={() => (
           <FormItem>
             <FormLabel>Briefly describe the situation or challenge you faced.</FormLabel>
@@ -165,8 +126,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={challengeValue}
-                onChange={e => setChallengeValue(e.target.value)}
+                value={situationOrChallenge}
+                onChange={e => setSituationOrChallenge(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -175,9 +136,9 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
         )}
       />
 
-      {/* Background (Why it mattered) */}
+      {/* Why it mattered */}
       <FormField
-        name={`${exampleKey}.situationDetails.background`}
+        name={`${exampleKey}.situation.why-was-this-a-problem-or-why-did-it-matter`}
         render={() => (
           <FormItem>
             <FormLabel>Why was this a problem or why did it matter?</FormLabel>
@@ -186,8 +147,8 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={backgroundValue}
-                onChange={e => setBackgroundValue(e.target.value)}
+                value={whyItMattered}
+                onChange={e => setWhyItMattered(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

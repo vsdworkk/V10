@@ -1,19 +1,18 @@
 /**
 @description
 Client sub-component to capture the "Task" portion of a STAR example.
-Updated to use the new StarSchema structure with detailed sub-fields.
+Updated to use the new nested StarSchema structure with kebab-case question fields.
 Prompts user for:
-1) Responsibility in addressing the issue (objective)
-2) How completing the task would help solve the problem (requirements)
-Stores data in both the main task field and in the taskDetails sub-object.
+1) What was your responsibility in addressing this issue?
+2) How would completing this task help solve the problem?
+3) What constraints or requirements did you need to consider?
 
 Key Features:
 - React Hook Form context
-- Stores data in both the main task field and in the taskDetails sub-object
+- Stores data directly in nested structure with kebab-case question names
 - Example ID (starExample1 or starExample2) is determined by props
 @notes
-Similar structure to situation-step; we hold sub-fields in local state, then
-build a final labeled string while also storing the structured data.
+Similar structure to situation-step; we use the new nested structure
 */
 
 "use client"
@@ -29,6 +28,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { isString, parseLegacyTask } from "@/types"
 
 interface TaskStepProps {
   /**
@@ -40,67 +40,45 @@ interface TaskStepProps {
 export default function TaskStep({ exampleKey }: TaskStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
 
-  const [responsibilityValue, setResponsibilityValue] = useState("")
-  const [helpSolveValue, setHelpSolveValue] = useState("")
+  const [responsibility, setResponsibility] = useState("")
+  const [helpSolve, setHelpSolve] = useState("")
+  const [constraints, setConstraints] = useState("")
 
   // Watch the current values from the form
   const storedTask = watch(`${exampleKey}.task`)
-  const storedDetails = watch(`${exampleKey}.taskDetails`)
-
-  // Helper to build final labeled string
-  const buildTaskString = (
-    responsibility: string,
-    helpSolve: string
-  ) => {
-    let result = ""
-    if (responsibility.trim()) {
-      result += `Responsibility: ${responsibility.trim()}\n`
-    }
-    if (helpSolve.trim()) {
-      result += `How it would help: ${helpSolve.trim()}`
-    }
-    return result.trim()
-  }
 
   const handleBlur = () => {
-    // Create the combined string for backward compatibility
-    const finalString = buildTaskString(
-      responsibilityValue,
-      helpSolveValue
-    )
-    
-    // Store both the main task field and the detailed sub-fields
-    setValue(`${exampleKey}.task`, finalString, { shouldDirty: true })
-    setValue(`${exampleKey}.taskDetails`, {
-      objective: responsibilityValue,
-      requirements: helpSolveValue,
+    // Store data in the new nested structure
+    setValue(`${exampleKey}.task`, {
+      "what-was-your-responsibility-in-addressing-this-issue": responsibility,
+      "how-would-completing-this-task-help-solve-the-problem": helpSolve,
+      "what-constraints-or-requirements-did-you-need-to-consider": constraints
     }, { shouldDirty: true })
   }
 
   // Initialize local state from existing form data if available
   useEffect(() => {
-    // If we have structured details, use those
-    if (storedDetails) {
-      setResponsibilityValue(storedDetails.objective || "")
-      setHelpSolveValue(storedDetails.requirements || "")
-    } 
-    // Otherwise, try to parse from the combined string (legacy support)
-    else if (storedTask) {
-      const lines = storedTask.split('\n')
-      lines.forEach(line => {
-        if (line.startsWith('Responsibility:')) {
-          setResponsibilityValue(line.replace('Responsibility:', '').trim())
-        } else if (line.startsWith('How it would help:')) {
-          setHelpSolveValue(line.replace('How it would help:', '').trim())
-        }
-      })
+    if (storedTask) {
+      // For the new structure, extract values from the nested object
+      if (typeof storedTask === 'object') {
+        setResponsibility(storedTask["what-was-your-responsibility-in-addressing-this-issue"] || "")
+        setHelpSolve(storedTask["how-would-completing-this-task-help-solve-the-problem"] || "")
+        setConstraints(storedTask["what-constraints-or-requirements-did-you-need-to-consider"] || "")
+      } 
+      // Legacy support for old format (string)
+      else if (isString(storedTask)) {
+        const parsedTask = parseLegacyTask(storedTask);
+        setResponsibility(parsedTask["what-was-your-responsibility-in-addressing-this-issue"] || "");
+        setHelpSolve(parsedTask["how-would-completing-this-task-help-solve-the-problem"] || "");
+        setConstraints(parsedTask["what-constraints-or-requirements-did-you-need-to-consider"] || "");
+      }
     }
-  }, [storedTask, storedDetails, exampleKey])
+  }, [storedTask, exampleKey])
 
   return (
     <div className="space-y-4">
       <FormField
-        name={`${exampleKey}.taskDetails.objective`}
+        name={`${exampleKey}.task.what-was-your-responsibility-in-addressing-this-issue`}
         render={() => (
           <FormItem>
             <FormLabel>What was your responsibility in addressing this issue?</FormLabel>
@@ -109,8 +87,8 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={responsibilityValue}
-                onChange={e => setResponsibilityValue(e.target.value)}
+                value={responsibility}
+                onChange={e => setResponsibility(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -120,7 +98,7 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
       />
 
       <FormField
-        name={`${exampleKey}.taskDetails.requirements`}
+        name={`${exampleKey}.task.how-would-completing-this-task-help-solve-the-problem`}
         render={() => (
           <FormItem>
             <FormLabel>How would completing this task help solve the problem or tackle the challenge?</FormLabel>
@@ -129,8 +107,28 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={helpSolveValue}
-                onChange={e => setHelpSolveValue(e.target.value)}
+                value={helpSolve}
+                onChange={e => setHelpSolve(e.target.value)}
+                onBlur={handleBlur}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        name={`${exampleKey}.task.what-constraints-or-requirements-did-you-need-to-consider`}
+        render={() => (
+          <FormItem>
+            <FormLabel>What constraints or requirements did you need to consider?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "We had limited resources and a tight deadline of three weeks before launch."
+            </div>
+            <FormControl>
+              <Textarea
+                value={constraints}
+                onChange={e => setConstraints(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

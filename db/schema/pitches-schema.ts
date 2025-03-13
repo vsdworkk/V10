@@ -49,64 +49,110 @@ export const pitchStatusEnum = pgEnum("pitch_status", [
 
 /**
  * @description
- * Standardized structure for STAR example details following the Situation, Task, Action, Result framework.
- * Each top-level field (situation, task, action, result) contains both the main content
- * and optional detailed sub-fields for more structured data.
+ * Defines an action step structure with specific questions about what was done,
+ * how it was done, and the outcome of the step.
+ */
+export interface ActionStep {
+  /**
+   * Step number for clear ordering (1, 2, 3, etc.)
+   */
+  stepNumber: number;
+  
+  /**
+   * Original question: "What did you specifically do in this step?"
+   */
+  "what-did-you-specifically-do-in-this-step": string;
+  
+  /**
+   * Original question: "How did you do it? (tools, methods, or skills)"
+   */
+  "how-did-you-do-it-tools-methods-or-skills": string;
+  
+  /**
+   * Original question: "What was the outcome of this step? (optional)"
+   */
+  "what-was-the-outcome-of-this-step-optional"?: string;
+}
+
+/**
+ * @description
+ * Revised structure for STAR example details following the Situation, Task, Action, Result framework.
+ * Each section contains specific questions structured as kebab-case field names.
  */
 export interface StarSchema {
   /**
    * @description
    * Situation: The context and background of the example.
-   * What was the circumstance or challenge you faced?
    */
-  situation: string;
+  situation: {
+    /**
+     * Original question: "Where and when did this experience occur?"
+     */
+    "where-and-when-did-this-experience-occur"?: string;
+    
+    /**
+     * Original question: "Briefly describe the situation or challenge you faced."
+     */
+    "briefly-describe-the-situation-or-challenge-you-faced"?: string;
+    
+    /**
+     * Original question: "Why was this a problem or why did it matter?"
+     */
+    "why-was-this-a-problem-or-why-did-it-matter"?: string;
+  };
   
   /**
    * @description
    * Task: The specific responsibility or assignment.
-   * What were you specifically tasked with doing?
    */
-  task: string;
+  task: {
+    /**
+     * Original question: "What was your responsibility in addressing this issue?"
+     */
+    "what-was-your-responsibility-in-addressing-this-issue"?: string;
+    
+    /**
+     * Original question: "How would completing this task help solve the problem?"
+     */
+    "how-would-completing-this-task-help-solve-the-problem"?: string;
+    
+    /**
+     * Original question: "What constraints or requirements did you need to consider?"
+     */
+    "what-constraints-or-requirements-did-you-need-to-consider"?: string;
+  };
   
   /**
    * @description
    * Action: The steps you took to address the situation.
-   * What did you do and how did you do it?
+   * Each step has three specific components based on exact questions.
    */
-  action: string;
+  action: {
+    /**
+     * Array of steps, each with three specific components
+     */
+    steps: ActionStep[];
+  };
   
   /**
    * @description
    * Result: The outcome of your actions.
-   * What was achieved or what happened as a result?
    */
-  result: string;
-  
-  /**
-   * Optional sub-fields for more detailed structure
-   */
-  situationDetails?: {
-    context?: string;
-    challenge?: string;
-    background?: string;
-  };
-  
-  taskDetails?: {
-    objective?: string;
-    requirements?: string;
-    constraints?: string;
-  };
-  
-  actionDetails?: {
-    steps?: string[];
-    skills?: string[];
-    approach?: string;
-  };
-  
-  resultDetails?: {
-    metrics?: string;
-    impact?: string;
-    learnings?: string;
+  result: {
+    /**
+     * Original question: "What positive outcome did you achieve?"
+     */
+    "what-positive-outcome-did-you-achieve"?: string;
+    
+    /**
+     * Original question: "How did this outcome benefit your team, stakeholders, or organization?"
+     */
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"?: string;
+    
+    /**
+     * Original question: "What did you learn from this experience?"
+     */
+    "what-did-you-learn-from-this-experience"?: string;
   };
 }
 

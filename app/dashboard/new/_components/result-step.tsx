@@ -1,15 +1,15 @@
 /**
 @description
 Client sub-component for the "Result" portion of a STAR example.
-Updated to use the new StarSchema structure with detailed sub-fields.
+Updated to use the new nested StarSchema structure with kebab-case question fields.
 Prompts user for:
-1) Positive outcome achieved (metrics)
-2) How the outcome benefited team/stakeholders/organisation (impact)
-Stores data in both the main result field and in the resultDetails sub-object.
+1) What positive outcome did you achieve?
+2) How did this outcome benefit your team, stakeholders, or organization?
+3) What did you learn from this experience?
 
 Key Features:
 - React Hook Form context
-- Stores data in both the main result field and in the resultDetails sub-object
+- Stores data directly in nested structure with kebab-case question names
 - Example ID (starExample1 or starExample2) is determined by props
 */
 
@@ -26,6 +26,7 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { isString, parseLegacyResult } from "@/types"
 
 interface ResultStepProps {
   exampleKey: "starExample1" | "starExample2"
@@ -34,66 +35,45 @@ interface ResultStepProps {
 export default function ResultStep({ exampleKey }: ResultStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
 
-  const [outcomeValue, setOutcomeValue] = useState("")
-  const [benefitValue, setBenefitValue] = useState("")
+  const [positiveOutcome, setPositiveOutcome] = useState("")
+  const [benefitToTeam, setBenefitToTeam] = useState("")
+  const [whatYouLearned, setWhatYouLearned] = useState("")
 
   // Watch the current values from the form
   const storedResult = watch(`${exampleKey}.result`)
-  const storedDetails = watch(`${exampleKey}.resultDetails`)
-
-  const buildResultString = (
-    outcome: string,
-    benefit: string
-  ) => {
-    let result = ""
-    if (outcome.trim()) {
-      result += `Outcome: ${outcome.trim()}\n`
-    }
-    if (benefit.trim()) {
-      result += `Benefit: ${benefit.trim()}`
-    }
-    return result.trim()
-  }
 
   const handleBlur = () => {
-    // Create the combined string for backward compatibility
-    const finalString = buildResultString(
-      outcomeValue,
-      benefitValue
-    )
-    
-    // Store both the main result field and the detailed sub-fields
-    setValue(`${exampleKey}.result`, finalString, { shouldDirty: true })
-    setValue(`${exampleKey}.resultDetails`, {
-      metrics: outcomeValue,
-      impact: benefitValue,
+    // Store data in the new nested structure
+    setValue(`${exampleKey}.result`, {
+      "what-positive-outcome-did-you-achieve": positiveOutcome,
+      "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": benefitToTeam,
+      "what-did-you-learn-from-this-experience": whatYouLearned
     }, { shouldDirty: true })
   }
 
   // Initialize local state from existing form data if available
   useEffect(() => {
-    // If we have structured details, use those
-    if (storedDetails) {
-      setOutcomeValue(storedDetails.metrics || "")
-      setBenefitValue(storedDetails.impact || "")
-    } 
-    // Otherwise, try to parse from the combined string (legacy support)
-    else if (storedResult) {
-      const lines = storedResult.split('\n')
-      lines.forEach(line => {
-        if (line.startsWith('Outcome:')) {
-          setOutcomeValue(line.replace('Outcome:', '').trim())
-        } else if (line.startsWith('Benefit:')) {
-          setBenefitValue(line.replace('Benefit:', '').trim())
-        }
-      })
+    if (storedResult) {
+      // For the new structure, extract values from the nested object
+      if (typeof storedResult === 'object') {
+        setPositiveOutcome(storedResult["what-positive-outcome-did-you-achieve"] || "")
+        setBenefitToTeam(storedResult["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || "")
+        setWhatYouLearned(storedResult["what-did-you-learn-from-this-experience"] || "")
+      } 
+      // Legacy support for old structure (string)
+      else if (isString(storedResult)) {
+        const parsedResult = parseLegacyResult(storedResult);
+        setPositiveOutcome(parsedResult["what-positive-outcome-did-you-achieve"] || "");
+        setBenefitToTeam(parsedResult["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || "");
+        setWhatYouLearned(parsedResult["what-did-you-learn-from-this-experience"] || "");
+      }
     }
-  }, [storedResult, storedDetails, exampleKey])
+  }, [storedResult, exampleKey])
 
   return (
     <div className="space-y-4">
       <FormField
-        name={`${exampleKey}.resultDetails.metrics`}
+        name={`${exampleKey}.result.what-positive-outcome-did-you-achieve`}
         render={() => (
           <FormItem>
             <FormLabel>What positive outcome did you achieve from your actions?</FormLabel>
@@ -102,8 +82,8 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
             </div>
             <FormControl>
               <Textarea
-                value={outcomeValue}
-                onChange={e => setOutcomeValue(e.target.value)}
+                value={positiveOutcome}
+                onChange={e => setPositiveOutcome(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -113,17 +93,37 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
       />
 
       <FormField
-        name={`${exampleKey}.resultDetails.impact`}
+        name={`${exampleKey}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`}
         render={() => (
           <FormItem>
-            <FormLabel>How did this outcome benefit your team, stakeholders, or organisation? (optional)</FormLabel>
+            <FormLabel>How did this outcome benefit your team, stakeholders, or organisation?</FormLabel>
             <div className="text-sm text-muted-foreground mb-2">
               • Example: "Our early launch resulted in praise from clients and stakeholders."
             </div>
             <FormControl>
               <Textarea
-                value={benefitValue}
-                onChange={e => setBenefitValue(e.target.value)}
+                value={benefitToTeam}
+                onChange={e => setBenefitToTeam(e.target.value)}
+                onBlur={handleBlur}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        name={`${exampleKey}.result.what-did-you-learn-from-this-experience`}
+        render={() => (
+          <FormItem>
+            <FormLabel>What did you learn from this experience?</FormLabel>
+            <div className="text-sm text-muted-foreground mb-2">
+              • Example: "I learned the importance of thorough testing before major releases."
+            </div>
+            <FormControl>
+              <Textarea
+                value={whatYouLearned}
+                onChange={e => setWhatYouLearned(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
