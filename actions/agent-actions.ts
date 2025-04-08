@@ -225,95 +225,115 @@ Years of Experience: ${pitchData.yearsExperience}
     // Convert to JSON string for the API
     const starComponents = JSON.stringify(structuredStarComponents);
 
-    // Build the agent request body
-    const agentBody = {
-      input_variables: {
-        job_description: jobDescription,
-        star_components: starComponents,
-        Star_Word_Count: "300", // Hardcoded as specified
-        User_Experience: pitchData.relevantExperience,
-        Intro_Word_Count: "200", // Hardcoded as specified
-        Conclusion_Word_Count: "200", // Hardcoded as specified
-        ILS: "Isssdsd" // Hardcoded as specified
-      },
-      return_all_outputs: false
-    };
+    // Hardcoded API key as specified in the documentation
+    const apiKey = 'pl_4c3ed9b8d7381ef88414569b8a3b2373';
 
-    // API key - in production, use environment variable
-    const apiKey = process.env.AGENT_API_KEY || 'pl_4c3ed9b8d7381ef88414569b8a3b2373';
-
-    // Make the initial POST request to start the agent
-    const options = {
+    // 1. Make POST request to run the agent
+    const postOptions = {
       method: 'POST',
       headers: {
         'X-API-KEY': apiKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(agentBody)
+      body: JSON.stringify({
+        input_variables: {
+          job_description: jobDescription,
+          star_components: starComponents,
+          Star_Word_Count: "300", // Hardcoded as specified
+          User_Experience: pitchData.relevantExperience,
+          Intro_Word_Count: "200", // Hardcoded as specified
+          Conclusion_Word_Count: "200", // Hardcoded as specified
+          ILS: "Isssdsd" // Hardcoded as specified
+        },
+        return_all_outputs: false
+      })
     };
 
-    const response = await fetch('https://api.promptlayer.com/workflows/Master_Agent_V1/run', options);
+    // Send the POST request to start the agent execution
+    const postResponse = await fetch('https://api.promptlayer.com/workflows/Master_Agent_V1/run', postOptions);
     
-    if (!response.ok) {
-      throw new Error(`Agent API request failed with status: ${response.status}`);
+    if (!postResponse.ok) {
+      const errorText = await postResponse.text();
+      throw new Error(`Failed to start agent execution: ${errorText}`);
     }
     
-    const result = await response.json();
-    const executionId = result.workflow_version_execution_id;
+    const postData = await postResponse.json();
+    
+    if (!postData.success) {
+      throw new Error(postData.message || "Failed to start agent execution");
+    }
+    
+    // Extract the workflow_version_execution_id from the response
+    const executionId = postData.workflow_version_execution_id;
     
     if (!executionId) {
-      throw new Error('No execution ID returned from agent API');
-    }
-
-    // Wait 150 seconds as specified before getting results
-    console.log(`Waiting for agent processing, execution ID: ${executionId}`);
-    await setTimeout(150000); // 150 seconds
-    
-    // Retrieve the results
-    const getOptions = {
-      method: 'GET', 
-      headers: {'X-API-KEY': apiKey}
-    };
-    
-    const getUrl = `https://api.promptlayer.com/workflow-version-execution-results?workflow_version_execution_id=${executionId}`;
-    const getResponse = await fetch(getUrl, getOptions);
-    
-    if (!getResponse.ok) {
-      throw new Error(`Agent results request failed with status: ${getResponse.status}`);
+      throw new Error("No execution ID received from agent");
     }
     
-    const getResult = await getResponse.json();
+    console.log(`Agent execution started with ID: ${executionId}`);
     
-    // Extract the generated pitch from the result
-    const generatedPitch = getResult.result || getResult.output || "";
+    // 2. Poll for results (with retry logic)
+    let maxRetries = 30; // 30 retries with 5 second delay = up to 150 seconds of waiting
+    let resultData = null;
     
-    if (!generatedPitch) {
-      throw new Error('No pitch content returned from agent API');
+    while (maxRetries > 0) {
+      // Wait 5 seconds between checks
+      await setTimeout(5000);
+      
+      // Make GET request to check for results
+      const getOptions = {
+        method: 'GET', 
+        headers: {'X-API-KEY': apiKey}
+      };
+      
+      try {
+        const getResponse = await fetch(
+          `https://api.promptlayer.com/workflow-version-execution-results?workflow_version_execution_id=${executionId}`, 
+          getOptions
+        );
+        
+        if (getResponse.ok) {
+          const data = await getResponse.json();
+          
+          // Check if processing is complete and we have a result
+          if (data && typeof data === 'string') {
+            resultData = data;
+            break;
+          }
+        }
+      } catch (error) {
+        console.log(`Polling attempt failed, retries left: ${maxRetries}`, error);
+      }
+      
+      maxRetries--;
     }
     
+    if (!resultData) {
+      throw new Error("Timed out waiting for agent response. Please try again.");
+    }
+    
+    // Return the agent-generated pitch
     return {
       isSuccess: true,
-      message: "Pitch generated successfully by agent",
-      data: generatedPitch
+      message: "Pitch generated successfully via PromptLayer agent",
+      data: resultData
     };
-    
   } catch (error) {
     console.error("Error generating pitch with agent:", error);
     
-    // Handle timeout errors specifically
+    // Check for timeout errors
     if (error instanceof Error && 
         (error.message.includes('timeout') || 
-         error.message.includes('ETIMEDOUT') || 
-         error.message.includes('FUNCTION_INVOCATION_TIMEOUT'))) {
+         error.message.includes('Timed out'))) {
       return {
         isSuccess: false,
-        message: "The request took too long to process. Please try again or use a shorter description."
+        message: "The agent took too long to process your request. Please try again or simplify your inputs."
       };
     }
     
     return {
       isSuccess: false,
-      message: error instanceof Error ? error.message : "Failed to generate pitch with agent"
+      message: (error as Error).message || "Failed to generate pitch with agent"
     };
   }
 } 
