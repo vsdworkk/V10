@@ -5,5 +5,8 @@
       "memory": 1024,
       "maxDuration": 300
     }
-  }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next"
 } 
