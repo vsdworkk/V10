@@ -35,7 +35,8 @@ import { z } from "zod"
 const updatePitchSchema = z.object({
   id: z.string().uuid().optional(),
   userId: z.string().optional(),
-  albertGuidance: z.string().optional()
+  albertGuidance: z.string().optional(),
+  starExamplesCount: z.number().min(2).max(3).optional()
 })
 
 /**

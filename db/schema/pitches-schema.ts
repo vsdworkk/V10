@@ -20,6 +20,7 @@
  * - pitchContent: The final AI-generated pitch text
  * - status: "draft", "final", or "submitted" (pgEnum: pitch_status)
  * - createdAt, updatedAt: Timestamps auto-managed by Drizzle
+ * - starExamplesCount: The number of star examples selected by the user (default: 2)
  *
  * @notes
  * - We do not generate migrations or run them as per instructions. This schema is for runtime usage.
@@ -264,6 +265,13 @@ export const pitchesTable = pgTable("pitches", {
    * The status of the pitch - "draft", "final", or "submitted".
    */
   status: pitchStatusEnum("status").notNull().default("draft"),
+
+  /**
+   * @description
+   * Number of STAR examples to include (2 or 3).
+   * Default is 2 to match the existing behavior.
+   */
+  starExamplesCount: integer("star_examples_count").default(2).notNull(),
 
   /**
    * @description

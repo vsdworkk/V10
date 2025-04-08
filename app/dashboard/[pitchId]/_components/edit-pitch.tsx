@@ -72,7 +72,8 @@ const editPitchSchema = z.object({
   resumePath: z.string().optional().nullable(),
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional(),
-  pitchContent: z.string().optional().nullable()
+  pitchContent: z.string().optional().nullable(),
+  starExamplesCount: z.number().min(2).max(3).default(2)
 })
 type EditPitchFormData = z.infer<typeof editPitchSchema>
 
@@ -106,7 +107,8 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
         result: ""
       },
       starExample2: (pitch.starExample2 as any) || undefined,
-      pitchContent: pitch.pitchContent ?? ""
+      pitchContent: pitch.pitchContent ?? "",
+      starExamplesCount: pitch.starExamplesCount || 2
     }
   })
 
@@ -285,6 +287,32 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                         2 STAR examples are required.
                       </p>
                     )}
+                  </FormItem>
+                )}
+              />
+
+              {/* Star Examples Count */}
+              <FormField
+                control={methods.control}
+                name="starExamplesCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of STAR Examples</FormLabel>
+                    <FormControl>
+                      <Select 
+                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                        defaultValue={String(field.value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select count" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="3">3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />

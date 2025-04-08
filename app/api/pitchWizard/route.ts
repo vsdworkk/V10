@@ -46,7 +46,8 @@ export async function POST(request: Request) {
       starExample2: body.starExample2 || null,
       albertGuidance: body.albertGuidance || "",
       pitchContent: body.pitchContent || "",
-      status: body.status || "draft"
+      status: body.status || "draft",
+      starExamplesCount: body.starExamplesCount ? parseInt(body.starExamplesCount) : 2
     }
 
     let result;

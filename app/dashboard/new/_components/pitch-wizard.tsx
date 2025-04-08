@@ -110,6 +110,7 @@ const starSchema = z.object({
  *  - starExample2 (optional if pitchWordLimit >= 650)
  *  - pitchContent (AI-generated final text)
  *  - selectedFile (the local File object for potential upload in Step 2)
+ *  - starExamplesCount (number of STAR examples to include, default 2)
  */
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
@@ -127,7 +128,8 @@ const pitchWizardSchema = z.object({
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional(),
   pitchContent: z.string().optional(),
-  selectedFile: z.any().optional()
+  selectedFile: z.any().optional(),
+  starExamplesCount: z.enum(["2", "3"]).default("2")
 })
 
 export type PitchWizardFormData = z.infer<typeof pitchWizardSchema>
@@ -200,7 +202,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           },
           starExample2: pitchData.starExample2 ? (pitchData.starExample2 as any) : undefined,
           pitchContent: pitchData.pitchContent || "",
-          selectedFile: null
+          selectedFile: null,
+          starExamplesCount: (pitchData.starExamplesCount === 3 ? "3" : "2") as "2" | "3"
         }
       : {
           userId,
@@ -221,7 +224,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           },
           starExample2: undefined,
           pitchContent: "",
-          selectedFile: null
+          selectedFile: null,
+          starExamplesCount: "2" as "2" | "3"
         },
     mode: "onChange" // Enable validation as fields change
   })
@@ -495,7 +499,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       starExample2: data.starExample2 || null,
       albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent || "",
-      status: "draft"
+      status: "draft",
+      starExamplesCount: data.starExamplesCount
     };
 
     // If we have a pitch ID (either from props or from previous save), include it
@@ -671,7 +676,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       starExample2: data.starExample2,
       albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent,
-      status: pitchStatus
+      status: pitchStatus,
+      starExamplesCount: data.starExamplesCount
     }
 
     // If we're editing an existing pitch, include the ID

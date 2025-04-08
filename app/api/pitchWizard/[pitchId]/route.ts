@@ -46,7 +46,8 @@ const updatePitchSchema = z.object({
   starExample1: z.any().optional(),
   starExample2: z.any().optional(),
   albertGuidance: z.string().optional().nullable(),
-  pitchContent: z.string().optional().nullable()
+  pitchContent: z.string().optional().nullable(),
+  starExamplesCount: z.number().min(2).max(3).optional()
 })
 
 /**

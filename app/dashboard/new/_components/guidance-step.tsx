@@ -20,11 +20,21 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 import { useParams } from "next/navigation"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 
 export default function GuidanceStep() {
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
   const params = useParams()
+  
+  // Get the star examples count from the form
+  const starExamplesCount = watch("starExamplesCount")
 
   // We watch these fields to build the request for guidance:
   const roleName = watch("roleName")
@@ -65,7 +75,8 @@ export default function GuidanceStep() {
       const payload = {
         id: pitchId as string,
         userId: formData.userId,
-        albertGuidance: guidance
+        albertGuidance: guidance,
+        starExamplesCount: parseInt(formData.starExamplesCount)
       }
   
       const response = await fetch(`/api/pitches/${pitchId}`, {
@@ -178,21 +189,64 @@ export default function GuidanceStep() {
     void fetchGuidance()
   }
 
+  // Handle star examples count change
+  const handleStarExamplesCountChange = (value: "2" | "3") => {
+    // Update the form context
+    setValue("starExamplesCount", value, { shouldDirty: true })
+    
+    // If we have a pitch ID, update the database
+    const pitchId = params?.pitchId
+    if (pitchId) {
+      const formData = getValues()
+      const payload = {
+        id: pitchId as string,
+        userId: formData.userId,
+        starExamplesCount: parseInt(value)
+      }
+      
+      fetch(`/api/pitches/${pitchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(error => {
+        console.error("Error saving star examples count:", error)
+      })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Albert's Guidance</h2>
-        {albertGuidance && !loading && (
-          <Button 
-            onClick={handleManualRefresh} 
-            variant="outline" 
-            size="sm"
-            disabled={loading}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Guidance
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <span className="text-sm mr-2">Star examples:</span>
+            <Select
+              value={starExamplesCount}
+              onValueChange={handleStarExamplesCountChange}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="Count" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {albertGuidance && !loading && (
+            <Button 
+              onClick={handleManualRefresh} 
+              variant="outline" 
+              size="sm"
+              disabled={loading}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Guidance
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Show loading, error, or the Card with guidance */}
