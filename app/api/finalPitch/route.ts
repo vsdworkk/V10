@@ -19,8 +19,8 @@
 import { NextResponse } from "next/server"
 import { generateAgentPitchAction } from "@/actions/agent-actions"
 
-// Increase the timeout for this route - agent processing takes 3 minutes plus overhead
-export const maxDuration = 240 // 4 minutes (240 seconds) to allow for agent processing
+// Increase the timeout for this route - agent processing takes 150s
+export const maxDuration = 180 // 180 seconds (3 minutes) to allow for agent processing
 
 export async function POST(request: Request) {
   try {

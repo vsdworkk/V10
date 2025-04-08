@@ -265,9 +265,9 @@ Years of Experience: ${pitchData.yearsExperience}
       throw new Error('No execution ID returned from agent API');
     }
 
-    // Wait 3 minutes as specified before getting results
+    // Wait 150 seconds as specified before getting results
     console.log(`Waiting for agent processing, execution ID: ${executionId}`);
-    await setTimeout(180000); // 3 minutes (180 seconds)
+    await setTimeout(150000); // 150 seconds
     
     // Retrieve the results
     const getOptions = {
@@ -284,82 +284,11 @@ Years of Experience: ${pitchData.yearsExperience}
     
     const getResult = await getResponse.json();
     
-    // Log the complete response to understand its structure
-    console.log("Agent API response:", JSON.stringify(getResult, null, 2));
-    
-    // Extract the generated pitch from the result - handle different possible structures
-    let generatedPitch = "";
-    
-    // Handle the case where the entire response is a string (direct text response)
-    if (typeof getResult === 'string') {
-      generatedPitch = getResult;
-    } 
-    // Handle the case where the response is a JSON string that needs to be parsed
-    else if (typeof getResult === 'string' && (getResult.startsWith('{') || getResult.startsWith('['))) {
-      try {
-        const parsedResult = JSON.parse(getResult);
-        if (typeof parsedResult === 'string') {
-          generatedPitch = parsedResult;
-        } else if (parsedResult && typeof parsedResult === 'object') {
-          generatedPitch = parsedResult.result || parsedResult.output || parsedResult.response || JSON.stringify(parsedResult);
-        }
-      } catch (e) {
-        // If parsing fails, use the string directly
-        generatedPitch = getResult;
-      }
-    }
-    // Check various potential locations in the response structure if it's an object
-    else if (getResult && typeof getResult === 'object') {
-      if ('result' in getResult && getResult.result) {
-        generatedPitch = String(getResult.result);
-      } else if ('output' in getResult && getResult.output) {
-        generatedPitch = String(getResult.output);
-      } else if ('response' in getResult && getResult.response) {
-        generatedPitch = String(getResult.response);
-      } else if ('output_variables' in getResult && getResult.output_variables) {
-        // If output is in an output_variables object
-        const outputVars = getResult.output_variables;
-        if (typeof outputVars === 'object' && outputVars !== null) {
-          // Look for any property that might contain the output
-          for (const key of Object.keys(outputVars)) {
-            if (outputVars[key] && typeof outputVars[key] === 'string') {
-              generatedPitch = outputVars[key];
-              break;
-            }
-          }
-        }
-      } else if (Array.isArray(getResult) && getResult.length > 0) {
-        // If the result is an array, try to get the first item
-        const firstItem = getResult[0];
-        if (typeof firstItem === 'string') {
-          generatedPitch = firstItem;
-        } else if (typeof firstItem === 'object' && firstItem !== null) {
-          // Try common fields in the first object
-          generatedPitch = String(
-            firstItem.result || 
-            firstItem.output || 
-            firstItem.response || 
-            firstItem.text || 
-            firstItem.content || 
-            JSON.stringify(firstItem)
-          );
-        }
-      } else {
-        // Last resort: stringify the entire result
-        generatedPitch = JSON.stringify(getResult);
-      }
-    }
-    
-    console.log("Extracted pitch content:", generatedPitch ? "Content found" : "No content found");
-    
-    // Looks like we're getting the response as a direct string, so let's use it even if our detection thinks it's empty
-    if (!generatedPitch && typeof getResult === 'string' && getResult.length > 100) {
-      console.log("Using the raw response as pitch content");
-      generatedPitch = getResult;
-    }
+    // Extract the generated pitch from the result
+    const generatedPitch = getResult.result || getResult.output || "";
     
     if (!generatedPitch) {
-      throw new Error('No pitch content found in agent API response. Full response: ' + JSON.stringify(getResult));
+      throw new Error('No pitch content returned from agent API');
     }
     
     return {
