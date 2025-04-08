@@ -1,27 +1,26 @@
 /**
  * @description
- * API route for generating the final pitch text from GPT-4o ("Albert").
+ * API route for generating the final pitch text using our custom agent.
  * 
  * Key Features:
- * - Expects role and experience fields (same as guidance, plus STAR examples).
- * - Calls generatePitchAction in "pitch" mode.
- * - Returns the AI-generated pitch in JSON format for the client wizard.
+ * - Expects role and experience fields (same as before).
+ * - Calls generateAgentPitchAction to use our custom agent instead of OpenAI.
+ * - Returns the agent-generated pitch in JSON format for the client wizard.
  * 
  * @dependencies
- * - generatePitchAction from "@/actions/ai-actions"
+ * - generateAgentPitchAction from "@/actions/agent-actions"
  * - NextResponse for JSON responses
  * 
  * @notes
- * This route is similar to /api/albertGuidance but uses mode="pitch" to get
- * a complete final pitch instead of suggestions. The client can then show an
- * editable text area for the user to refine the content.
+ * This route replaces the previous implementation that used OpenAI's API directly.
+ * The client-side code remains unchanged as the response format is the same.
  */
 
 import { NextResponse } from "next/server"
-import { generatePitchAction } from "@/actions/ai-actions"
+import { generateAgentPitchAction } from "@/actions/agent-actions"
 
-// Increase the timeout for this route
-export const maxDuration = 55 // 55 seconds
+// Increase the timeout for this route - agent processing takes 3 minutes plus overhead
+export const maxDuration = 240 // 4 minutes (240 seconds) to allow for agent processing
 
 export async function POST(request: Request) {
   try {
@@ -42,8 +41,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // We call generatePitchAction with mode="pitch" (default)
-    const aiResult = await generatePitchAction({
+    // Call our new agent action instead of the OpenAI action
+    const agentResult = await generateAgentPitchAction({
       roleName: body.roleName,
       roleLevel: body.roleLevel,
       pitchWordLimit: Number(body.pitchWordLimit),
@@ -51,19 +50,18 @@ export async function POST(request: Request) {
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
       starExample1: body.starExample1,
-      starExample2: body.starExample2,
-      mode: "pitch"
+      starExample2: body.starExample2
     })
 
-    if (!aiResult.isSuccess) {
+    if (!agentResult.isSuccess) {
       return NextResponse.json(
-        { isSuccess: false, message: aiResult.message },
+        { isSuccess: false, message: agentResult.message },
         { status: 500 }
       )
     }
 
     return NextResponse.json(
-      { isSuccess: true, message: aiResult.message, data: aiResult.data },
+      { isSuccess: true, message: agentResult.message, data: agentResult.data },
       { status: 200 }
     )
   } catch (error: any) {
