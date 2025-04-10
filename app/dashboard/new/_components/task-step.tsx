@@ -46,6 +46,9 @@ export default function TaskStep({ exampleKey }: TaskStepProps) {
 
   // Watch the current values from the form
   const storedTask = watch(`${exampleKey}.task`)
+  
+  // Determine which STAR example number we're working on
+  const exampleNumber = exampleKey === "starExample1" ? 1 : 2
 
   const handleBlur = () => {
     // Store data in the new nested structure

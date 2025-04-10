@@ -41,6 +41,10 @@ export default function ResultStep({ exampleKey }: ResultStepProps) {
 
   // Watch the current values from the form
   const storedResult = watch(`${exampleKey}.result`)
+  
+  // Determine which STAR example number we're working on
+  const exampleNumber = exampleKey === "starExample1" ? 1 : 
+                        exampleKey === "starExample2" ? 2 : 3;
 
   const handleBlur = () => {
     // Store data in the new nested structure

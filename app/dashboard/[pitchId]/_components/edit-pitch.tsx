@@ -50,6 +50,7 @@ import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import ExportPitch from "./export-pitch" // <-- NEW IMPORT
 import { cn } from "@/lib/utils"
+import { useStepContext } from "@/app/dashboard/new/_components/progress-bar-wrapper"
 
 // STAR validation schema
 const starSchema = z.object({
@@ -87,6 +88,8 @@ interface EditPitchProps {
 export default function EditPitch({ pitch, userId }: EditPitchProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const [isStarCountLocked, setIsStarCountLocked] = useState(false)
+  const { markStepCompleted } = useStepContext()
 
   // Initialize react-hook-form
   const methods = useForm<EditPitchFormData>({
@@ -187,6 +190,37 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
         const err = await res.json()
         throw new Error(err.error || "Failed to update pitch")
       }
+      
+      // Lock the star examples count after saving
+      setIsStarCountLocked(true)
+      
+      // Mark this step as completed in the progress bar
+      markStepCompleted(1) // Basic info
+      
+      if (data.yearsExperience && data.relevantExperience) {
+        markStepCompleted(2) // Experience
+      }
+      
+      if (data.starExample1?.situation && data.starExample1?.task && 
+          data.starExample1?.action && data.starExample1?.result) {
+        markStepCompleted(4) // STAR Example 1 - Situation
+        markStepCompleted(5) // STAR Example 1 - Task
+        markStepCompleted(6) // STAR Example 1 - Action
+        markStepCompleted(7) // STAR Example 1 - Result
+      }
+      
+      if (watchWordLimit >= 650 && data.starExample2?.situation && data.starExample2?.task && 
+          data.starExample2?.action && data.starExample2?.result) {
+        markStepCompleted(8) // STAR Example 2 - Situation
+        markStepCompleted(9) // STAR Example 2 - Task
+        markStepCompleted(10) // STAR Example 2 - Action
+        markStepCompleted(11) // STAR Example 2 - Result
+      }
+      
+      if (data.pitchContent) {
+        markStepCompleted(12) // Review
+      }
+      
       toast({
         title: "Pitch Updated",
         description: "Your changes have been saved."
@@ -311,8 +345,12 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     <FormLabel>Number of STAR Examples</FormLabel>
                     <FormControl>
                       <Select 
-                        onValueChange={(value) => field.onChange(parseInt(value))} 
+                        onValueChange={(value) => {
+                          field.onChange(parseInt(value))
+                          // No need to change locking state here
+                        }}
                         defaultValue={String(field.value)}
+                        disabled={isStarCountLocked}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select count" />
@@ -323,6 +361,11 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                         </SelectContent>
                       </Select>
                     </FormControl>
+                    {isStarCountLocked && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Star example count is locked. This cannot be changed once set.
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -397,75 +440,19 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
             {/* STAR Examples */}
             <div className="my-6 border-b pb-2 pt-4">
               <h2 className="text-lg font-semibold">STAR Examples</h2>
+              <p className="text-sm text-muted-foreground">
+                Use the Situation-Task-Action-Result format to describe your relevant experiences.
+              </p>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-medium">STAR Example 1</h3>
-              {/* Situation */}
-              <FormField
-                control={methods.control}
-                name="starExample1.situation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Situation</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Describe the context or situation..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Task */}
-              <FormField
-                control={methods.control}
-                name="starExample1.task"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Task</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="What was your responsibility or goal?" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Action */}
-              <FormField
-                control={methods.control}
-                name="starExample1.action"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Action</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="What action(s) did you take?" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Result */}
-              <FormField
-                control={methods.control}
-                name="starExample1.result"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Result</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="What were the outcomes or results?" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* STAR Example 2 (only shown if pitchWordLimit >= 650) */}
-            {watchWordLimit >= 650 && (
-              <div className="mt-4 space-y-2">
-                <h3 className="font-medium">STAR Example 2</h3>
+            
+            {/* STAR Example 1 */}
+            <div className="space-y-3 mb-8 border rounded-lg p-5 bg-slate-50">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">STAR Example 1</h3>
+              <div className="space-y-4">
                 {/* Situation */}
                 <FormField
                   control={methods.control}
-                  name="starExample2.situation"
+                  name="starExample1.situation"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Situation</FormLabel>
@@ -479,7 +466,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 {/* Task */}
                 <FormField
                   control={methods.control}
-                  name="starExample2.task"
+                  name="starExample1.task"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Task</FormLabel>
@@ -493,7 +480,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 {/* Action */}
                 <FormField
                   control={methods.control}
-                  name="starExample2.action"
+                  name="starExample1.action"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Action</FormLabel>
@@ -507,7 +494,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 {/* Result */}
                 <FormField
                   control={methods.control}
-                  name="starExample2.result"
+                  name="starExample1.result"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Result</FormLabel>
@@ -518,6 +505,71 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                     </FormItem>
                   )}
                 />
+              </div>
+            </div>
+
+            {/* STAR Example 2 (only shown if pitchWordLimit >= 650) */}
+            {watchWordLimit >= 650 && (
+              <div className="space-y-3 mb-8 border rounded-lg p-5 bg-slate-50">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2">STAR Example 2</h3>
+                <div className="space-y-4">
+                  {/* Situation */}
+                  <FormField
+                    control={methods.control}
+                    name="starExample2.situation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Situation</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Describe the context or situation..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Task */}
+                  <FormField
+                    control={methods.control}
+                    name="starExample2.task"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Task</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="What was your responsibility or goal?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Action */}
+                  <FormField
+                    control={methods.control}
+                    name="starExample2.action"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Action</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="What action(s) did you take?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Result */}
+                  <FormField
+                    control={methods.control}
+                    name="starExample2.result"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Result</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="What were the outcomes or results?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 

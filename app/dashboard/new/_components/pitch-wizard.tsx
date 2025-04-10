@@ -158,12 +158,13 @@ const stepTitles = [
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const { toast } = useToast()
   const router = useRouter()
-  const { setCurrentStep, setTotalSteps } = useStepContext()
+  const { setCurrentStep, setTotalSteps, markStepCompleted } = useStepContext()
   const [currentStepLocal, setCurrentStepLocal] = useState(1)
   const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
+  const [isStarCountLocked, setIsStarCountLocked] = useState(false)
 
   // Helper function to ensure roleLevel is one of the valid enum values
   const validateRoleLevel = (level: string): "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1" => {
@@ -247,47 +248,44 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   useEffect(() => {
     if (pitchData) {
       // Initialize completed steps based on filled data
-      const newCompletedSteps: number[] = []
       
       // Step 1: Role Information
       if (pitchData.roleName && pitchData.roleLevel) {
-        newCompletedSteps.push(1)
+        markStepCompleted(1)
       }
       
       // Step 2: Experience
       if (pitchData.yearsExperience && pitchData.relevantExperience) {
-        newCompletedSteps.push(2)
+        markStepCompleted(2)
       }
       
       // Step 3: Guidance
       if (pitchData.albertGuidance) {
-        newCompletedSteps.push(3)
+        markStepCompleted(3)
       }
       
       // STAR Example 1 steps
       if (pitchData.starExample1) {
         const star1 = pitchData.starExample1 as any
-        if (star1.situation) newCompletedSteps.push(4)
-        if (star1.task) newCompletedSteps.push(5)
-        if (star1.action) newCompletedSteps.push(6)
-        if (star1.result) newCompletedSteps.push(7)
+        if (star1.situation) markStepCompleted(4)
+        if (star1.task) markStepCompleted(5)
+        if (star1.action) markStepCompleted(6)
+        if (star1.result) markStepCompleted(7)
       }
       
       // STAR Example 2 steps (if needed)
       if (pitchData.pitchWordLimit >= 650 && pitchData.starExample2) {
         const star2 = pitchData.starExample2 as any
-        if (star2.situation) newCompletedSteps.push(8)
-        if (star2.task) newCompletedSteps.push(9)
-        if (star2.action) newCompletedSteps.push(10)
-        if (star2.result) newCompletedSteps.push(11)
+        if (star2.situation) markStepCompleted(8)
+        if (star2.task) markStepCompleted(9)
+        if (star2.action) markStepCompleted(10)
+        if (star2.result) markStepCompleted(11)
       }
       
       // Final step
       if (pitchData.pitchContent) {
-        newCompletedSteps.push(12)
+        markStepCompleted(12)
       }
-      
-      setCompletedSteps(newCompletedSteps)
       
       // Determine the appropriate starting step
       // If they have completed all steps, start at the review step
@@ -326,7 +324,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         setCurrentStepLocal(1)
       }
     }
-  }, [pitchData])
+  }, [pitchData, markStepCompleted]);
 
   // If user chooses a limit < 650, we remove starExample2 from form data
   useEffect(() => {
@@ -449,13 +447,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       setIsGeneratingFinalPitch(false)
     }
   }
-
-  // Mark current step as completed when moving to next step
-  const markStepCompleted = (step: number) => {
-    if (!completedSteps.includes(step)) {
-      setCompletedSteps(prev => [...prev, step]);
-    }
-  };
 
   /**
    * @function saveCurrentState
@@ -581,11 +572,23 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     if (currentStep === 2) {
       await autoUploadResume()
     }
+    
+    // Lock the STAR examples count when leaving the guidance step
+    if (currentStep === 3) {
+      setIsStarCountLocked(true)
+      
+      // Show a toast to let the user know
+      toast({
+        title: "STAR Examples Count Locked",
+        description: `Your selection of ${methods.getValues("starExamplesCount")} STAR examples has been locked.`,
+      })
+    }
 
     // Special case: Generate final pitch after last STAR step for Example 1
     // if the word limit is < 650
     if (currentStep === 7 && numericLimit() < 650) {
       await generateFinalPitch()
+      markStepCompleted(currentStep)
       setCurrentStepLocal(12)
       return
     }
@@ -593,14 +596,15 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     // Special case: Generate final pitch after last STAR step for Example 2
     if (currentStep === 11) {
       await generateFinalPitch()
+      markStepCompleted(currentStep)
       setCurrentStepLocal(12)
       return
     }
 
     // Otherwise, just increment
-    setCurrentStepLocal(s => Math.min(s + 1, totalSteps))
     markStepCompleted(currentStep)
-  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps, saveCurrentState])
+    setCurrentStepLocal(s => Math.min(s + 1, totalSteps))
+  }, [currentStep, methods, toast, autoUploadResume, numericLimit, generateFinalPitch, totalSteps, saveCurrentState, markStepCompleted])
 
   /**
    * @function goBack
@@ -734,6 +738,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         return null
     }
   }
+
+  // Add a local wrapper for markStepCompleted
+  const markStepCompletedLocal = (step: number) => {
+    markStepCompleted(step)
+    if (!completedSteps.includes(step)) {
+      setCompletedSteps(prev => [...prev, step]);
+    }
+  };
 
   /**
    * If we're currently generating the final pitch automatically, display a

@@ -24,6 +24,7 @@ import { redirect } from "next/navigation"
 import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
 import ProgressBarWrapper from "@/app/dashboard/new/_components/progress-bar-wrapper"
 import CheckStoredPitch from "@/app/dashboard/new/_components/check-stored-pitch"
+import DynamicHeader from "./_components/dynamic-header"
 
 export default async function CreateNewPitchPage() {
   // Check if the user is authenticated
@@ -40,16 +41,10 @@ export default async function CreateNewPitchPage() {
       {/* Check if there's a stored pitch ID and redirect if found */}
       <CheckStoredPitch />
       
-      <ProgressBarWrapper />
-      
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Role Details</h1>
-        <p className="text-muted-foreground mt-2">
-          Follow the steps below to create a tailored pitch for your APS application.
-        </p>
-      </div>
-      
-      <PitchWizard userId={userId} />
+      <ProgressBarWrapper>
+        <DynamicHeader />
+        <PitchWizard userId={userId} />
+      </ProgressBarWrapper>
     </div>
   )
 }

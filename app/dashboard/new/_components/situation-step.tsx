@@ -62,6 +62,10 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
   // Watch the current values from the form - this needs to be adapted for the new structure
   const storedSituation = watch(`${exampleKey}.situation`)
   
+  // Determine which STAR example number we're working on
+  const exampleNumber = exampleKey === "starExample1" ? 1 : 
+                        exampleKey === "starExample2" ? 2 : 3;
+  
   /**
    * Handler to update the form state with the new nested structure
    */

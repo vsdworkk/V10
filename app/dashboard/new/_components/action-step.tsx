@@ -54,6 +54,10 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
   // Watch the current values from the form
   const storedAction = watch(`${exampleKey}.action`)
   
+  // Determine which STAR example number we're working on
+  const exampleNumber = exampleKey === "starExample1" ? 1 : 
+                        exampleKey === "starExample2" ? 2 : 3;
+  
   // Maximum steps limit
   const MAX_STEPS = 5
   const hasReachedMaxSteps = steps.length >= MAX_STEPS
@@ -227,49 +231,42 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground">
-          Document your actions in sequential steps. Add each step one by one, filling in the details and saving before moving to the next.
-        </p>
-      </div>
+    <div className="space-y-4">
+      {/* Step list */}
+      <Accordion
+        type="single"
+        collapsible
+        value={openStep}
+        onValueChange={handleValueChange}
+        className="space-y-2"
+      >
+        {steps.map(step => (
+          <StepItem
+            key={step.id}
+            step={step}
+            onSave={handleSaveStep}
+          />
+        ))}
+      </Accordion>
+
+      {/* Add step button */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleAddStep}
+        disabled={hasReachedMaxSteps}
+        className="mt-2"
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        Add Step {steps.length > 0 ? steps.length + 1 : 1}
+      </Button>
       
-      <div className="bg-muted/40 p-4 rounded-lg">
-        <Accordion
-          type="single"
-          collapsible
-          value={openStep}
-          onValueChange={handleValueChange}
-          className="space-y-3"
-        >
-          {steps.map((step) => (
-            <StepItem
-              key={step.id}
-              step={step}
-              onSave={handleSaveStep}
-            />
-          ))}
-        </Accordion>
-        
-        <div className="mt-4">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={hasReachedMaxSteps}
-            onClick={handleAddStep}
-            className="w-full"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Step {steps.length + 1}
-          </Button>
-          {hasReachedMaxSteps && (
-            <p className="text-sm text-muted-foreground mt-2 text-center">
-              Maximum of {MAX_STEPS} steps reached
-            </p>
-          )}
-        </div>
-      </div>
+      {hasReachedMaxSteps && (
+        <p className="text-xs text-muted-foreground">
+          You've reached the maximum number of steps ({MAX_STEPS}).
+        </p>
+      )}
     </div>
   )
 }

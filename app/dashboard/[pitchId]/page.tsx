@@ -28,6 +28,8 @@ import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
 import EditPitch from "./_components/edit-pitch"
+import ProgressBarWrapper from "@/app/dashboard/new/_components/progress-bar-wrapper"
+import EditHeader from "./_components/edit-header"
 
 /**
  * In Next.js 15, dynamic route params are async.
@@ -65,8 +67,13 @@ export default async function PitchDetailPage({ params }: PitchDetailPageProps) 
   // Render the EditPitch client component in Suspense, if needed
   const pitch = result.data
   return (
-    <Suspense fallback={<div className="p-6">Loading Pitch...</div>}>
-      <EditPitch pitch={pitch} userId={userId} />
-    </Suspense>
+    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+      <ProgressBarWrapper>
+        <EditHeader />
+        <Suspense fallback={<div className="p-6">Loading Pitch...</div>}>
+          <EditPitch pitch={pitch} userId={userId} />
+        </Suspense>
+      </ProgressBarWrapper>
+    </div>
   )
 }
