@@ -5,20 +5,20 @@ Collects:
  - roleName
  - organisationName
  - roleLevel (now APS1, APS2, APS3, APS4, APS5, APS6, EL1)
- - pitchWordLimit (dropdown with <500, <650, <750, <1000>)
+ - pitchWordLimit (numeric input for any value > 0)
  - roleDescription (optional)
 
 Key Features:
  - Uses React Hook Form context from the wizard
  - Provides basic inputs with label + error display
- - Word limit is no longer a numeric text field; it is a dropdown with discrete strings.
+ - Word limit is now a numeric text field allowing any value greater than 0.
 
 @dependencies
 React Hook Form, zod for validation
 Shadcn UI components for consistent styling
 
 @notes
-We replaced the old numeric text input for pitchWordLimit with a Select.
+We replaced the old dropdown for pitchWordLimit with a numeric Input.
 We replaced old roleLevel items with APS1, APS2, APS3, APS4, APS5, APS6, EL1.
 */
 "use client"
@@ -207,33 +207,34 @@ export default function RoleStep() {
               <FormField
                 control={control}
                 name="pitchWordLimit"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormControl>
-                      <Select
-                        onValueChange={(val) => {
-                          // Explicitly ensure we're working with a string
-                          // This is important for the form validation
-                          field.onChange(String(val));
+                      <Input
+                        {...field}
+                        type="number"
+                        min="400"
+                        placeholder="Minimum 400 words"
+                        className={cn(
+                          "bg-background",
+                          (field.value !== undefined && field.value < 400) ? "border-red-500 focus-visible:ring-red-500" : ""
+                        )}
+                        onChange={(e) => {
+                          // Convert string value to number
+                          const value = parseInt(e.target.value) || 0;
+                          field.onChange(value);
                         }}
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Select a limit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="<500">{"<500"}</SelectItem>
-                          <SelectItem value="<650">{"<650"}</SelectItem>
-                          <SelectItem value="<750">{"<750"}</SelectItem>
-                          <SelectItem value="<1000">{"<1000"}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormDescription>
-                      Choose the maximum word count for your pitch
+                      Enter the maximum word count for your pitch (minimum 400)
                     </FormDescription>
-                    <FormMessage />
+                    {field.value !== undefined && field.value < 400 ? (
+                      <p className="text-red-500 text-sm mt-1">Word limit must be at least 400</p>
+                    ) : (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />

@@ -37,7 +37,7 @@ const updatePitchSchema = z.object({
   userId: z.string().optional(),
   roleName: z.string().min(2),
   roleLevel: z.string().nonempty(),
-  pitchWordLimit: z.number().min(100).max(2000),
+  pitchWordLimit: z.number().min(400).max(2000),
   roleDescription: z.string().optional().nullable(),
   yearsExperience: z.string().nonempty(),
   relevantExperience: z.string().min(10),

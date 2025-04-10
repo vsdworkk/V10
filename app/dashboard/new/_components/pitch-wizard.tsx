@@ -117,7 +117,7 @@ const pitchWizardSchema = z.object({
   roleName: z.string().min(2, "Role Name must be at least 2 characters."),
   organisationName: z.string().optional(),
   roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
-  pitchWordLimit: z.enum(["<500", "<650", "<750", "<1000"]),
+  pitchWordLimit: z.number().min(400, "Word limit must be at least 400 words."),
   roleDescription: z.string().optional(),
   yearsExperience: z.string().nonempty("Years of experience is required."),
   relevantExperience: z
@@ -165,14 +165,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
 
-  // Helper function to convert numeric pitch word limit to string format
-  const formatPitchWordLimit = (limit: number): "<500" | "<650" | "<750" | "<1000" => {
-    if (limit < 500) return "<500"
-    if (limit < 650) return "<650"
-    if (limit < 750) return "<750"
-    return "<1000"
-  }
-
   // Helper function to ensure roleLevel is one of the valid enum values
   const validateRoleLevel = (level: string): "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1" => {
     const validLevels = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]
@@ -188,7 +180,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           roleName: pitchData.roleName,
           organisationName: pitchData.organisationName || "",
           roleLevel: validateRoleLevel(pitchData.roleLevel),
-          pitchWordLimit: formatPitchWordLimit(pitchData.pitchWordLimit),
+          pitchWordLimit: pitchData.pitchWordLimit,
           roleDescription: pitchData.roleDescription || "",
           yearsExperience: pitchData.yearsExperience,
           relevantExperience: pitchData.relevantExperience,
@@ -210,7 +202,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           roleName: "",
           organisationName: "",
           roleLevel: "APS4", // Default role level
-          pitchWordLimit: "<650", // Default word limit
+          pitchWordLimit: 650, // Default word limit as a number
           roleDescription: "",
           yearsExperience: "",
           relevantExperience: "",
@@ -230,23 +222,13 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     mode: "onChange" // Enable validation as fields change
   })
 
-  // Helper: watch pitchWordLimit, convert to a numeric so we can do <650 checks
+  // Helper: watch pitchWordLimit, already numeric so no conversion needed
   const watchWordLimit = methods.watch("pitchWordLimit")
   
-  // Convert the string format to a numeric value for comparisons
+  // No need for a conversion function as pitchWordLimit is already a number
+  // But we still pass through for consistency elsewhere in the code
   const numericLimit = () => {
-    switch (watchWordLimit) {
-      case "<500":
-        return 500
-      case "<650":
-        return 650
-      case "<750":
-        return 750
-      case "<1000":
-        return 1000
-      default:
-        return 650
-    }
+    return watchWordLimit;
   }
 
   // Calculate total steps based on word limit

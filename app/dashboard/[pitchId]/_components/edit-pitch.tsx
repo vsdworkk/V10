@@ -49,6 +49,7 @@ import { useToast } from "@/lib/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import ExportPitch from "./export-pitch" // <-- NEW IMPORT
+import { cn } from "@/lib/utils"
 
 // STAR validation schema
 const starSchema = z.object({
@@ -61,18 +62,19 @@ const starSchema = z.object({
 // Main form schema for editing the pitch
 const editPitchSchema = z.object({
   id: z.string().uuid(),
-  userId: z.string(),
-  roleName: z.string().min(2),
-  organisationName: z.string().optional().nullable(),
-  roleLevel: z.string().nonempty(),
-  pitchWordLimit: z.number().min(100).max(2000),
-  roleDescription: z.string().optional().nullable(),
-  yearsExperience: z.string().nonempty(),
-  relevantExperience: z.string().min(10),
-  resumePath: z.string().optional().nullable(),
+  userId: z.string().min(1, "User ID is required"),
+  roleName: z.string().min(1, "Role name is required"),
+  organisationName: z.string().optional(),
+  roleLevel: z.string().min(1, "Role level is required"),
+  pitchWordLimit: z.number().min(400, "Word limit must be at least 400 words"),
+  roleDescription: z.string().optional(),
+  yearsExperience: z.string().min(1, "Years of experience is required"),
+  relevantExperience: z.string().min(1, "Relevant experience is required"),
+  resumePath: z.string().optional(),
+  albertGuidance: z.string().optional(),
   starExample1: starSchema,
   starExample2: z.union([starSchema, z.undefined()]).optional(),
-  pitchContent: z.string().optional().nullable(),
+  pitchContent: z.string().optional(),
   starExamplesCount: z.number().min(2).max(3).default(2)
 })
 type EditPitchFormData = z.infer<typeof editPitchSchema>
@@ -267,17 +269,26 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               <FormField
                 control={methods.control}
                 name="pitchWordLimit"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Pitch Word Limit</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
+                        min="400"
+                        placeholder="Minimum 400 words"
+                        className={cn(
+                          (field.value !== undefined && field.value < 400) ? "border-red-500 focus-visible:ring-red-500" : ""
+                        )}
                         value={field.value}
                         onChange={e => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
-                    <FormMessage />
+                    {field.value !== undefined && field.value < 400 ? (
+                      <p className="text-red-500 text-sm mt-1">Word limit must be at least 400 words</p>
+                    ) : (
+                      <FormMessage />
+                    )}
                     {watchWordLimit < 650 ? (
                       <p className="text-xs text-muted-foreground mt-1">
                         Only 1 STAR example is needed.

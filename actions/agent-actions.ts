@@ -228,6 +228,12 @@ Years of Experience: ${pitchData.yearsExperience}
     // Hardcoded API key as specified in the documentation
     const apiKey = 'pl_4c3ed9b8d7381ef88414569b8a3b2373';
 
+    // Calculate word counts dynamically based on the formulas
+    const numStarExamples = starExamplesArray.length;
+    const introWordCount = Math.round(pitchData.pitchWordLimit * 0.10);
+    const conclusionWordCount = Math.round(pitchData.pitchWordLimit * 0.10);
+    const starWordCount = Math.round((pitchData.pitchWordLimit * 0.80) / numStarExamples);
+
     // 1. Make POST request to run the agent
     const postOptions = {
       method: 'POST',
@@ -239,10 +245,10 @@ Years of Experience: ${pitchData.yearsExperience}
         input_variables: {
           job_description: jobDescription,
           star_components: starComponents,
-          Star_Word_Count: "300", // Hardcoded as specified
+          Star_Word_Count: starWordCount.toString(), // Dynamically calculated
           User_Experience: pitchData.relevantExperience,
-          Intro_Word_Count: "200", // Hardcoded as specified
-          Conclusion_Word_Count: "200", // Hardcoded as specified
+          Intro_Word_Count: introWordCount.toString(), // Dynamically calculated
+          Conclusion_Word_Count: conclusionWordCount.toString(), // Dynamically calculated
           ILS: "Isssdsd" // Hardcoded as specified
         },
         return_all_outputs: false
