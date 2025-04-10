@@ -33,9 +33,6 @@ export default function GuidanceStep() {
   const { toast } = useToast()
   const params = useParams()
   
-  // Add a state to track if the star examples count has been locked
-  const [isStarCountLocked, setIsStarCountLocked] = useState(false)
-  
   // Get the star examples count from the form
   const starExamplesCount = watch("starExamplesCount")
 
@@ -177,17 +174,6 @@ export default function GuidanceStep() {
     }
   }, [hasInitialized, albertGuidance, loading, fetchGuidance])
 
-  // Check if we're returning to this step and the star count should be locked
-  useEffect(() => {
-    // If we have a pitchId and the form has starExample1 data, we've likely been here before
-    const pitchId = params?.pitchId
-    const hasStarData = Object.keys(watch("starExample1")?.situation || {}).length > 0
-    
-    if (pitchId && hasStarData) {
-      setIsStarCountLocked(true)
-    }
-  }, [params, watch])
-
   const handleRetry = () => {
     setRetryCount(prev => prev + 1)
     void fetchGuidance()
@@ -238,7 +224,6 @@ export default function GuidanceStep() {
             <Select
               value={starExamplesCount}
               onValueChange={handleStarExamplesCountChange}
-              disabled={isStarCountLocked}
             >
               <SelectTrigger className="w-20">
                 <SelectValue placeholder="Count" />
@@ -262,21 +247,6 @@ export default function GuidanceStep() {
             </Button>
           )}
         </div>
-      </div>
-      
-      {/* Important notice about STAR examples count */}
-      <div className="bg-amber-50 border border-amber-200 rounded-md p-3 my-3">
-        <p className="text-sm font-medium">
-          ⚠️ Important: The number of STAR examples cannot be changed after proceeding to the next step.
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Choose carefully - each example needs a complete Situation, Task, Action, and Result.
-        </p>
-        {isStarCountLocked && (
-          <p className="text-xs font-medium mt-1 text-amber-600">
-            Your STAR examples count is locked because you've already started working on your examples.
-          </p>
-        )}
       </div>
 
       {/* Show loading, error, or the Card with guidance */}

@@ -287,44 +287,50 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         markStepCompleted(12)
       }
       
-      // Determine the appropriate starting step
-      // If they have completed all steps, start at the review step
-      if (pitchData.pitchContent) {
-        setCurrentStepLocal(12)
-      } 
-      // If they have completed STAR Example 1, but need Example 2
-      else if (pitchData.pitchWordLimit >= 650 && 
-               pitchData.starExample1 && 
-               (pitchData.starExample1 as any).result && 
-               (!pitchData.starExample2 || !(pitchData.starExample2 as any).situation)) {
-        setCurrentStepLocal(8)
-      }
-      // If they have started but not completed STAR Example 1
-      else if (pitchData.starExample1) {
-        const star1 = pitchData.starExample1 as any
-        if (!star1.situation) setCurrentStepLocal(4)
-        else if (!star1.task) setCurrentStepLocal(5)
-        else if (!star1.action) setCurrentStepLocal(6)
-        else if (!star1.result) setCurrentStepLocal(7)
-      }
-      // If they have guidance but haven't started STAR examples
-      else if (pitchData.albertGuidance) {
-        setCurrentStepLocal(4)
-      }
-      // If they have experience info but no guidance
-      else if (pitchData.yearsExperience && pitchData.relevantExperience) {
-        setCurrentStepLocal(3)
-      }
-      // If they have role info but no experience
-      else if (pitchData.roleName && pitchData.roleLevel) {
-        setCurrentStepLocal(2)
-      }
-      // Otherwise start at the beginning
-      else {
-        setCurrentStepLocal(1)
+      // Check if we have a stored currentStep value from the database
+      if (pitchData.currentStep && pitchData.currentStep > 0 && pitchData.currentStep <= totalSteps) {
+        // If so, use it as the starting point
+        setCurrentStepLocal(pitchData.currentStep);
+      } else {
+        // Otherwise, determine the appropriate starting step based on completed content
+        // If they have completed all steps, start at the review step
+        if (pitchData.pitchContent) {
+          setCurrentStepLocal(12)
+        } 
+        // If they have completed STAR Example 1, but need Example 2
+        else if (pitchData.pitchWordLimit >= 650 && 
+                pitchData.starExample1 && 
+                (pitchData.starExample1 as any).result && 
+                (!pitchData.starExample2 || !(pitchData.starExample2 as any).situation)) {
+          setCurrentStepLocal(8)
+        }
+        // If they have started but not completed STAR Example 1
+        else if (pitchData.starExample1) {
+          const star1 = pitchData.starExample1 as any
+          if (!star1.situation) setCurrentStepLocal(4)
+          else if (!star1.task) setCurrentStepLocal(5)
+          else if (!star1.action) setCurrentStepLocal(6)
+          else if (!star1.result) setCurrentStepLocal(7)
+        }
+        // If they have guidance but haven't started STAR examples
+        else if (pitchData.albertGuidance) {
+          setCurrentStepLocal(4)
+        }
+        // If they have experience info but no guidance
+        else if (pitchData.yearsExperience && pitchData.relevantExperience) {
+          setCurrentStepLocal(3)
+        }
+        // If they have role info but no experience
+        else if (pitchData.roleName && pitchData.roleLevel) {
+          setCurrentStepLocal(2)
+        }
+        // Otherwise start at the beginning
+        else {
+          setCurrentStepLocal(1)
+        }
       }
     }
-  }, [pitchData, markStepCompleted]);
+  }, [pitchData, markStepCompleted, totalSteps]);
 
   // If user chooses a limit < 650, we remove starExample2 from form data
   useEffect(() => {
@@ -473,8 +479,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent || "",
       status: "draft",
-      starExamplesCount: data.starExamplesCount
+      starExamplesCount: data.starExamplesCount,
+      currentStep: currentStep // Store the current step
     };
+
+    // *** ADD CONSOLE LOG HERE ***
+    console.log("Saving pitch state with payload:", payload);
 
     // If we have a pitch ID (either from props or from previous save), include it
     if (pitchId) {
@@ -514,7 +524,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       });
       return undefined;
     }
-  }, [methods, userId, pitchId, numericLimit, toast]);
+  }, [methods, userId, pitchId, numericLimit, toast, currentStep]);
 
   /**
    * @function goNext
@@ -620,6 +630,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    */
   const saveAndClose = useCallback(async () => {
     try {
+      // Ensure current step is saved
       await saveCurrentState();
       
       toast({
@@ -663,7 +674,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       albertGuidance: data.albertGuidance || "",
       pitchContent: data.pitchContent,
       status: pitchStatus,
-      starExamplesCount: data.starExamplesCount
+      starExamplesCount: data.starExamplesCount,
+      currentStep: currentStep
     }
 
     // If we're editing an existing pitch, include the ID
@@ -702,7 +714,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         variant: "destructive"
       })
     }
-  }, [methods, userId, router, toast, numericLimit, pitchId])
+  }, [methods, userId, router, toast, numericLimit, pitchId, currentStep])
 
   /**
    * @function renderStep

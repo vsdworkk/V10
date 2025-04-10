@@ -206,7 +206,7 @@ export const pitchesTable = pgTable("pitches", {
    * @description
    * Word limit for the pitch. e.g. 500, 650, 750, 1000, 1500
    */
-  pitchWordLimit: integer("pitch_word_limit").notNull(),
+  pitchWordLimit: integer("pitch_word_limit").notNull().default(650),
 
   /**
    * @description
@@ -272,6 +272,12 @@ export const pitchesTable = pgTable("pitches", {
    * Default is 2 to match the existing behavior.
    */
   starExamplesCount: integer("star_examples_count").default(2).notNull(),
+
+  /**
+   * @description
+   * Current step in the wizard
+   */
+  currentStep: integer("current_step").default(1).notNull(),
 
   /**
    * @description

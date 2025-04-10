@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Prepare data for create/update
+    // Prepare data for create/update, *including currentStep*
     const pitchData = {
       userId: body.userId,
       roleName: body.roleName,
@@ -47,13 +47,15 @@ export async function POST(request: Request) {
       albertGuidance: body.albertGuidance || "",
       pitchContent: body.pitchContent || "",
       status: body.status || "draft",
-      starExamplesCount: body.starExamplesCount ? parseInt(body.starExamplesCount) : 2
+      starExamplesCount: body.starExamplesCount ? parseInt(body.starExamplesCount) : 2,
+      currentStep: body.currentStep || 1 // Add currentStep here, defaulting to 1
     }
 
     let result;
 
     // If an ID is provided, update the existing pitch
     if (body.id) {
+      // *** Pass the full pitchData object to updatePitchAction ***
       result = await updatePitchAction(body.id, pitchData, body.userId)
       
       if (!result.isSuccess) {

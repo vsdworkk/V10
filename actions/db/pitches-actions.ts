@@ -124,6 +124,8 @@ export async function updatePitchAction(
   userId: string
 ): Promise<ActionState<SelectPitch>> {
   try {
+    console.log("Updating pitch with ID:", id, "and data:", updatedData);
+    
     const [updatedPitch] = await db
       .update(pitchesTable)
       .set(updatedData)

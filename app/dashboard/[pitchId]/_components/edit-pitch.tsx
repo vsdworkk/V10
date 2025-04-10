@@ -178,7 +178,9 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
     // If pitchWordLimit < 650, remove starExample2
     const patchBody = {
       ...data,
-      starExample2: watchWordLimit < 650 ? undefined : data.starExample2
+      starExample2: watchWordLimit < 650 ? undefined : data.starExample2,
+      // Store current step based on the user's progress to allow proper resuming
+      currentStep: getCurrentStepFromData(data)
     }
     try {
       const res = await fetch(`/api/pitchWizard/${data.id}`, {
@@ -233,6 +235,47 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
         variant: "destructive"
       })
     }
+  }
+
+  // Helper function to determine the current step based on data in the form
+  function getCurrentStepFromData(data: EditPitchFormData): number {
+    if (data.pitchContent) {
+      return 12; // Review step
+    }
+    
+    if (watchWordLimit >= 650) {
+      // Check STAR Example 2 fields
+      if (data.starExample2?.result) {
+        return 12; // Ready for review
+      } else if (data.starExample2?.action) {
+        return 11; // Result step of Example 2
+      } else if (data.starExample2?.task) {
+        return 10; // Action step of Example 2
+      } else if (data.starExample2?.situation) {
+        return 9; // Task step of Example 2
+      } else if (data.starExample1?.result) {
+        return 8; // Situation step of Example 2
+      }
+    }
+    
+    // Check STAR Example 1 fields
+    if (data.starExample1?.result) {
+      return watchWordLimit >= 650 ? 8 : 12; // Either Example 2 or Review
+    } else if (data.starExample1?.action) {
+      return 7; // Result step of Example 1
+    } else if (data.starExample1?.task) {
+      return 6; // Action step of Example 1
+    } else if (data.starExample1?.situation) {
+      return 5; // Task step of Example 1
+    } else if (data.albertGuidance) {
+      return 4; // Situation step of Example 1
+    } else if (data.yearsExperience && data.relevantExperience) {
+      return 3; // Guidance step
+    } else if (data.roleName && data.roleLevel) {
+      return 2; // Experience step
+    }
+    
+    return 1; // Default to role step
   }
 
   return (
