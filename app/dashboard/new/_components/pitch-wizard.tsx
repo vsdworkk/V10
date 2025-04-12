@@ -9,16 +9,15 @@ It has 12 potential steps:
 5. TaskStep (starExample1)
 6. ActionStep (starExample1)
 7. ResultStep (starExample1)
-8. SituationStep (starExample2) [only if pitchWordLimit >= 650]
-9. TaskStep (starExample2) [only if pitchWordLimit >= 650]
-10. ActionStep (starExample2) [only if pitchWordLimit >= 650]
-11. ResultStep (starExample2) [only if pitchWordLimit >= 650]
+8. SituationStep (starExample2) [only if starExamplesCount is 3]
+9. TaskStep (starExample2) [only if starExamplesCount is 3]
+10. ActionStep (starExample2) [only if starExamplesCount is 3]
+11. ResultStep (starExample2) [only if starExamplesCount is 3]
 12. ReviewStep (final)
-When the user completes the last relevant STAR step, the wizard automatically
-generates the final pitch from Albert, displaying a spinner while generating.
-Once generation completes, we move to the review step without a manual "Generate"
-button. This aligns with the requirement to remove the "Generate Final Pitch" button
-and use auto-generation.
+When the user completes the last relevant STAR step (as determined by their selection
+of STAR examples count in the guidance step), the wizard automatically navigates to
+the review step and generates the final pitch from Albert, displaying a spinner while
+generating. Once generation completes, the pitch is displayed on the review step.
 @dependencies
 - React Hook Form for form state management
 - Shadcn UI components for consistent styling
@@ -27,7 +26,7 @@ and use auto-generation.
 @notes
 We handle uploading the resume automatically when leaving Step 2 -> Step 3.
 We store the final pitch in pitchContent, which is edited in the final step.
-We skip starExample2 if pitchWordLimit < 650.
+The number of STAR examples is determined by the user's selection in Step 3 (Guidance).
 */
 
 "use client"
@@ -232,8 +231,11 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     return watchWordLimit;
   }
 
-  // Calculate total steps based on word limit
-  const totalSteps = numericLimit() >= 650 ? 12 : 8
+  // Watch the user's selection of STAR examples
+  const watchStarExamplesCount = methods.watch("starExamplesCount");
+
+  // Calculate total steps based on user's selection of STAR examples
+  const totalSteps = parseInt(watchStarExamplesCount) === 2 ? 8 : 12;
   
   // For convenience, alias the local state to the name used throughout the component
   const currentStep = currentStepLocal
@@ -273,8 +275,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         if (star1.result) markStepCompleted(7)
       }
       
-      // STAR Example 2 steps (if needed)
-      if (pitchData.pitchWordLimit >= 650 && pitchData.starExample2) {
+      // STAR Example 2 steps (if needed based on user selection)
+      if (pitchData.starExamplesCount === 3 && pitchData.starExample2) {
         const star2 = pitchData.starExample2 as any
         if (star2.situation) markStepCompleted(8)
         if (star2.task) markStepCompleted(9)
@@ -297,8 +299,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         if (pitchData.pitchContent) {
           setCurrentStepLocal(12)
         } 
-        // If they have completed STAR Example 1, but need Example 2
-        else if (pitchData.pitchWordLimit >= 650 && 
+        // If they have completed STAR Example 1, but need Example 2 and they chose 3 examples
+        else if (pitchData.starExamplesCount === 3 && 
                 pitchData.starExample1 && 
                 (pitchData.starExample1 as any).result && 
                 (!pitchData.starExample2 || !(pitchData.starExample2 as any).situation)) {
@@ -594,21 +596,24 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       })
     }
 
-    // Special case: Generate final pitch after last STAR step for Example 1
-    // if the word limit is < 650
-    if (currentStep === 7 && numericLimit() < 650) {
-      await generateFinalPitch()
-      markStepCompleted(currentStep)
-      setCurrentStepLocal(12)
-      return
-    }
-
-    // Special case: Generate final pitch after last STAR step for Example 2
-    if (currentStep === 11) {
-      await generateFinalPitch()
-      markStepCompleted(currentStep)
-      setCurrentStepLocal(12)
-      return
+    // Get the user-selected number of STAR examples
+    const starExamplesCount = parseInt(methods.getValues("starExamplesCount") || "2");
+    
+    // Determine if this is the last STAR example's result step based on user selection
+    const isLastStarExample = 
+      (starExamplesCount === 2 && currentStep === 7) || // First example is last when user selected 2
+      (starExamplesCount === 3 && currentStep === 11);  // Second example is last when user selected 3
+    
+    // Special case: Generate final pitch after completing the last STAR example
+    // based on user's selection of starExamplesCount
+    if (isLastStarExample) {
+      // First navigate to the Review step, then generate the pitch
+      markStepCompleted(currentStep);
+      setCurrentStepLocal(12);
+      
+      // Now generate the pitch (this will show the loading indicator on the Review page)
+      await generateFinalPitch();
+      return;
     }
 
     // Otherwise, just increment
