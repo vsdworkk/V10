@@ -152,7 +152,7 @@ const stepTitles = [
   "Task",
   "Action",
   "Result",
-  "Review & Submit"
+  "Finalise Pitch"
 ]
 
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
@@ -790,9 +790,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       <div className="space-y-8">
         {/* Current step title */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-medium mb-6 pb-2 border-b">
-            {stepTitles[currentStep - 1]}
-          </h3>
+          {/* Only show step title if not on the final step */}
+          {currentStep !== 12 && (
+            <h3 className="text-lg font-medium mb-6 pb-2 border-b">
+              {stepTitles[currentStep - 1]}
+            </h3>
+          )}
 
           {/* Step content with animation */}
           <motion.div

@@ -255,6 +255,9 @@ Years of Experience: ${pitchData.yearsExperience}
       })
     };
 
+    // Add this line for debugging:
+    console.log("Sending POST request to PromptLayer with options:", JSON.stringify(postOptions, null, 2));
+
     // Send the POST request to start the agent execution
     const postResponse = await fetch('https://api.promptlayer.com/workflows/Master_Agent_V1/run', postOptions);
     

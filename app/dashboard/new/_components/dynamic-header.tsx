@@ -34,7 +34,7 @@ export default function DynamicHeader() {
       // Show the correct example number based on whether we're showing example 2 or 3
       return `STAR Example #2`
     } else if (currentStep === 12) {
-      return "Review & Submit"
+      return "Finalise Pitch"
     } else {
       return "Pitch Wizard"
     }
@@ -65,7 +65,7 @@ export default function DynamicHeader() {
     } else if (currentStep === 11) {
       return "Share the results and impact of your second example."
     } else if (currentStep === 12) {
-      return "Review your completed pitch and make any final edits before submitting."
+      return ""
     } else {
       return "Follow the steps below to create a tailored pitch for your APS application."
     }
