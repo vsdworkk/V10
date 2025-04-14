@@ -19,38 +19,46 @@
 import { NextResponse } from "next/server"
 import { generateAgentPitchAction } from "@/actions/agent-actions"
 
-// Increase the timeout for this route - agent processing takes 150s
-export const maxDuration = 180 // 180 seconds (3 minutes) to allow for agent processing
+// Increase the timeout for this route - agent processing can take 150s or more
+export const maxDuration = 180 // 180 seconds
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Basic validation
+    // Basic validation: ensure we have the minimum required fields.
+    // Now we check for starExamples (array) instead of starExample1/starExample2.
     if (
       !body.roleName ||
       !body.roleLevel ||
       !body.pitchWordLimit ||
       !body.yearsExperience ||
       !body.relevantExperience ||
-      !body.starExample1
+      !Array.isArray(body.starExamples) ||
+      body.starExamples.length === 0
     ) {
       return NextResponse.json(
-        { isSuccess: false, message: "Missing required fields for pitch generation" },
+        {
+          isSuccess: false,
+          message: "Missing required fields for pitch generation (including at least one STAR example)."
+        },
         { status: 400 }
       )
     }
 
-    // Call our new agent action instead of the OpenAI action
+    // Convert pitchWordLimit to a number just in case it's passed as a string
+    const numericLimit = Number(body.pitchWordLimit)
+
+    // Call our new agent action instead of the OpenAI action.
+    // We pass the array of starExamples plus other relevant data.
     const agentResult = await generateAgentPitchAction({
       roleName: body.roleName,
       roleLevel: body.roleLevel,
-      pitchWordLimit: Number(body.pitchWordLimit),
+      pitchWordLimit: numericLimit,
       yearsExperience: body.yearsExperience,
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
-      starExample1: body.starExample1,
-      starExample2: body.starExample2
+      starExamples: body.starExamples
     })
 
     if (!agentResult.isSuccess) {
@@ -66,18 +74,22 @@ export async function POST(request: Request) {
     )
   } catch (error: any) {
     console.error("Error in /api/finalPitch POST:", error)
-    
-    // Check for timeout errors
-    if (error.message?.includes('timeout') || error.name === 'AbortError' || error.code === 'ETIMEDOUT') {
+
+    // Check for timeout-related errors
+    if (
+      error.message?.includes("timeout") ||
+      error.name === "AbortError" ||
+      error.code === "ETIMEDOUT"
+    ) {
       return NextResponse.json(
-        { 
-          isSuccess: false, 
-          message: "The request took too long to process. Please try again or use a shorter description." 
+        {
+          isSuccess: false,
+          message: "The request took too long to process. Please try again or shorten the request."
         },
         { status: 504 }
       )
     }
-    
+
     return NextResponse.json(
       { isSuccess: false, message: error.message || "Internal server error" },
       { status: 500 }

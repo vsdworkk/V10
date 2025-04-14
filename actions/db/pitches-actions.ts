@@ -1,7 +1,9 @@
+"use server"
+
 /**
  * @description
  * Provides CRUD actions for managing pitch records in the 'pitches' table.
- * 
+ *
  * Key Exports:
  * - createPitchAction: Insert a new pitch record
  * - getPitchByIdAction: Fetch a single pitch by ID for a given user
@@ -11,11 +13,9 @@
  *
  * @notes
  * - Each function returns an ActionState<T>, indicating success/failure status.
- * - We rely on Drizzle's typed schemas and eq conditions from drizzle-orm.
- * - This file must follow the project rules (no partial code, all-lowercase, etc.).
+ * - We rely on Drizzle's typed schemas (pitchesTable) and eq/and conditions.
+ * - This file uses the new "starExamples" array field in place of the old "starExample1"/"starExample2".
  */
-
-"use server"
 
 import { db } from "@/db/db"
 import {
@@ -32,18 +32,16 @@ import { ActionState } from "@/types"
  * Creates a new pitch record in the "pitches" table.
  *
  * @param pitchData - InsertPitch: The new pitch data from the user wizard.
- * @returns Promise<ActionState<SelectPitch>> - The result state with either success or failure.
- *
- * @notes
- * - We wrap in a try/catch to handle DB errors gracefully.
- * - We insert user-supplied data, returning the newly created pitch row.
+ * @returns Promise<ActionState<SelectPitch>> - The result state (success/failure + data).
  */
 export async function createPitchAction(
   pitchData: InsertPitch
 ): Promise<ActionState<SelectPitch>> {
   try {
-    // Drizzle returns an array of inserted rows. We only expect one here.
-    const [newPitch] = await db.insert(pitchesTable).values(pitchData).returning()
+    const [newPitch] = await db
+      .insert(pitchesTable)
+      .values(pitchData)
+      .returning()
 
     return {
       isSuccess: true,
@@ -64,8 +62,8 @@ export async function createPitchAction(
  * @description
  * Fetches a single pitch by ID, ensuring it belongs to the specified user.
  *
- * @param id - string: The pitch ID we want to look up.
- * @param userId - string: The user ID to which the pitch must belong.
+ * @param id - string: The pitch ID to look up.
+ * @param userId - string: The user ID for ownership validation.
  * @returns Promise<ActionState<SelectPitch>> - Success with the pitch record if found, else failure.
  */
 export async function getPitchByIdAction(
@@ -76,12 +74,7 @@ export async function getPitchByIdAction(
     const [pitch] = await db
       .select()
       .from(pitchesTable)
-      .where(
-        and(
-          eq(pitchesTable.id, id),
-          eq(pitchesTable.userId, userId)
-        )
-      )
+      .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
       .limit(1)
 
     if (!pitch) {
@@ -110,13 +103,10 @@ export async function getPitchByIdAction(
  * @description
  * Updates an existing pitch record with the given data, ensuring user ownership.
  *
- * @param id - string: The unique pitch ID we want to update.
- * @param updatedData - Partial<InsertPitch>: The fields we want to modify.
+ * @param id - string: The unique pitch ID to update.
+ * @param updatedData - Partial<InsertPitch>: The fields to modify.
  * @param userId - string: The user ID for ownership validation.
  * @returns Promise<ActionState<SelectPitch>> - Updated pitch record on success, or failure message.
- *
- * @notes
- * - Only fields included in updatedData will be altered. Others remain unchanged.
  */
 export async function updatePitchAction(
   id: string,
@@ -124,17 +114,12 @@ export async function updatePitchAction(
   userId: string
 ): Promise<ActionState<SelectPitch>> {
   try {
-    console.log("Updating pitch with ID:", id, "and data:", updatedData);
-    
+    console.log("Updating pitch with ID:", id, "and data:", updatedData)
+
     const [updatedPitch] = await db
       .update(pitchesTable)
       .set(updatedData)
-      .where(
-        and(
-          eq(pitchesTable.id, id),
-          eq(pitchesTable.userId, userId)
-        )
-      )
+      .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
       .returning()
 
     if (!updatedPitch) {
@@ -161,13 +146,10 @@ export async function updatePitchAction(
 /**
  * @function getAllPitchesForUserAction
  * @description
- * Retrieves all pitch records that belong to a particular user.
+ * Retrieves all pitch records belonging to a specific user, newest first.
  *
  * @param userId - string: The user ID to filter by.
- * @returns Promise<ActionState<SelectPitch[]>> - Array of pitch records on success, or failure message.
- *
- * @notes
- * - If no records are found, returns an empty array with success = true.
+ * @returns Promise<ActionState<SelectPitch[]>> - Array of pitches on success, or failure message.
  */
 export async function getAllPitchesForUserAction(
   userId: string
@@ -200,7 +182,7 @@ export async function getAllPitchesForUserAction(
  *
  * @param id - string: The pitch ID to delete.
  * @param userId - string: The user ID used to validate ownership.
- * @returns Promise<ActionState<void>> - isSuccess indicates whether the deletion was successful.
+ * @returns Promise<ActionState<void>> - `isSuccess` indicates whether the deletion was successful.
  */
 export async function deletePitchAction(
   id: string,
@@ -209,13 +191,8 @@ export async function deletePitchAction(
   try {
     const result = await db
       .delete(pitchesTable)
-      .where(
-        and(
-          eq(pitchesTable.id, id),
-          eq(pitchesTable.userId, userId)
-        )
-      )
-      .returning() // this returns an array, but we won't use the row data
+      .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
+      .returning()
 
     if (result.length === 0) {
       return {

@@ -3,25 +3,6 @@
  * @description
  * An API route for updating an existing pitch by ID. Expects a PATCH request.
  * The request body should contain updated pitch data. We enforce user ownership.
- * This simplified version is primarily used for updating the albertGuidance field.
- *
- * Key features:
- * - Checks if user is authenticated
- * - Calls updatePitchAction from pitches-actions
- * - Returns JSON with either success or error
- *
- * @dependencies
- * - auth from "@clerk/nextjs/server" for verifying the user
- * - NextResponse from "next/server" for returning JSON
- * - updatePitchAction from "@/actions/db/pitches-actions"
- *
- * @notes
- * The route is accessible at /api/pitches/[pitchId] for PATCH requests.
- * Example usage:
- *   fetch("/api/pitches/<pitchId>", {
- *     method: "PATCH",
- *     body: JSON.stringify({...}),
- *   })
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -30,70 +11,112 @@ import { updatePitchAction } from "@/actions/db/pitches-actions"
 import { z } from "zod"
 
 /**
- * A minimal schema for updating the albertGuidance field.
+ * Zod schema for a single Action step
+ */
+const actionStepSchema = z.object({
+  stepNumber: z.number(),
+  "what-did-you-specifically-do-in-this-step": z.string(),
+  "how-did-you-do-it-tools-methods-or-skills": z.string(),
+  "what-was-the-outcome-of-this-step-optional": z.string().optional()
+})
+
+/**
+ * Zod schema for one STAR example
+ */
+const starSchema = z.object({
+  situation: z.object({
+    "where-and-when-did-this-experience-occur": z.string().optional(),
+    "briefly-describe-the-situation-or-challenge-you-faced": z.string().optional(),
+    "why-was-this-a-problem-or-why-did-it-matter": z.string().optional()
+  }),
+  task: z.object({
+    "what-was-your-responsibility-in-addressing-this-issue": z.string().optional(),
+    "how-would-completing-this-task-help-solve-the-problem": z.string().optional(),
+    "what-constraints-or-requirements-did-you-need-to-consider": z.string().optional()
+  }),
+  action: z.object({
+    steps: z.array(actionStepSchema).min(1).optional()
+  }),
+  result: z.object({
+    "what-positive-outcome-did-you-achieve": z.string().optional(),
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().optional(),
+    "what-did-you-learn-from-this-experience": z.string().optional()
+  })
+})
+
+/**
+ * Update schema for a pitch record. 
+ * starExamples is now an array of starSchema objects (optional).
  */
 const updatePitchSchema = z.object({
   id: z.string().uuid().optional(),
   userId: z.string().optional(),
-  albertGuidance: z.string().optional(),
-  starExamplesCount: z.number().min(2).max(3).optional()
+  roleName: z.string().min(2),
+  roleLevel: z.string().nonempty(),
+  pitchWordLimit: z.number().min(400).max(2000),
+  roleDescription: z.string().optional().nullable(),
+  yearsExperience: z.string().nonempty(),
+  relevantExperience: z.string().min(10),
+  resumePath: z.string().optional().nullable(),
+  
+  // We store starExamples as an array of starSchema objects
+  starExamples: z.array(starSchema).optional(),
+
+  albertGuidance: z.string().optional().nullable(),
+  pitchContent: z.string().optional().nullable(),
+
+  /**
+   * starExamplesCount can be from 1..10 (or any range).
+   * Adjust min/max as you see fit.
+   */
+  starExamplesCount: z.number().min(1).max(10).optional(),
+
+  // You could also allow currentStep, status, etc. if needed
 })
 
-/**
- * A dynamic route handler for /api/pitches/[pitchId].
- * We only define a PATCH method here to handle pitch updates.
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ pitchId: string }> }
 ) {
   try {
     const { userId } = await auth()
-    
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    
-    // Extract the pitchId from params
+
     const { pitchId } = await params
-    
-    console.log(`PATCH /api/pitches/${pitchId}: Processing update request`);
-    
-    // Parse the request body
+    console.log(`PATCH /api/pitchWizard/${pitchId}: Processing update request`)
+
     const body = await request.json()
-    
-    // Ensure user ID is set correctly (enforce ownership)
+    // Enforce user ownership
     body.userId = userId
-    
-    // Validate the request body
+
+    // Validate
     try {
       updatePitchSchema.parse(body)
     } catch (err) {
-      console.error(`PATCH /api/pitches/${pitchId}: Validation error:`, err);
+      console.error(`Validation error:`, err)
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
     }
-    
-    console.log(`PATCH /api/pitches/${pitchId}: Calling updatePitchAction`);
-    
-    // Call our server action to update the pitch
+
+    console.log(`PATCH /api/pitchWizard/${pitchId}: Calling updatePitchAction`)
     const result = await updatePitchAction(pitchId, body, userId)
-    
+
     if (!result.isSuccess) {
-      console.error(`PATCH /api/pitches/${pitchId}: Update failed:`, result.message);
+      console.error(`Update failed:`, result.message)
       return NextResponse.json({ error: result.message }, { status: 500 })
     }
-    
-    console.log(`PATCH /api/pitches/${pitchId}: Update successful`);
-    
-    return NextResponse.json({ 
-      message: "Pitch updated successfully", 
-      data: result.data 
+
+    console.log(`Update successful`)
+    return NextResponse.json({
+      message: "Pitch updated successfully",
+      data: result.data
     })
   } catch (error: any) {
-    console.error("Error in PATCH /api/pitches/[pitchId]:", error)
+    console.error("Error in PATCH /api/pitchWizard/[pitchId]:", error)
     return NextResponse.json(
       { error: error.message || "An unexpected error occurred" },
       { status: 500 }
     )
   }
-} 
+}

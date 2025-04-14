@@ -1,24 +1,3 @@
-/**
-@description
-Client sub-component to capture the "Situation" portion of a STAR example.
-Updated to use the new nested StarSchema structure with kebab-case question fields.
-It prompts the user for three specific questions:
-1) Where and when did this experience occur?
-2) Briefly describe the situation or challenge you faced.
-3) Why was this a problem or why did it matter?
-
-Key Features:
-- Uses React Hook Form context
-- Stores data directly in nested structure with kebab-case question names
-- Example ID (starExample1 or starExample2) is determined by props
-
-@dependencies
-- React Hook Form for state management
-- Shadcn UI components
-@notes
-We do not handle step navigation in this component; that occurs in pitch-wizard or higher-level logic.
-*/
-
 "use client"
 
 import { useFormContext } from "react-hook-form"
@@ -36,10 +15,9 @@ import { isString, parseLegacySituation } from "@/types"
 
 interface SituationStepProps {
   /**
-   * exampleKey indicates whether we are dealing with starExample1 or starExample2
-   * e.g., "starExample1" or "starExample2"
+   * exampleIndex indicates which starExamples[index] to use
    */
-  exampleKey: "starExample1" | "starExample2"
+  exampleIndex: number
 }
 
 /**
@@ -49,58 +27,69 @@ interface SituationStepProps {
  * 2) Briefly describe the situation or challenge you faced.
  * 3) Why was this a problem or why did it matter?
  *
- * Stores data directly in the new nested structure format.
+ * Data is stored in starExamples[exampleIndex].situation
  */
-export default function SituationStep({ exampleKey }: SituationStepProps) {
-  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+export default function SituationStep({ exampleIndex }: SituationStepProps) {
+  const { watch, setValue } = useFormContext<PitchWizardFormData>()
 
-  // Local state for the question fields
+  // Watch the current values from the form at this index
+  const storedSituation = watch(`starExamples.${exampleIndex}.situation`)
+
+  // Local state for each field
   const [whereAndWhen, setWhereAndWhen] = useState("")
   const [situationOrChallenge, setSituationOrChallenge] = useState("")
   const [whyItMattered, setWhyItMattered] = useState("")
 
-  // Watch the current values from the form - this needs to be adapted for the new structure
-  const storedSituation = watch(`${exampleKey}.situation`)
-  
-  // Determine which STAR example number we're working on
-  const exampleNumber = exampleKey === "starExample1" ? 1 : 
-                        exampleKey === "starExample2" ? 2 : 3;
-  
   /**
-   * Handler to update the form state with the new nested structure
+   * Handler to update the form state when the user leaves a field (onBlur).
+   * We store data in `starExamples[exampleIndex].situation` with kebab-case keys.
    */
   const handleBlur = () => {
-    setValue(`${exampleKey}.situation`, {
-      "where-and-when-did-this-experience-occur": whereAndWhen,
-      "briefly-describe-the-situation-or-challenge-you-faced": situationOrChallenge,
-      "why-was-this-a-problem-or-why-did-it-matter": whyItMattered
-    }, { shouldDirty: true })
+    setValue(
+      `starExamples.${exampleIndex}.situation`,
+      {
+        "where-and-when-did-this-experience-occur": whereAndWhen,
+        "briefly-describe-the-situation-or-challenge-you-faced": situationOrChallenge,
+        "why-was-this-a-problem-or-why-did-it-matter": whyItMattered
+      },
+      { shouldDirty: true }
+    )
   }
 
   // Initialize local state from existing form data if available
   useEffect(() => {
     if (storedSituation) {
-      // For the new structure, extract values from the nested object
-      if (typeof storedSituation === 'object') {
-        setWhereAndWhen(storedSituation["where-and-when-did-this-experience-occur"] || "")
-        setSituationOrChallenge(storedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || "")
-        setWhyItMattered(storedSituation["why-was-this-a-problem-or-why-did-it-matter"] || "")
-      } 
-      // Legacy support for old structure - use our utility function to parse legacy format
-      else if (isString(storedSituation)) {
-        const parsedSituation = parseLegacySituation(storedSituation);
-        setWhereAndWhen(parsedSituation["where-and-when-did-this-experience-occur"] || "");
-        setSituationOrChallenge(parsedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || "");
-        setWhyItMattered(parsedSituation["why-was-this-a-problem-or-why-did-it-matter"] || "");
+      if (typeof storedSituation === "object") {
+        setWhereAndWhen(
+          storedSituation["where-and-when-did-this-experience-occur"] || ""
+        )
+        setSituationOrChallenge(
+          storedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || ""
+        )
+        setWhyItMattered(
+          storedSituation["why-was-this-a-problem-or-why-did-it-matter"] || ""
+        )
+      } else if (isString(storedSituation)) {
+        // Legacy support for old string-based storage
+        const parsedSituation = parseLegacySituation(storedSituation)
+        setWhereAndWhen(
+          parsedSituation["where-and-when-did-this-experience-occur"] || ""
+        )
+        setSituationOrChallenge(
+          parsedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || ""
+        )
+        setWhyItMattered(
+          parsedSituation["why-was-this-a-problem-or-why-did-it-matter"] || ""
+        )
       }
     }
-  }, [storedSituation, exampleKey])
+  }, [storedSituation])
 
   return (
     <div className="space-y-4">
       {/* Where and when */}
       <FormField
-        name={`${exampleKey}.situation.where-and-when-did-this-experience-occur`}
+        name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
         render={() => (
           <FormItem>
             <FormLabel>Where and when did this experience occur?</FormLabel>
@@ -110,7 +99,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             <FormControl>
               <Textarea
                 value={whereAndWhen}
-                onChange={e => setWhereAndWhen(e.target.value)}
+                onChange={(e) => setWhereAndWhen(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -121,7 +110,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
       {/* Situation or Challenge */}
       <FormField
-        name={`${exampleKey}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
+        name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
         render={() => (
           <FormItem>
             <FormLabel>Briefly describe the situation or challenge you faced.</FormLabel>
@@ -131,7 +120,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             <FormControl>
               <Textarea
                 value={situationOrChallenge}
-                onChange={e => setSituationOrChallenge(e.target.value)}
+                onChange={(e) => setSituationOrChallenge(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>
@@ -142,7 +131,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
 
       {/* Why it mattered */}
       <FormField
-        name={`${exampleKey}.situation.why-was-this-a-problem-or-why-did-it-matter`}
+        name={`starExamples.${exampleIndex}.situation.why-was-this-a-problem-or-why-did-it-matter`}
         render={() => (
           <FormItem>
             <FormLabel>Why was this a problem or why did it matter?</FormLabel>
@@ -152,7 +141,7 @@ export default function SituationStep({ exampleKey }: SituationStepProps) {
             <FormControl>
               <Textarea
                 value={whyItMattered}
-                onChange={e => setWhyItMattered(e.target.value)}
+                onChange={(e) => setWhyItMattered(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

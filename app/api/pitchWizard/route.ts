@@ -1,21 +1,7 @@
 /**
  * @description
- * An API route that handles the creation or update of a pitch record.
- * The client wizard sends a POST request with the entire pitch data as JSON.
- * If the request includes an 'id' field, it updates the existing pitch.
- * Otherwise, it creates a new pitch.
- *
- * Key Features:
- * - Reads request JSON for pitch fields
- * - Calls createPitchAction or updatePitchAction based on presence of 'id'
- * - Returns 200 on success, 400 or 500 on error
- *
- * @dependencies
- * - createPitchAction and updatePitchAction from "@/actions/db/pitches-actions"
- * - Next.js "NextResponse" for JSON responses
- *
- * @notes
- * - We do not do AI generation here, purely storing data as draft or final
+ * An API route that handles creating or updating a pitch record. 
+ * Expects a JSON body with the relevant fields.
  */
 
 import { NextResponse } from "next/server"
@@ -25,66 +11,56 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Validate minimal fields. (In an advanced scenario, we might replicate
-    // the Zod schema logic or rely on the wizard's own validation.)
+    // Minimal checks for required fields
     if (!body.userId || !body.roleName || !body.roleLevel) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Prepare data for create/update, *including currentStep*
+    // starExamples is an array of objects, starExamplesCount is a number
     const pitchData = {
       userId: body.userId,
       roleName: body.roleName,
       organisationName: body.organisationName || null,
       roleLevel: body.roleLevel,
-      pitchWordLimit: body.pitchWordLimit || 500,
+      pitchWordLimit: body.pitchWordLimit || 650,
       roleDescription: body.roleDescription || "",
       yearsExperience: body.yearsExperience || "",
       relevantExperience: body.relevantExperience || "",
       resumePath: body.resumePath || null,
-      starExample1: body.starExample1 || null,
-      starExample2: body.starExample2 || null,
+
+      // The new field storing an array of starSchema objects
+      starExamples: body.starExamples || [],
+
       albertGuidance: body.albertGuidance || "",
       pitchContent: body.pitchContent || "",
       status: body.status || "draft",
-      starExamplesCount: body.starExamplesCount ? parseInt(body.starExamplesCount) : 2,
-      currentStep: body.currentStep || 1 // Add currentStep here, defaulting to 1
+      
+      // This can be 1..10 or more, depending on your wizard
+      starExamplesCount: body.starExamplesCount
+        ? parseInt(body.starExamplesCount, 10)
+        : 1,
+
+      // Track which step the user is on
+      currentStep: body.currentStep || 1
     }
 
-    let result;
+    let result
 
-    // If an ID is provided, update the existing pitch
+    // If an ID is provided, we update
     if (body.id) {
-      // *** Pass the full pitchData object to updatePitchAction ***
       result = await updatePitchAction(body.id, pitchData, body.userId)
-      
       if (!result.isSuccess) {
-        return NextResponse.json(
-          { error: result.message },
-          { status: 500 }
-        )
+        return NextResponse.json({ error: result.message }, { status: 500 })
       }
-      
-      return NextResponse.json({ 
-        message: "Pitch updated", 
-        data: result.data 
-      }, { status: 200 })
+      return NextResponse.json({ message: "Pitch updated", data: result.data })
     } 
     // Otherwise, create a new pitch
     else {
       result = await createPitchAction(pitchData)
-      
       if (!result.isSuccess) {
-        return NextResponse.json(
-          { error: result.message },
-          { status: 500 }
-        )
+        return NextResponse.json({ error: result.message }, { status: 500 })
       }
-      
-      return NextResponse.json({ 
-        message: "Pitch created", 
-        data: result.data 
-      }, { status: 200 })
+      return NextResponse.json({ message: "Pitch created", data: result.data })
     }
   } catch (error: any) {
     console.error("Error in /api/pitchWizard POST:", error)

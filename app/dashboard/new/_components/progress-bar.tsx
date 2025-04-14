@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 
 interface ProgressBarProps {
   currentStep: number
@@ -8,17 +8,34 @@ interface ProgressBarProps {
   completedSteps: number[]
 }
 
-export default function ProgressBar({ currentStep, totalSteps, completedSteps }: ProgressBarProps) {
-  // Calculate progress percentage
-  const calculateProgress = () => {
-    // If we're at the first step and nothing is completed yet, show minimal progress
+/**
+ * @function ProgressBar
+ * Displays a horizontal bar indicating overall wizard progress, plus text 
+ * showing how many steps are completed and the current step number.
+ */
+export default function ProgressBar({
+  currentStep,
+  totalSteps,
+  completedSteps
+}: ProgressBarProps) {
+  
+  // Calculate progress as a percentage
+  const progressPercent = useMemo(() => {
+    // Edge case: if totalSteps is 0, avoid dividing by zero
+    if (totalSteps <= 0) return 0
+
+    // If we're at the first step and nothing is completed, show minimal progress
     if (currentStep === 1 && completedSteps.length === 0) {
-      return (1 / totalSteps) * 100;
+      return (1 / totalSteps) * 100
     }
-    
-    // Otherwise, show progress based on the number of completed steps + current step
-    return Math.min(((completedSteps.length + 1) / totalSteps) * 100, 100);
-  };
+
+    // Otherwise, show progress based on how many steps are completed + the current step
+    // e.g., if 3 steps are completed, and user is on step 4, that's effectively 4 steps done.
+    const effectiveCompleted = completedSteps.length + 1 // current step "in progress"
+    const fraction = effectiveCompleted / totalSteps
+
+    return Math.min(fraction * 100, 100)
+  }, [currentStep, totalSteps, completedSteps])
 
   return (
     <div className="w-full mb-8">
@@ -30,16 +47,16 @@ export default function ProgressBar({ currentStep, totalSteps, completedSteps }:
           Step {currentStep} of {totalSteps}
         </span>
       </div>
-      
+
       <div className="relative">
-        {/* Thicker progress bar */}
+        {/* The background of the progress bar */}
         <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-primary transition-all duration-300 ease-in-out"
-            style={{ width: `${calculateProgress()}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
     </div>
   )
-} 
+}

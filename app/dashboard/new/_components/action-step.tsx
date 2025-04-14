@@ -1,19 +1,3 @@
-/**
-@description
-Client sub-component for the "Action" portion of a STAR example.
-Updated to use the new StarSchema structure with kebab-case question fields for each step.
-This component allows users to add multiple action steps, where each step has three components:
-1) What did you specifically do in this step?
-2) How did you do it? (tools, methods, or skills)
-3) What was the outcome of this step? (optional)
-
-Key Features:
-- React Hook Form context
-- Multiple steps with add/edit functionality
-- Stores data directly in nested structure with an array of steps
-- Example ID (starExample1 or starExample2) is determined by props
-*/
-
 "use client"
 
 import { useFormContext } from "react-hook-form"
@@ -38,147 +22,165 @@ import {
 } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
 import { isString } from "@/types"
-import type { ActionStep } from "@/types/action-steps-types"
+import type { ActionStep as ActionStepType } from "@/types/action-steps-types"
 
 interface ActionStepProps {
-  exampleKey: "starExample1" | "starExample2"
+  /**
+   * exampleIndex indicates which starExamples[index] to use
+   */
+  exampleIndex: number
 }
 
-export default function ActionStep({ exampleKey }: ActionStepProps) {
-  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+/**
+ * @function ActionStep
+ * Allows multiple steps describing the user's actions.
+ * Data is stored in starExamples[exampleIndex].action.steps[]
+ */
+export default function ActionStep({ exampleIndex }: ActionStepProps) {
+  const { watch, setValue } = useFormContext<PitchWizardFormData>()
   
-  // State for our accordion steps
-  const [steps, setSteps] = useState<ActionStep[]>([])
+  // Watch the action object for this example
+  const storedAction = watch(`starExamples.${exampleIndex}.action`)
+
+  const [steps, setSteps] = useState<ActionStepType[]>([])
   const [openStep, setOpenStep] = useState<string | undefined>(undefined)
-  
-  // Watch the current values from the form
-  const storedAction = watch(`${exampleKey}.action`)
-  
-  // Determine which STAR example number we're working on
-  const exampleNumber = exampleKey === "starExample1" ? 1 : 
-                        exampleKey === "starExample2" ? 2 : 3;
-  
-  // Maximum steps limit
+
   const MAX_STEPS = 5
   const hasReachedMaxSteps = steps.length >= MAX_STEPS
-  
-  // Initial setup to create a default step if none exists
+
+  // On mount or when storedAction changes, parse existing steps into our local state
   useEffect(() => {
-    if (steps.length === 0) {
-      // If we have the new structure with steps
-      if (storedAction && typeof storedAction === 'object' && 'steps' in storedAction && Array.isArray(storedAction.steps)) {
-        // Convert to our UI format with unique IDs
-        const parsedSteps = storedAction.steps.map((step, index) => {
-          return {
-            id: uuidv4(),
-            position: index + 1,
-            "what-did-you-specifically-do-in-this-step": step["what-did-you-specifically-do-in-this-step"] || "",
-            "how-did-you-do-it-tools-methods-or-skills": step["how-did-you-do-it-tools-methods-or-skills"] || "",
-            "what-was-the-outcome-of-this-step-optional": step["what-was-the-outcome-of-this-step-optional"] || "",
-            isCompleted: Boolean(
-              step["what-did-you-specifically-do-in-this-step"] &&
-              step["how-did-you-do-it-tools-methods-or-skills"]
-            ),
-            // Include legacy properties for backward compatibility
-            title: step["what-did-you-specifically-do-in-this-step"] || "",
-            description: `How: ${step["how-did-you-do-it-tools-methods-or-skills"] || ""}\nOutcome: ${step["what-was-the-outcome-of-this-step-optional"] || ""}`
-          };
-        });
-        
-        if (parsedSteps.length > 0) {
-          setSteps(parsedSteps);
-          return;
-        }
+    // If we already have steps in local state, don't re-initialize
+    if (steps.length > 0) return
+
+    if (
+      storedAction &&
+      typeof storedAction === "object" &&
+      "steps" in storedAction &&
+      Array.isArray(storedAction.steps)
+    ) {
+      // Convert stored steps to our local format
+      const parsedSteps = storedAction.steps.map((step: any, index: number) => ({
+        id: uuidv4(),
+        position: index + 1,
+        "what-did-you-specifically-do-in-this-step":
+          step["what-did-you-specifically-do-in-this-step"] || "",
+        "how-did-you-do-it-tools-methods-or-skills":
+          step["how-did-you-do-it-tools-methods-or-skills"] || "",
+        "what-was-the-outcome-of-this-step-optional":
+          step["what-was-the-outcome-of-this-step-optional"] || "",
+        isCompleted: Boolean(
+          step["what-did-you-specifically-do-in-this-step"] &&
+          step["how-did-you-do-it-tools-methods-or-skills"]
+        ),
+        // optional fields for display
+        title: step["what-did-you-specifically-do-in-this-step"] || "",
+        description: `How: ${
+          step["how-did-you-do-it-tools-methods-or-skills"] || ""
+        }\nOutcome: ${
+          step["what-was-the-outcome-of-this-step-optional"] || ""
+        }`
+      }))
+      if (parsedSteps.length > 0) {
+        setSteps(parsedSteps)
+        return
       }
-      // Legacy support for old format
-      else if (isString(storedAction)) {
-        try {
-          const sections = storedAction.split('--');
-          if (sections.length > 1) {
-            const parsedSteps = sections.map((section: string, index: number) => {
-              const lines = section.trim().split('\n');
-              let title = "";
-              let howText = "";
-              let outcomeText = "";
-              
-              lines.forEach((line: string) => {
-                if (line.startsWith("Step ") && line.includes(":")) {
-                  title = line.split(":")[1].trim();
-                } else if (line.startsWith("How:")) {
-                  howText = line.replace("How:", "").trim();
-                } else if (line.startsWith("Outcome:")) {
-                  outcomeText = line.replace("Outcome:", "").trim();
-                }
-              });
-              
-              return {
-                id: uuidv4(),
-                position: index + 1,
-                "what-did-you-specifically-do-in-this-step": title,
-                "how-did-you-do-it-tools-methods-or-skills": howText,
-                "what-was-the-outcome-of-this-step-optional": outcomeText,
-                isCompleted: Boolean(title && howText),
-                // Include legacy properties
-                title,
-                description: `How: ${howText}\n${outcomeText ? `Outcome: ${outcomeText}` : ''}`
-              };
-            });
-            
-            if (parsedSteps.length > 0) {
-              setSteps(parsedSteps);
-              return;
+    } else if (isString(storedAction)) {
+      // Legacy string-based action data
+      try {
+        const sections = storedAction.split("--")
+        if (sections.length > 1) {
+          const parsedSteps = sections.map((section: string, index: number) => {
+            const lines = section.trim().split("\n")
+            let title = ""
+            let howText = ""
+            let outcomeText = ""
+
+            lines.forEach((line: string) => {
+              if (line.startsWith("Step ") && line.includes(":")) {
+                title = line.split(":")[1].trim()
+              } else if (line.startsWith("How:")) {
+                howText = line.replace("How:", "").trim()
+              } else if (line.startsWith("Outcome:")) {
+                outcomeText = line.replace("Outcome:", "").trim()
+              }
+            })
+
+            return {
+              id: uuidv4(),
+              position: index + 1,
+              "what-did-you-specifically-do-in-this-step": title,
+              "how-did-you-do-it-tools-methods-or-skills": howText,
+              "what-was-the-outcome-of-this-step-optional": outcomeText,
+              isCompleted: Boolean(title && howText),
+              title,
+              description: `How: ${howText}\n${
+                outcomeText ? `Outcome: ${outcomeText}` : ""
+              }`
             }
+          })
+
+          if (parsedSteps.length > 0) {
+            setSteps(parsedSteps)
+            return
           }
-        } catch (e) {
-          console.error("Error parsing legacy action steps:", e);
         }
+      } catch (e) {
+        console.error("Error parsing legacy action steps:", e)
       }
-      
-      // If we couldn't parse existing data, create a default step
-      setSteps([
-        {
-          id: uuidv4(),
-          position: 1,
-          "what-did-you-specifically-do-in-this-step": "",
-          "how-did-you-do-it-tools-methods-or-skills": "",
-          "what-was-the-outcome-of-this-step-optional": "",
-          isCompleted: false,
-          title: "",
-          description: ""
-        }
-      ]);
     }
-  }, [steps.length, storedAction]);
-  
-  // Function to update form values
-  const updateActionValue = (updatedSteps: ActionStep[]) => {
-    // Create an array of step objects for the new structure
+
+    // If no existing data, create a default single step
+    setSteps([
+      {
+        id: uuidv4(),
+        position: 1,
+        "what-did-you-specifically-do-in-this-step": "",
+        "how-did-you-do-it-tools-methods-or-skills": "",
+        "what-was-the-outcome-of-this-step-optional": "",
+        isCompleted: false,
+        title: "",
+        description: ""
+      }
+    ])
+  }, [steps.length, storedAction])
+
+  /**
+   * Update the form whenever our local steps change
+   */
+  const updateActionValue = (updatedSteps: ActionStepType[]) => {
     const stepData = updatedSteps
-      .filter(step => 
-        step["what-did-you-specifically-do-in-this-step"]?.trim() || 
-        step["how-did-you-do-it-tools-methods-or-skills"]?.trim()
+      .filter(
+        (s) =>
+          s["what-did-you-specifically-do-in-this-step"]?.trim() ||
+          s["how-did-you-do-it-tools-methods-or-skills"]?.trim()
       )
-      .map(step => ({
+      .map((step) => ({
         stepNumber: step.position,
-        "what-did-you-specifically-do-in-this-step": step["what-did-you-specifically-do-in-this-step"] || "",
-        "how-did-you-do-it-tools-methods-or-skills": step["how-did-you-do-it-tools-methods-or-skills"] || "",
-        "what-was-the-outcome-of-this-step-optional": step["what-was-the-outcome-of-this-step-optional"] || ""
-      }));
-    
-    // Store in the new nested structure
-    setValue(`${exampleKey}.action`, {
-      steps: stepData
-    }, { shouldDirty: true });
+        "what-did-you-specifically-do-in-this-step":
+          step["what-did-you-specifically-do-in-this-step"] || "",
+        "how-did-you-do-it-tools-methods-or-skills":
+          step["how-did-you-do-it-tools-methods-or-skills"] || "",
+        "what-was-the-outcome-of-this-step-optional":
+          step["what-was-the-outcome-of-this-step-optional"] || ""
+      }))
+
+    // Update the form field starExamples[exampleIndex].action.steps
+    setValue(
+      `starExamples.${exampleIndex}.action`,
+      { steps: stepData },
+      { shouldDirty: true }
+    )
   }
-  
-  // Handle saving a step
+
+  // Save step changes
   const handleSaveStep = (
-    stepId: string, 
-    what: string, 
-    how: string, 
+    stepId: string,
+    what: string,
+    how: string,
     outcome: string
   ) => {
-    const updatedSteps = steps.map(step => {
+    const updatedSteps = steps.map((step) => {
       if (step.id === stepId) {
         return {
           ...step,
@@ -186,26 +188,24 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
           "how-did-you-do-it-tools-methods-or-skills": how,
           "what-was-the-outcome-of-this-step-optional": outcome,
           isCompleted: Boolean(what.trim() && how.trim()),
-          // Update legacy properties
           title: what,
-          description: `How: ${how}\n${outcome ? `Outcome: ${outcome}` : ''}`
-        };
+          description: `How: ${how}\n${outcome ? `Outcome: ${outcome}` : ""}`
+        }
       }
-      return step;
-    });
-    
-    setSteps(updatedSteps);
-    updateActionValue(updatedSteps);
-    
-    // Close the accordion after saving
-    setOpenStep(undefined);
-  };
+      return step
+    })
 
-  // Handle adding a new step
+    setSteps(updatedSteps)
+    updateActionValue(updatedSteps)
+
+    // Close the accordion
+    setOpenStep(undefined)
+  }
+
   const handleAddStep = () => {
-    if (hasReachedMaxSteps) return;
-    
-    const newStep: ActionStep = {
+    if (hasReachedMaxSteps) return
+
+    const newStep: ActionStepType = {
       id: uuidv4(),
       position: steps.length + 1,
       "what-did-you-specifically-do-in-this-step": "",
@@ -214,25 +214,23 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
       isCompleted: false,
       title: "",
       description: ""
-    };
-    
-    const updatedSteps = [...steps, newStep];
-    setSteps(updatedSteps);
-    setOpenStep(newStep.id); // Open the newly added step
-  };
+    }
 
-  // Handle opening a step
+    const updatedSteps = [...steps, newStep]
+    setSteps(updatedSteps)
+    setOpenStep(newStep.id)
+  }
+
   const handleValueChange = (value: string) => {
     if (value === "") {
-      setOpenStep(undefined);
-      return;
+      setOpenStep(undefined)
+      return
     }
-    setOpenStep(value);
-  };
+    setOpenStep(value)
+  }
 
   return (
     <div className="space-y-4">
-      {/* Step list */}
       <Accordion
         type="single"
         collapsible
@@ -240,16 +238,11 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
         onValueChange={handleValueChange}
         className="space-y-2"
       >
-        {steps.map(step => (
-          <StepItem
-            key={step.id}
-            step={step}
-            onSave={handleSaveStep}
-          />
+        {steps.map((step) => (
+          <StepItem key={step.id} step={step} onSave={handleSaveStep} />
         ))}
       </Accordion>
 
-      {/* Add step button */}
       <Button
         type="button"
         variant="outline"
@@ -259,9 +252,8 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
         className="mt-2"
       >
         <Plus className="mr-2 h-4 w-4" />
-        Add Step {steps.length > 0 ? steps.length + 1 : 1}
+        Add Step {steps.length + 1}
       </Button>
-      
       {hasReachedMaxSteps && (
         <p className="text-xs text-muted-foreground">
           You've reached the maximum number of steps ({MAX_STEPS}).
@@ -272,29 +264,32 @@ export default function ActionStep({ exampleKey }: ActionStepProps) {
 }
 
 interface StepItemProps {
-  step: ActionStep;
+  step: ActionStepType
   onSave: (
     stepId: string,
     what: string,
     how: string,
     outcome: string
-  ) => void;
+  ) => void
 }
 
+/**
+ * Renders a single collapsible step item.
+ */
 function StepItem({ step, onSave }: StepItemProps) {
-  const [what, setWhat] = useState(step["what-did-you-specifically-do-in-this-step"] || "");
-  const [how, setHow] = useState(step["how-did-you-do-it-tools-methods-or-skills"] || "");
-  const [outcome, setOutcome] = useState(step["what-was-the-outcome-of-this-step-optional"] || "");
-  
+  const [what, setWhat] = useState(step["what-did-you-specifically-do-in-this-step"])
+  const [how, setHow] = useState(step["how-did-you-do-it-tools-methods-or-skills"])
+  const [outcome, setOutcome] = useState(step["what-was-the-outcome-of-this-step-optional"])
+
   useEffect(() => {
-    setWhat(step["what-did-you-specifically-do-in-this-step"] || "");
-    setHow(step["how-did-you-do-it-tools-methods-or-skills"] || "");
-    setOutcome(step["what-was-the-outcome-of-this-step-optional"] || "");
-  }, [step]);
-  
+    setWhat(step["what-did-you-specifically-do-in-this-step"])
+    setHow(step["how-did-you-do-it-tools-methods-or-skills"])
+    setOutcome(step["what-was-the-outcome-of-this-step-optional"])
+  }, [step])
+
   const handleSave = () => {
-    onSave(step.id, what, how, outcome);
-  };
+    onSave(step.id, what ?? "", how ?? "", outcome ?? "")
+  }
 
   return (
     <AccordionItem
@@ -307,19 +302,27 @@ function StepItem({ step, onSave }: StepItemProps) {
       <AccordionTrigger className="px-4 py-2 hover:no-underline">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center">
-            <div className={cn(
-              "w-6 h-6 rounded-full mr-3 flex items-center justify-center text-xs",
-              step.isCompleted ? "bg-green-500 text-white" : "bg-muted-foreground/20"
-            )}>
+            <div
+              className={cn(
+                "w-6 h-6 rounded-full mr-3 flex items-center justify-center text-xs",
+                step.isCompleted
+                  ? "bg-green-500 text-white"
+                  : "bg-muted-foreground/20"
+              )}
+            >
               {step.position}
             </div>
-            <span className={cn(
-              "font-medium flex-grow text-left",
-              !step.isCompleted && "text-muted-foreground"
-            )}>
-              {step.isCompleted 
-                ? what 
-                : `Step ${step.position}: ${what || "Not yet completed"}`}
+            <span
+              className={cn(
+                "font-medium flex-grow text-left",
+                !step.isCompleted && "text-muted-foreground"
+              )}
+            >
+              {step.isCompleted
+                ? what
+                : `Step ${step.position}: ${
+                    what || "Not yet completed"
+                  }`}
             </span>
           </div>
           {step.isCompleted && (
@@ -329,67 +332,65 @@ function StepItem({ step, onSave }: StepItemProps) {
           )}
         </div>
       </AccordionTrigger>
-      
+
       <AccordionContent className="px-4 pb-4 pt-2">
         <div className="space-y-3">
+          {/* WHAT */}
           <div className="space-y-1">
             <FormLabel htmlFor={`step-${step.id}-what`}>
               What did you specifically do in this step?
             </FormLabel>
             <div className="text-xs text-muted-foreground">
-              • Example: "I analyzed the log files to identify patterns in the errors."
+              • Example: "I analyzed the log files to identify error patterns."
             </div>
             <Textarea
               id={`step-${step.id}-what`}
               value={what}
-              onChange={e => setWhat(e.target.value)}
+              onChange={(e) => setWhat(e.target.value)}
               placeholder="Describe what you did in this step..."
               className="resize-none"
             />
           </div>
-          
+
+          {/* HOW */}
           <div className="space-y-1">
             <FormLabel htmlFor={`step-${step.id}-how`}>
               How did you do it? (tools, methods, or skills)
             </FormLabel>
             <div className="text-xs text-muted-foreground">
-              • Example: "I used log analysis tools and applied my expertise in debugging to trace the error patterns."
+              • Example: "I used log analysis tools and debugging techniques."
             </div>
             <Textarea
               id={`step-${step.id}-how`}
               value={how}
-              onChange={e => setHow(e.target.value)}
+              onChange={(e) => setHow(e.target.value)}
               placeholder="Describe how you approached this step..."
               className="resize-none"
             />
           </div>
-          
+
+          {/* OUTCOME (optional) */}
           <div className="space-y-1">
             <FormLabel htmlFor={`step-${step.id}-outcome`}>
               What was the outcome of this step? (optional)
             </FormLabel>
             <div className="text-xs text-muted-foreground">
-              • Example: "I successfully identified that the issue was related to a memory leak in a specific module."
+              • Example: "I pinpointed a memory leak in a specific module."
             </div>
             <Textarea
               id={`step-${step.id}-outcome`}
               value={outcome}
-              onChange={e => setOutcome(e.target.value)}
+              onChange={(e) => setOutcome(e.target.value)}
               placeholder="Describe the result of this step..."
               className="resize-none"
             />
           </div>
-          
-          <Button 
-            type="button" 
-            size="sm" 
-            className="mt-2"
-            onClick={handleSave}
-          >
+
+          <Button type="button" size="sm" className="mt-2" onClick={handleSave}>
             Save Step {step.position}
           </Button>
         </div>
       </AccordionContent>
     </AccordionItem>
-  );
+  )
 }

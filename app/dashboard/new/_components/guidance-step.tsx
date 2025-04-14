@@ -1,22 +1,16 @@
-/**
-@description
-Client sub-component for wizard Step 3: Automatic Albert Guidance.
-Modified to only generate guidance once and store it in the database.
-The guidance is displayed in a large Card component. If there is any error,
-it is shown to the user.
-@notes
-- The user can manually refresh the guidance using the "Refresh" button
-- We store the returned guidance in both the form's "albertGuidance" field and the database
-- We don't automatically regenerate guidance if it's already available
-*/
-
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard"
 import { useToast } from "@/lib/hooks/use-toast"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 import { useParams } from "next/navigation"
@@ -33,10 +27,10 @@ export default function GuidanceStep() {
   const { toast } = useToast()
   const params = useParams()
   
-  // Get the star examples count from the form
+  // Watch the starExamplesCount from the form; it might be "1", "2", ..., "10"
   const starExamplesCount = watch("starExamplesCount")
 
-  // We watch these fields to build the request for guidance:
+  // Watch fields needed to build the request for guidance:
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
   const pitchWordLimit = watch("pitchWordLimit")
@@ -51,48 +45,56 @@ export default function GuidanceStep() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState<number>(0)
-  
+
   // Use a key string to detect changes - only used for manual refresh
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${relevantExperience && relevantExperience.slice(0, 50)}|${roleDescription && roleDescription.slice(0, 50)}`
+  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${
+    relevantExperience && relevantExperience.slice(0, 50)
+  }|${roleDescription && roleDescription.slice(0, 50)}`
+
   const lastFetchKeyRef = useRef<string>("")
-  
-  // Flag to track if we've initialized this component
+
+  // Track if we've initialized this component to avoid repeated fetches
   const [hasInitialized, setHasInitialized] = useState(false)
 
-  // Function to save the guidance to the database
+  // Saves guidance to the database (if pitchId is known)
   const saveGuidanceToDatabase = async (guidance: string) => {
     try {
       const pitchId = params?.pitchId
       if (!pitchId) {
-        // For new pitches (no ID yet), we'll store the guidance in the form
-        // and it will be saved when the pitch is first created
-        console.log("No pitch ID available yet. Guidance will be saved with the new pitch.")
+        // For new pitches (no ID yet), the guidance is stored in the form
+        // and will be saved upon first creation in PitchWizard
+        console.log("No pitch ID available yet. Guidance will be saved when the pitch is created.")
         return
       }
-  
-      // For existing pitches, update the albertGuidance field
+
+      // For existing pitches, update albertGuidance
       const formData = getValues()
       const payload = {
         id: pitchId as string,
         userId: formData.userId,
         albertGuidance: guidance,
-        starExamplesCount: parseInt(formData.starExamplesCount)
+        // We parse starExamplesCount from string to number, if needed
+        starExamplesCount: parseInt(formData.starExamplesCount, 10)
       }
-  
+
       const response = await fetch(`/api/pitches/${pitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      
+
       if (!response.ok) {
-        console.error("Failed to save guidance to database:", await response.text())
+        console.error(
+          "Failed to save guidance to database:",
+          await response.text()
+        )
       }
     } catch (error) {
       console.error("Error saving guidance to database:", error)
     }
   }
 
+  // Fetches guidance from the AI backend
   const fetchGuidance = useCallback(async () => {
     if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
       setError("Missing required fields. Please complete Step 2 first.")
@@ -103,9 +105,9 @@ export default function GuidanceStep() {
       setLoading(true)
       setError(null)
 
-      // Set a timeout for the fetch operation
+      // Set up a 60-second timeout
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000)
 
       const response = await fetch("/api/albertGuidance", {
         method: "POST",
@@ -125,7 +127,7 @@ export default function GuidanceStep() {
 
       if (!response.ok) {
         if (response.status === 504) {
-          throw new Error("The request timed out. Please try again with a shorter description or retry later.")
+          throw new Error("The request timed out. Please try again later.")
         }
         const errText = await response.text()
         throw new Error(errText || "Failed to fetch guidance")
@@ -136,21 +138,20 @@ export default function GuidanceStep() {
         throw new Error(data.message || "Error generating guidance")
       }
 
-      // Store the returned guidance in form state
+      // Store the returned guidance in the form state
       setValue("albertGuidance", data.data, { shouldDirty: true })
-      
-      // Save to database
+
+      // Save to DB if possible
       await saveGuidanceToDatabase(data.data)
-      
-      setRetryCount(0) // Reset retry count on success
-      
-      // Update the last fetch key
+
+      setRetryCount(0) // reset on success
       lastFetchKeyRef.current = formDataKey
     } catch (err: any) {
-      const errorMessage = err.name === 'AbortError' 
-        ? "Request timed out. Please try again with a shorter description."
-        : err.message
-      
+      const errorMessage =
+        err.name === "AbortError"
+          ? "Request timed out. Please try again."
+          : err.message
+
       setError(errorMessage)
       toast({
         title: "Error",
@@ -160,14 +161,24 @@ export default function GuidanceStep() {
     } finally {
       setLoading(false)
     }
-  }, [roleName, roleLevel, pitchWordLimit, yearsExperience, relevantExperience, roleDescription, setValue, formDataKey, toast])
+  }, [
+    roleName,
+    roleLevel,
+    pitchWordLimit,
+    yearsExperience,
+    relevantExperience,
+    roleDescription,
+    setValue,
+    formDataKey,
+    toast
+  ])
 
-  // Run once when the component mounts
+  // Only run once at component mount or if albertGuidance is empty
   useEffect(() => {
     if (!hasInitialized) {
       setHasInitialized(true)
-      
-      // Only fetch guidance if we don't already have it
+
+      // If there's no existing guidance, fetch it
       if (!albertGuidance && !loading) {
         void fetchGuidance()
       }
@@ -175,40 +186,34 @@ export default function GuidanceStep() {
   }, [hasInitialized, albertGuidance, loading, fetchGuidance])
 
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1)
+    setRetryCount((prev) => prev + 1)
     void fetchGuidance()
   }
 
-  // Add a manual refresh button for users
   const handleManualRefresh = () => {
-    // Clear any existing guidance
     setValue("albertGuidance", "", { shouldDirty: false })
-    // Reset retry count
     setRetryCount(0)
-    // Fetch new guidance
     void fetchGuidance()
   }
 
-  // Handle star examples count change
-  const handleStarExamplesCountChange = (value: "2" | "3") => {
-    // Update the form context
-    setValue("starExamplesCount", value, { shouldDirty: true })
-    
-    // If we have a pitch ID, update the database
+  // Updated to handle arbitrary string values, e.g. "1", "2", ... "10"
+  const handleStarExamplesCountChange = (value: string) => {
+    setValue("starExamplesCount", value as "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10", { shouldDirty: true })
+
     const pitchId = params?.pitchId
     if (pitchId) {
       const formData = getValues()
       const payload = {
         id: pitchId as string,
         userId: formData.userId,
-        starExamplesCount: parseInt(value)
+        starExamplesCount: parseInt(value, 10) // Convert to number
       }
-      
+
       fetch(`/api/pitches/${pitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      }).catch(error => {
+      }).catch((error) => {
         console.error("Error saving star examples count:", error)
       })
     }
@@ -216,11 +221,12 @@ export default function GuidanceStep() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h2 className="text-lg font-semibold">Albert's Guidance</h2>
+
         <div className="flex items-center gap-3">
           <div className="flex items-center">
-            <span className="text-sm mr-2">Star examples:</span>
+            <span className="text-sm mr-2">Star Examples:</span>
             <Select
               value={starExamplesCount}
               onValueChange={handleStarExamplesCountChange}
@@ -229,19 +235,18 @@ export default function GuidanceStep() {
                 <SelectValue placeholder="Count" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
+                {/* Example options from 1 to 10 */}
+                {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map((val) => (
+                  <SelectItem key={val} value={val}>
+                    {val}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          
+
           {albertGuidance && !loading && (
-            <Button 
-              onClick={handleManualRefresh} 
-              variant="outline" 
-              size="sm"
-              disabled={loading}
-            >
+            <Button onClick={handleManualRefresh} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Guidance
             </Button>
@@ -249,7 +254,7 @@ export default function GuidanceStep() {
         </div>
       </div>
 
-      {/* Show loading, error, or the Card with guidance */}
+      {/* Loading State */}
       {loading && (
         <div className="flex flex-col items-center space-y-2 py-4">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -259,23 +264,18 @@ export default function GuidanceStep() {
         </div>
       )}
 
+      {/* Error State */}
       {error && (
         <div className="rounded-md bg-red-50 p-4 border border-red-200">
-          <p className="text-sm text-red-600 mb-3">
-            {error}
-          </p>
-          <Button 
-            onClick={handleRetry} 
-            variant="outline" 
-            size="sm"
-            disabled={loading}
-          >
+          <p className="text-sm text-red-600 mb-3">{error}</p>
+          <Button onClick={handleRetry} variant="outline" size="sm" disabled={loading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
           </Button>
         </div>
       )}
 
+      {/* Success State: Display Guidance */}
       {!loading && !error && albertGuidance && (
         <Card>
           <CardHeader>
@@ -285,28 +285,30 @@ export default function GuidanceStep() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="whitespace-pre-wrap text-sm">
-              {albertGuidance}
-            </div>
+            <div className="whitespace-pre-wrap text-sm">{albertGuidance}</div>
           </CardContent>
         </Card>
       )}
 
-      {/* 
-        If there's no guidance yet (and not loading), we either haven't fetched or
-        we are missing required data from Step 2. 
-      */}
+      {/* No Guidance Yet */}
       {!loading && !error && !albertGuidance && (
         <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
           <p className="text-muted-foreground text-sm mb-3">
-            Guidance is not available. Please ensure you have filled out Step 2 (Experience
-            details) completely.
+            Guidance is not available. Please ensure you've completed Step 2 
+            (Experience) fully, then try again.
           </p>
-          <Button 
-            onClick={handleRetry} 
-            variant="outline" 
+          <Button
+            onClick={handleRetry}
+            variant="outline"
             size="sm"
-            disabled={loading || !roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience}
+            disabled={
+              loading ||
+              !roleName ||
+              !roleLevel ||
+              !pitchWordLimit ||
+              !yearsExperience ||
+              !relevantExperience
+            }
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
