@@ -27,6 +27,8 @@ import { getPitchByIdAction } from "@/actions/db/pitches-actions"
 import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
+import ProgressBarWrapper from "@/app/dashboard/new/_components/progress-bar-wrapper"
+import DynamicHeader from "@/app/dashboard/new/_components/dynamic-header"
 
 function PitchWizardSkeleton() {
   return (
@@ -67,8 +69,13 @@ export default async function ResumePitchPage({ params }: { params: Promise<{ pi
   const { pitchId } = await params
   
   return (
-    <Suspense fallback={<PitchWizardSkeleton />}>
-      <PitchWizardFetcher pitchId={pitchId} />
-    </Suspense>
+    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+      <Suspense fallback={<PitchWizardSkeleton />}>
+        <ProgressBarWrapper>
+          <DynamicHeader />
+          <PitchWizardFetcher pitchId={pitchId} />
+        </ProgressBarWrapper>
+      </Suspense>
+    </div>
   )
 } 
