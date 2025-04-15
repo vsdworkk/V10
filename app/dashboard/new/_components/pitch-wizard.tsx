@@ -207,15 +207,64 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     // If the user just finished the final STAR sub-step:
     const lastStarStep = 3 + (starCount * 4)
     if (currentStepLocal === lastStarStep) {
-      // We can automatically jump to the final step and generate the pitch if desired
-      setCurrentStepLocal(lastStarStep + 1)
-      // Optionally generate the final pitch
+      // Automatically generate the final pitch when moving to the review step
+      setIsGeneratingFinalPitch(true)
+      setFinalPitchError(null)
+      
+      try {
+        const data = methods.getValues()
+        // First save the pitch data as a draft
+        await savePitchData(data, pitchId, setPitchId, toast)
+        
+        // Then generate the pitch using the agent
+        const res = await fetch("/api/finalPitch", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            roleName: data.roleName,
+            roleLevel: data.roleLevel,
+            pitchWordLimit: data.pitchWordLimit,
+            roleDescription: data.roleDescription || "",
+            yearsExperience: data.yearsExperience,
+            relevantExperience: data.relevantExperience,
+            starExamples: data.starExamples
+          })
+        })
+        
+        if (!res.ok) {
+          const errText = await res.text()
+          throw new Error(errText || "Failed to generate final pitch")
+        }
+        
+        const result = await res.json()
+        if (!result.isSuccess) {
+          throw new Error(result.message || "Failed to generate final pitch")
+        }
+        
+        // Update the pitch content in the form
+        methods.setValue("pitchContent", result.data || "", { shouldDirty: true })
+        
+        // Move to the review step
+        setCurrentStepLocal(lastStarStep + 1)
+      } catch (error: any) {
+        console.error("Error generating pitch:", error)
+        setFinalPitchError(error.message || "An error occurred generating your pitch")
+        toast({
+          title: "Error",
+          description: error.message || "Failed to generate pitch",
+          variant: "destructive"
+        })
+      } finally {
+        setIsGeneratingFinalPitch(false)
+      }
       return
     }
 
     // Otherwise just move on
     setCurrentStepLocal((s) => Math.min(s + 1, totalSteps))
-  }, [currentStepLocal, starCount, totalSteps])
+  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast])
 
   const goBack = useCallback(() => {
     setCurrentStepLocal((s) => Math.max(s - 1, 1))
@@ -240,7 +289,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
   }, [methods, pitchId, setPitchId, toast, router])
 
-  // Optional: If we're generating the final pitch automatically, show a spinner
+  // If we're generating the final pitch automatically, show a spinner
   if (isGeneratingFinalPitch) {
     return (
       <div className="flex flex-col items-center space-y-4 py-8 bg-white rounded-lg shadow-sm border p-6">
