@@ -56,8 +56,7 @@ export function isActionObject(value: unknown): value is StarSchema['action'] {
 export function parseLegacySituation(text: string): StarSchema['situation'] {
   const result: StarSchema['situation'] = {
     "where-and-when-did-this-experience-occur": "",
-    "briefly-describe-the-situation-or-challenge-you-faced": "",
-    "why-was-this-a-problem-or-why-did-it-matter": ""
+    "briefly-describe-the-situation-or-challenge-you-faced": ""
   };
   
   const lines = text.split('\n');
@@ -66,8 +65,6 @@ export function parseLegacySituation(text: string): StarSchema['situation'] {
       result["where-and-when-did-this-experience-occur"] = line.replace('Where and when:', '').trim();
     } else if (line.startsWith('Description:')) {
       result["briefly-describe-the-situation-or-challenge-you-faced"] = line.replace('Description:', '').trim();
-    } else if (line.startsWith('Why it mattered:')) {
-      result["why-was-this-a-problem-or-why-did-it-matter"] = line.replace('Why it mattered:', '').trim();
     }
   });
   
@@ -80,7 +77,6 @@ export function parseLegacySituation(text: string): StarSchema['situation'] {
 export function parseLegacyTask(text: string): StarSchema['task'] {
   const result: StarSchema['task'] = {
     "what-was-your-responsibility-in-addressing-this-issue": "",
-    "how-would-completing-this-task-help-solve-the-problem": "",
     "what-constraints-or-requirements-did-you-need-to-consider": ""
   };
   
@@ -88,8 +84,6 @@ export function parseLegacyTask(text: string): StarSchema['task'] {
   lines.forEach((line: string) => {
     if (line.startsWith('Responsibility:')) {
       result["what-was-your-responsibility-in-addressing-this-issue"] = line.replace('Responsibility:', '').trim();
-    } else if (line.startsWith('How it would help:')) {
-      result["how-would-completing-this-task-help-solve-the-problem"] = line.replace('How it would help:', '').trim();
     } else if (line.includes('constraints') || line.includes('requirements')) {
       result["what-constraints-or-requirements-did-you-need-to-consider"] = line.trim();
     }
@@ -104,8 +98,7 @@ export function parseLegacyTask(text: string): StarSchema['task'] {
 export function parseLegacyResult(text: string): StarSchema['result'] {
   const result: StarSchema['result'] = {
     "what-positive-outcome-did-you-achieve": "",
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-    "what-did-you-learn-from-this-experience": ""
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ""
   };
   
   const lines = text.split('\n');
@@ -114,8 +107,6 @@ export function parseLegacyResult(text: string): StarSchema['result'] {
       result["what-positive-outcome-did-you-achieve"] = line.replace('Outcome:', '').trim();
     } else if (line.startsWith('Benefit:')) {
       result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] = line.replace('Benefit:', '').trim();
-    } else if (line.includes('learn') || line.startsWith('Lessons:')) {
-      result["what-did-you-learn-from-this-experience"] = line.replace('Lessons:', '').trim();
     }
   });
   
