@@ -13,6 +13,9 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { isString, parseLegacySituation } from "@/types"
 
+// Import the minimal answer quality meter
+import { AnswerQualityMeter } from "./answer-quality-meter"
+
 interface SituationStepProps {
   /**
    * exampleIndex indicates which starExamples[index] to use
@@ -22,16 +25,14 @@ interface SituationStepProps {
 
 /**
  * @function SituationStep
- * Renders three text fields for the user to fill out based on specific questions:
- * 1) Where and when did this experience occur?
- * 2) Briefly describe the situation or challenge you faced.
+ * Renders two text fields:
+ *   1) Where and when did this experience occur?
+ *   2) Briefly describe the situation or challenge you faced.
  *
- * Data is stored in starExamples[exampleIndex].situation
+ * The component displays a minimal quality meter (three dots) under each field.
  */
 export default function SituationStep({ exampleIndex }: SituationStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
-
-  // Watch the current values from the form at this index
   const storedSituation = watch(`starExamples.${exampleIndex}.situation`)
 
   // Local state for each field
@@ -40,7 +41,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
 
   /**
    * Handler to update the form state when the user leaves a field (onBlur).
-   * We store data in `starExamples[exampleIndex].situation` with kebab-case keys.
+   * Data is stored in starExamples[exampleIndex].situation.
    */
   const handleBlur = () => {
     setValue(
@@ -64,7 +65,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
           storedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || ""
         )
       } else if (isString(storedSituation)) {
-        // Legacy support for old string-based storage
+        // Legacy fallback
         const parsedSituation = parseLegacySituation(storedSituation)
         setWhereAndWhen(
           parsedSituation["where-and-when-did-this-experience-occur"] || ""
@@ -78,7 +79,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
 
   return (
     <div className="space-y-4">
-      {/* Where and when */}
+      {/* Field 1: Where and when */}
       <FormField
         name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
         render={() => (
@@ -95,11 +96,13 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               />
             </FormControl>
             <FormMessage />
+            {/* Minimal answer quality meter below the first field */}
+            <AnswerQualityMeter text={whereAndWhen} />
           </FormItem>
         )}
       />
 
-      {/* Situation or Challenge */}
+      {/* Field 2: Situation or Challenge */}
       <FormField
         name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
         render={() => (
@@ -116,6 +119,8 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               />
             </FormControl>
             <FormMessage />
+            {/* Minimal answer quality meter below the second field */}
+            <AnswerQualityMeter text={situationOrChallenge} />
           </FormItem>
         )}
       />
