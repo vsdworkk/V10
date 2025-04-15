@@ -36,7 +36,6 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
 
   const [positiveOutcome, setPositiveOutcome] = useState("")
   const [benefitToTeam, setBenefitToTeam] = useState("")
-  const [whatYouLearned, setWhatYouLearned] = useState("")
 
   const handleBlur = () => {
     setValue(
@@ -44,8 +43,7 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
       {
         "what-positive-outcome-did-you-achieve": positiveOutcome,
         "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
-          benefitToTeam,
-        "what-did-you-learn-from-this-experience": whatYouLearned
+          benefitToTeam
       },
       { shouldDirty: true }
     )
@@ -62,9 +60,6 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
             "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
           ] || ""
         )
-        setWhatYouLearned(
-          storedResult["what-did-you-learn-from-this-experience"] || ""
-        )
       } else if (isString(storedResult)) {
         // Legacy fallback
         const parsedResult = parseLegacyResult(storedResult)
@@ -75,9 +70,6 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
           parsedResult[
             "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
           ] || ""
-        )
-        setWhatYouLearned(
-          parsedResult["what-did-you-learn-from-this-experience"] || ""
         )
       }
     }
@@ -121,26 +113,6 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
               <Textarea
                 value={benefitToTeam}
                 onChange={(e) => setBenefitToTeam(e.target.value)}
-                onBlur={handleBlur}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        name={`starExamples.${exampleIndex}.result.what-did-you-learn-from-this-experience`}
-        render={() => (
-          <FormItem>
-            <FormLabel>What did you learn from this experience?</FormLabel>
-            <div className="text-sm text-muted-foreground mb-2">
-              • Example: "I learned the importance of thorough testing before major releases."
-            </div>
-            <FormControl>
-              <Textarea
-                value={whatYouLearned}
-                onChange={(e) => setWhatYouLearned(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

@@ -37,6 +37,7 @@ const actionStepSchema = z.object({
 
 /**
  * A single STAR Example schema.
+ * Updated to remove certain fields (why-was-this-a-problem, how-would-completing, what-did-you-learn).
  */
 const starExampleSchema = z.object({
   situation: z.object({
@@ -45,26 +46,18 @@ const starExampleSchema = z.object({
       .min(5, "Please provide where and when this occurred."),
     "briefly-describe-the-situation-or-challenge-you-faced": z
       .string()
-      .min(5, "Please describe the situation or challenge."),
-    "why-was-this-a-problem-or-why-did-it-matter": z
-      .string()
-      .min(5, "Please explain why this mattered.")
+      .min(5, "Please describe the situation or challenge.")
   }),
   task: z.object({
     "what-was-your-responsibility-in-addressing-this-issue": z
       .string()
       .min(5, "Please describe your responsibility."),
-    "how-would-completing-this-task-help-solve-the-problem": z
-      .string()
-      .min(5, "Please explain how this would help."),
     "what-constraints-or-requirements-did-you-need-to-consider": z
       .string()
       .min(5, "Please describe any constraints.")
   }),
   action: z.object({
-    steps: z
-      .array(actionStepSchema)
-      .min(1, "Please add at least one action step.")
+    steps: z.array(actionStepSchema).min(1, "Please add at least one action step.")
   }),
   result: z.object({
     "what-positive-outcome-did-you-achieve": z
@@ -72,20 +65,13 @@ const starExampleSchema = z.object({
       .min(5, "Please describe the outcome you achieved."),
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z
       .string()
-      .min(5, "Please explain the benefits."),
-    "what-did-you-learn-from-this-experience": z
-      .string()
-      .min(5, "Please share what you learned.")
+      .min(5, "Please explain the benefits.")
   })
 })
 
 /**
- * Wizard form schema, storing:
- * - Basic role info, experience, etc.
- * - An array of starExamples
- * - starExamplesCount: how many STAR examples the user wants
- * - pitchContent: final AI-generated text
- * - selectedFile: for resume upload in Step 2
+ * Main wizard form schema.
+ * Removed yearsExperience, resumePath, and selectedFile fields.
  */
 const pitchWizardSchema = z.object({
   userId: z.string().optional(),
@@ -94,19 +80,17 @@ const pitchWizardSchema = z.object({
   roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
   pitchWordLimit: z.number().min(400, "Word limit must be at least 400 words."),
   roleDescription: z.string().optional(),
-  yearsExperience: z.string().nonempty("Years of experience is required."),
   relevantExperience: z.string().min(10, "Please provide more detail on your experience."),
-  resumePath: z.string().optional(),
   albertGuidance: z.string().optional(),
-  
+
+  // The user can pick 1..N examples in Guidance
+  starExamplesCount: z.enum(["1","2","3","4","5","6","7","8","9","10"]).default("1"),
+
   // The new approach: an array of examples
   starExamples: z.array(starExampleSchema).min(1, "At least one STAR example is required."),
-  
-  pitchContent: z.string().optional(),
-  selectedFile: z.any().optional(),
-  
-  // The user can pick 1..N examples in Guidance
-  starExamplesCount: z.enum(["1","2","3","4","5","6","7","8","9","10"]).default("1")
+
+  // The final text content from the AI
+  pitchContent: z.string().optional()
 })
 
 export type PitchWizardFormData = z.infer<typeof pitchWizardSchema>
@@ -115,14 +99,6 @@ interface PitchWizardProps {
   userId: string
   pitchData?: SelectPitch
 }
-
-// Fixed step titles for the first three steps plus the review step.
-// We'll generate STAR sub-step titles dynamically.
-const baseStepTitles = [
-  "Role Information",  // Step 1
-  "Experience",        // Step 2
-  "Guidance"          // Step 3
-]
 
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const router = useRouter()
@@ -201,9 +177,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    * Next / Back navigation
    */
   const goNext = useCallback(async () => {
-    // You can add step-specific validation calls here if you wish
-    // e.g., if (currentStepLocal === 1) { validate roleName, roleLevel, etc. }
-
     // If the user just finished the final STAR sub-step:
     const lastStarStep = 3 + (starCount * 4)
     if (currentStepLocal === lastStarStep) {
@@ -227,7 +200,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
             roleLevel: data.roleLevel,
             pitchWordLimit: data.pitchWordLimit,
             roleDescription: data.roleDescription || "",
-            yearsExperience: data.yearsExperience,
             relevantExperience: data.relevantExperience,
             starExamples: data.starExamples
           })
@@ -274,7 +246,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
    * Saves the form data as a draft (server call). Then closes the wizard or returns to the dashboard.
    */
   const saveAndClose = useCallback(async () => {
-    // Suppose we do a basic fetch to /api/pitchWizard
     const data = methods.getValues()
     await savePitchData(data, pitchId, setPitchId, toast)
     // Then redirect or do something
@@ -372,15 +343,15 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
 /**
  * Utility function to map existing pitch data (if any) to the wizard defaults.
+ * Removed the yearsExperience, resumePath, and selectedFile references.
  */
 function mapExistingDataToDefaults(userId: string, pitchData?: SelectPitch) {
-  // Type-safe role levels and star example counts
-  type RoleLevel = "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1";
-  type StarCount = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
-  
-  const defaultRoleLevel: RoleLevel = "APS4";
-  const roleLevels: RoleLevel[] = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"];
-  
+  type RoleLevel = "APS1" | "APS2" | "APS3" | "APS4" | "APS5" | "APS6" | "EL1"
+  type StarCount = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10"
+
+  const defaultRoleLevel: RoleLevel = "APS4"
+  const roleLevels: RoleLevel[] = ["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]
+
   if (!pitchData) {
     return {
       userId,
@@ -389,30 +360,26 @@ function mapExistingDataToDefaults(userId: string, pitchData?: SelectPitch) {
       roleLevel: defaultRoleLevel,
       pitchWordLimit: 650,
       roleDescription: "",
-      yearsExperience: "",
       relevantExperience: "",
-      resumePath: "",
       albertGuidance: "",
-      // At least one default example
       starExamples: [createEmptyStarExample()],
       pitchContent: "",
-      selectedFile: null,
       starExamplesCount: "1" as StarCount
     }
   }
 
   // Ensure roleLevel is a valid value from our enum
-  let safeRoleLevel: RoleLevel = defaultRoleLevel;
+  let safeRoleLevel: RoleLevel = defaultRoleLevel
   if (pitchData.roleLevel && roleLevels.includes(pitchData.roleLevel as any)) {
-    safeRoleLevel = pitchData.roleLevel as RoleLevel;
+    safeRoleLevel = pitchData.roleLevel as RoleLevel
   }
-  
+
   // Ensure starExamplesCount is a valid string from 1-10
-  let safeStarCount: StarCount = "1";
+  let safeStarCount: StarCount = "1"
   if (pitchData.starExamplesCount) {
-    const countStr = String(pitchData.starExamplesCount);
+    const countStr = String(pitchData.starExamplesCount)
     if (/^([1-9]|10)$/.test(countStr)) {
-      safeStarCount = countStr as StarCount;
+      safeStarCount = countStr as StarCount
     }
   }
 
@@ -423,32 +390,29 @@ function mapExistingDataToDefaults(userId: string, pitchData?: SelectPitch) {
     roleLevel: safeRoleLevel,
     pitchWordLimit: pitchData.pitchWordLimit || 650,
     roleDescription: pitchData.roleDescription || "",
-    yearsExperience: pitchData.yearsExperience || "",
     relevantExperience: pitchData.relevantExperience || "",
-    resumePath: pitchData.resumePath || "",
     albertGuidance: pitchData.albertGuidance || "",
-    starExamples: pitchData.starExamples && pitchData.starExamples.length > 0
-      ? pitchData.starExamples
-      : [createEmptyStarExample()],
+    starExamples:
+      pitchData.starExamples && pitchData.starExamples.length > 0
+        ? pitchData.starExamples
+        : [createEmptyStarExample()],
     pitchContent: pitchData.pitchContent || "",
-    selectedFile: null,
     starExamplesCount: safeStarCount
   }
 }
 
 /**
  * Creates an empty STAR example with a single empty action step.
+ * Removed keys for (why-was-this-a-problem, how-would-completing, what-did-you-learn).
  */
 function createEmptyStarExample() {
   return {
     situation: {
       "where-and-when-did-this-experience-occur": "",
-      "briefly-describe-the-situation-or-challenge-you-faced": "",
-      "why-was-this-a-problem-or-why-did-it-matter": ""
+      "briefly-describe-the-situation-or-challenge-you-faced": ""
     },
     task: {
       "what-was-your-responsibility-in-addressing-this-issue": "",
-      "how-would-completing-this-task-help-solve-the-problem": "",
       "what-constraints-or-requirements-did-you-need-to-consider": ""
     },
     action: {
@@ -463,8 +427,7 @@ function createEmptyStarExample() {
     },
     result: {
       "what-positive-outcome-did-you-achieve": "",
-      "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-      "what-did-you-learn-from-this-experience": ""
+      "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ""
     }
   }
 }
@@ -478,7 +441,7 @@ function generateDynamicStepTitle(currentStep: number, starCount: number): strin
   if (currentStep === 2) return "Experience"
   if (currentStep === 3) return "Guidance"
 
-  // star steps: 4 -> 3+(4*starCount)
+  // star steps: 4 -> 3 + (4 * starCount)
   const firstStarStep = 4
   const lastStarStep = 3 + (starCount * 4)
 
@@ -496,15 +459,15 @@ function generateDynamicStepTitle(currentStep: number, starCount: number): strin
 }
 
 /**
- * Example function to save pitch data as a draft.
+ * Saves pitch data as a draft (status = "draft").
+ * Removed references to yearsExperience, resumePath, and selectedFile.
  */
 async function savePitchData(
   data: PitchWizardFormData,
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
-  toast: any // from useToast
+  toast: any
 ) {
-  // Build the payload. You might adapt this or pass directly.
   const payload: any = {
     userId: data.userId,
     roleName: data.roleName,
@@ -512,16 +475,15 @@ async function savePitchData(
     roleLevel: data.roleLevel,
     pitchWordLimit: data.pitchWordLimit,
     roleDescription: data.roleDescription || "",
-    yearsExperience: data.yearsExperience,
     relevantExperience: data.relevantExperience,
-    resumePath: data.resumePath || null,
-    starExamples: data.starExamples,
     albertGuidance: data.albertGuidance || "",
     pitchContent: data.pitchContent || "",
-    status: "draft",
+    starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
-    currentStep: 1 // or wherever the user currently is
+    status: "draft",
+    currentStep: 1
   }
+
   if (pitchId) payload.id = pitchId
 
   try {
@@ -553,7 +515,8 @@ async function savePitchData(
 }
 
 /**
- * Example function to submit final pitch (status=final).
+ * Submits the final pitch (status = "final").
+ * Removed references to yearsExperience, resumePath, and selectedFile.
  */
 async function submitFinalPitch(
   data: PitchWizardFormData,
@@ -569,16 +532,15 @@ async function submitFinalPitch(
     roleLevel: data.roleLevel,
     pitchWordLimit: data.pitchWordLimit,
     roleDescription: data.roleDescription || "",
-    yearsExperience: data.yearsExperience,
     relevantExperience: data.relevantExperience,
-    resumePath: data.resumePath,
-    starExamples: data.starExamples,
     albertGuidance: data.albertGuidance || "",
     pitchContent: data.pitchContent,
-    status: "final",
+    starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
-    currentStep: 999 // or whichever indicates completion
+    status: "final",
+    currentStep: 999
   }
+
   if (pitchId) payload.id = pitchId
 
   try {

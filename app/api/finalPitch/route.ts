@@ -1,25 +1,10 @@
 /**
  * @description
  * API route for generating the final pitch text using our custom agent.
- * 
- * Key Features:
- * - Expects role and experience fields (same as before).
- * - Calls generateAgentPitchAction to use our custom agent instead of OpenAI.
- * - Returns the agent-generated pitch in JSON format for the client wizard.
- * 
- * @dependencies
- * - generateAgentPitchAction from "@/actions/agent-actions"
- * - NextResponse for JSON responses
- * 
- * @notes
- * This route replaces the previous implementation that used OpenAI's API directly.
- * The client-side code remains unchanged as the response format is the same.
  */
-
 import { NextResponse } from "next/server"
 import { generateAgentPitchAction } from "@/actions/agent-actions"
 
-// Increase the timeout for this route - agent processing can take 150s or more
 export const maxDuration = 180 // 180 seconds
 
 export async function POST(request: Request) {
@@ -27,12 +12,11 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     // Basic validation: ensure we have the minimum required fields.
-    // Now we check for starExamples (array) instead of starExample1/starExample2.
+    // Removed any reference to yearsExperience.
     if (
       !body.roleName ||
       !body.roleLevel ||
       !body.pitchWordLimit ||
-      !body.yearsExperience ||
       !body.relevantExperience ||
       !Array.isArray(body.starExamples) ||
       body.starExamples.length === 0
@@ -40,24 +24,24 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           isSuccess: false,
-          message: "Missing required fields for pitch generation (including at least one STAR example)."
+          message:
+            "Missing required fields for pitch generation (including at least one STAR example)."
         },
         { status: 400 }
       )
     }
 
-    // Convert pitchWordLimit to a number just in case it's passed as a string
+    // Convert pitchWordLimit to a number
     const numericLimit = Number(body.pitchWordLimit)
 
-    // Call our new agent action instead of the OpenAI action.
-    // We pass the array of starExamples plus other relevant data.
+    // Call our new agent action
     const agentResult = await generateAgentPitchAction({
       roleName: body.roleName,
       roleLevel: body.roleLevel,
       pitchWordLimit: numericLimit,
-      yearsExperience: body.yearsExperience,
       relevantExperience: body.relevantExperience,
       roleDescription: body.roleDescription || "",
+      // Now pass the array of starExamples
       starExamples: body.starExamples
     })
 
@@ -75,7 +59,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error in /api/finalPitch POST:", error)
 
-    // Check for timeout-related errors
     if (
       error.message?.includes("timeout") ||
       error.name === "AbortError" ||
@@ -84,7 +67,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           isSuccess: false,
-          message: "The request took too long to process. Please try again or shorten the request."
+          message:
+            "The request took too long to process. Please try again or shorten the request."
         },
         { status: 504 }
       )

@@ -34,7 +34,6 @@ export default function GuidanceStep() {
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
   const pitchWordLimit = watch("pitchWordLimit")
-  const yearsExperience = watch("yearsExperience")
   const relevantExperience = watch("relevantExperience")
   const roleDescription = watch("roleDescription")
 
@@ -47,7 +46,7 @@ export default function GuidanceStep() {
   const [retryCount, setRetryCount] = useState<number>(0)
 
   // Use a key string to detect changes - only used for manual refresh
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${yearsExperience}|${
+  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${
     relevantExperience && relevantExperience.slice(0, 50)
   }|${roleDescription && roleDescription.slice(0, 50)}`
 
@@ -77,17 +76,15 @@ export default function GuidanceStep() {
         starExamplesCount: parseInt(formData.starExamplesCount, 10)
       }
 
-      const response = await fetch(`/api/pitches/${pitchId}`, {
+      // <-- The key line: changed from `/api/pitches/${pitchId}` to `/api/pitchWizard/${pitchId}`
+      const response = await fetch(`/api/pitchWizard/${pitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        console.error(
-          "Failed to save guidance to database:",
-          await response.text()
-        )
+        console.error("Failed to save guidance to database:", await response.text())
       }
     } catch (error) {
       console.error("Error saving guidance to database:", error)
@@ -96,7 +93,7 @@ export default function GuidanceStep() {
 
   // Fetches guidance from the AI backend
   const fetchGuidance = useCallback(async () => {
-    if (!roleName || !roleLevel || !pitchWordLimit || !yearsExperience || !relevantExperience) {
+    if (!roleName || !roleLevel || !pitchWordLimit || !relevantExperience) {
       setError("Missing required fields. Please complete Step 2 first.")
       return
     }
@@ -116,7 +113,6 @@ export default function GuidanceStep() {
           roleName,
           roleLevel,
           pitchWordLimit,
-          yearsExperience,
           relevantExperience,
           roleDescription
         }),
@@ -165,7 +161,6 @@ export default function GuidanceStep() {
     roleName,
     roleLevel,
     pitchWordLimit,
-    yearsExperience,
     relevantExperience,
     roleDescription,
     setValue,
@@ -198,7 +193,21 @@ export default function GuidanceStep() {
 
   // Updated to handle arbitrary string values, e.g. "1", "2", ... "10"
   const handleStarExamplesCountChange = (value: string) => {
-    setValue("starExamplesCount", value as "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10", { shouldDirty: true })
+    setValue(
+      "starExamplesCount",
+      value as
+        | "1"
+        | "2"
+        | "3"
+        | "4"
+        | "5"
+        | "6"
+        | "7"
+        | "8"
+        | "9"
+        | "10",
+      { shouldDirty: true }
+    )
 
     const pitchId = params?.pitchId
     if (pitchId) {
@@ -209,7 +218,8 @@ export default function GuidanceStep() {
         starExamplesCount: parseInt(value, 10) // Convert to number
       }
 
-      fetch(`/api/pitches/${pitchId}`, {
+      // <-- Again, switched from `/api/pitches/${pitchId}` to `/api/pitchWizard/${pitchId}`
+      fetch(`/api/pitchWizard/${pitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -235,7 +245,6 @@ export default function GuidanceStep() {
                 <SelectValue placeholder="Count" />
               </SelectTrigger>
               <SelectContent>
-                {/* Example options from 1 to 10 */}
                 {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map((val) => (
                   <SelectItem key={val} value={val}>
                     {val}
@@ -306,7 +315,6 @@ export default function GuidanceStep() {
               !roleName ||
               !roleLevel ||
               !pitchWordLimit ||
-              !yearsExperience ||
               !relevantExperience
             }
           >

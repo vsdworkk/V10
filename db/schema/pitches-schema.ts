@@ -1,10 +1,8 @@
 /**
  * @description
  * This file defines the "pitches" table schema for APS Pitch Builder.
- * Updated to store an array of STAR examples in `starExamples` JSONB,
- * removing `starExample1` and `starExample2` in favor of a truly dynamic approach.
+ * Updated to store an array of STAR examples in `starExamples` JSONB.
  */
-
 import {
   pgEnum,
   pgTable,
@@ -18,7 +16,7 @@ import { profilesTable } from "@/db/schema/profiles-schema"
 
 /**
  * @description
- * Enum for pitch status, supporting limited, known states.
+ * Enum for pitch status
  */
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
@@ -27,8 +25,7 @@ export const pitchStatusEnum = pgEnum("pitch_status", [
 ])
 
 /**
- * @description
- * Interface defining a single action step in the STAR "Action" section.
+ * A single Action step in the STAR "Action" section
  */
 export interface ActionStep {
   stepNumber: number
@@ -38,18 +35,18 @@ export interface ActionStep {
 }
 
 /**
- * @description
- * Interface defining the structure of a single STAR example.
+ * The structure of a single STAR example.
+ * Remove "why-was-this-a-problem-or-why-did-it-matter",
+ * "how-would-completing-this-task-help-solve-the-problem",
+ * and "what-did-you-learn-from-this-experience".
  */
 export interface StarSchema {
   situation: {
     "where-and-when-did-this-experience-occur"?: string
     "briefly-describe-the-situation-or-challenge-you-faced"?: string
-    "why-was-this-a-problem-or-why-did-it-matter"?: string
   }
   task: {
     "what-was-your-responsibility-in-addressing-this-issue"?: string
-    "how-would-completing-this-task-help-solve-the-problem"?: string
     "what-constraints-or-requirements-did-you-need-to-consider"?: string
   }
   action: {
@@ -58,18 +55,16 @@ export interface StarSchema {
   result: {
     "what-positive-outcome-did-you-achieve"?: string
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"?: string
-    "what-did-you-learn-from-this-experience"?: string
   }
 }
 
 /**
- * If you store multiple STAR examples in one pitch, it's an array of StarSchema objects.
+ * We can store multiple STAR examples in `starExamples` (JSONB).
  */
 export type StarJsonbSchema = StarSchema[]
 
 /**
- * @description
- * The pitches table schema, updated to store starExamples as an array (JSONB).
+ * Drizzle table definition for "pitches".
  */
 export const pitchesTable = pgTable("pitches", {
   // Primary key
@@ -91,18 +86,10 @@ export const pitchesTable = pgTable("pitches", {
   // Optional job/role description
   roleDescription: text("role_description"),
 
-  // Experience fields
-  yearsExperience: text("years_experience").notNull(),
+  // Basic Experience field
   relevantExperience: text("relevant_experience").notNull(),
 
-  // Resume
-  resumePath: text("resume_path"),
-
-  /**
-   * @description
-   * Replaces starExample1 & starExample2 with a single array of STAR examples.
-   * e.g. [ { situation, task, action, result }, { situation, task, action, result }, ... ]
-   */
+  // Main array of STAR examples
   starExamples: jsonb("star_examples").$type<StarJsonbSchema>(),
 
   // Guidance from Albert AI
@@ -114,14 +101,10 @@ export const pitchesTable = pgTable("pitches", {
   // Pitch status
   status: pitchStatusEnum("status").default("draft").notNull(),
 
-  /**
-   * @description
-   * Number of STAR examples the user selected. 
-   * Defaults to 1, but you can set any range. (Wizard can store 1..10, etc.)
-   */
+  // How many STAR examples the user selected
   starExamplesCount: integer("star_examples_count").default(1).notNull(),
 
-  // Current step the user is on
+  // Current step in the wizard
   currentStep: integer("current_step").default(1).notNull(),
 
   // Timestamps

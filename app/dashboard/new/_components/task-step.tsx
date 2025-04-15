@@ -35,7 +35,6 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
   const storedTask = watch(`starExamples.${exampleIndex}.task`)
 
   const [responsibility, setResponsibility] = useState("")
-  const [helpSolve, setHelpSolve] = useState("")
   const [constraints, setConstraints] = useState("")
 
   const handleBlur = () => {
@@ -43,7 +42,6 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
       `starExamples.${exampleIndex}.task`,
       {
         "what-was-your-responsibility-in-addressing-this-issue": responsibility,
-        "how-would-completing-this-task-help-solve-the-problem": helpSolve,
         "what-constraints-or-requirements-did-you-need-to-consider": constraints
       },
       { shouldDirty: true }
@@ -56,9 +54,6 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
         setResponsibility(
           storedTask["what-was-your-responsibility-in-addressing-this-issue"] || ""
         )
-        setHelpSolve(
-          storedTask["how-would-completing-this-task-help-solve-the-problem"] || ""
-        )
         setConstraints(
           storedTask["what-constraints-or-requirements-did-you-need-to-consider"] || ""
         )
@@ -67,9 +62,6 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
         const parsedTask = parseLegacyTask(storedTask)
         setResponsibility(
           parsedTask["what-was-your-responsibility-in-addressing-this-issue"] || ""
-        )
-        setHelpSolve(
-          parsedTask["how-would-completing-this-task-help-solve-the-problem"] || ""
         )
         setConstraints(
           parsedTask["what-constraints-or-requirements-did-you-need-to-consider"] || ""
@@ -92,26 +84,6 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
               <Textarea
                 value={responsibility}
                 onChange={(e) => setResponsibility(e.target.value)}
-                onBlur={handleBlur}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        name={`starExamples.${exampleIndex}.task.how-would-completing-this-task-help-solve-the-problem`}
-        render={() => (
-          <FormItem>
-            <FormLabel>How would completing this task help solve the problem?</FormLabel>
-            <div className="text-sm text-muted-foreground mb-2">
-              • Example: "Fixing the errors promptly would avoid delays and maintain our reputation with clients."
-            </div>
-            <FormControl>
-              <Textarea
-                value={helpSolve}
-                onChange={(e) => setHelpSolve(e.target.value)}
                 onBlur={handleBlur}
               />
             </FormControl>

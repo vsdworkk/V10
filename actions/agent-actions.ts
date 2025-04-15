@@ -5,15 +5,6 @@
  * Exports server actions related to agent-driven pitch generation.
  * The primary action here is generateAgentPitchAction, which calls an external
  * agent API to generate the final pitch based on user-provided pitch details.
- *
- * Key Features:
- * - Makes a POST request to the agent API with required input variables
- * - Waits for processing, then makes a GET request to retrieve the results
- * - Returns the pitch in a standard ActionState format
- *
- * @dependencies
- * - "ActionState" from "@/types" for uniform success/fail structure.
- * - "AGENT_API_KEY" or similar environment variable, if needed.
  */
 
 import { ActionState } from "@/types"
@@ -23,20 +14,23 @@ import { setTimeout } from "timers/promises"
 /**
  * @interface GenerateAgentPitchParams
  * Describes the input needed to generate a pitch via the external agent.
- * - starExamples: an array of STAR examples in the new dynamic format (StarSchema).
  */
 export interface GenerateAgentPitchParams {
   roleName: string
   roleLevel: string
   pitchWordLimit: number
-  yearsExperience: string
   relevantExperience: string
   roleDescription?: string
-  starExamples: StarSchema[]  // Replaces starExample1 / starExample2
+  /**
+   * @description
+   * An array of STAR examples (StarSchema), each containing 
+   * situation, task, action, result. 
+   */
+  starExamples: StarSchema[]
 }
 
 /**
- * Type used for building the final JSON structure each example passes to the agent.
+ * Type used to build the final JSON structure for each example passed to the agent.
  */
 interface StarExampleOutput {
   id: string
@@ -48,7 +42,7 @@ interface StarExampleOutput {
 
 /**
  * @function generateAgentPitchAction
- * Calls the external agent to generate a final pitch text using the new, dynamic array of STAR examples.
+ * Calls the external agent to generate a final pitch text using the dynamic array of STAR examples.
  *
  * @param {GenerateAgentPitchParams} pitchData - The user-provided pitch data
  * @returns {Promise<ActionState<string>>} - The agent-generated text or an error state
@@ -57,31 +51,29 @@ export async function generateAgentPitchAction(
   pitchData: GenerateAgentPitchParams
 ): Promise<ActionState<string>> {
   try {
-    // 1) Format the core job description from pitch data.
+    // 1) Format the core job description from pitch data. 
+    //    (Removed "yearsExperience".)
     const jobDescription = `
 Role: ${pitchData.roleName}
 Level: ${pitchData.roleLevel}
 ${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ""}
-Years of Experience: ${pitchData.yearsExperience}
 `.trim()
 
     // 2) Convert the starExamples array into a simpler output array for the agent.
     const starExamplesArray: StarExampleOutput[] = pitchData.starExamples.map((example, index) => {
-      // Extract situation
-      const s = example.situation
+      // Extract situation fields
+      const s = example.situation || {}
       const situationText = [
         s["where-and-when-did-this-experience-occur"] || "",
-        s["briefly-describe-the-situation-or-challenge-you-faced"] || "",
-        s["why-was-this-a-problem-or-why-did-it-matter"] || ""
+        s["briefly-describe-the-situation-or-challenge-you-faced"] || ""
       ]
         .filter(Boolean)
         .join("\n")
 
-      // Extract task
-      const t = example.task
+      // Extract task fields
+      const t = example.task || {}
       const taskText = [
         t["what-was-your-responsibility-in-addressing-this-issue"] || "",
-        t["how-would-completing-this-task-help-solve-the-problem"] || "",
         t["what-constraints-or-requirements-did-you-need-to-consider"] || ""
       ]
         .filter(Boolean)
@@ -94,19 +86,18 @@ Years of Experience: ${pitchData.yearsExperience}
           .map((step, i) => {
             return `Step ${i + 1}: ${step["what-did-you-specifically-do-in-this-step"] || ""}\n` +
                    `How: ${step["how-did-you-do-it-tools-methods-or-skills"] || ""}\n` +
-                   (step["what-was-the-outcome-of-this-step-optional"]
+                   (step["what-was-the-outcome-of-this-step-optional"] 
                      ? `Outcome: ${step["what-was-the-outcome-of-this-step-optional"]}`
                      : "")
           })
           .join("\n\n")
       }
 
-      // Extract result
-      const r = example.result
+      // Extract result fields
+      const r = example.result || {}
       const resultText = [
         r["what-positive-outcome-did-you-achieve"] || "",
-        r["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || "",
-        r["what-did-you-learn-from-this-experience"] || ""
+        r["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] || ""
       ]
         .filter(Boolean)
         .join("\n")
@@ -120,7 +111,7 @@ Years of Experience: ${pitchData.yearsExperience}
       }
     })
 
-    // 3) Build the star_components JSON for the agent
+    // 3) Build the JSON for the agent
     const structuredStarComponents = {
       starExamples: starExamplesArray
     }
@@ -183,11 +174,11 @@ Years of Experience: ${pitchData.yearsExperience}
 
     console.log(`Agent execution started with ID: ${executionId}`)
 
-    let maxRetries = 30 // up to 30 retries (5-second intervals) = 150s total
+    let maxRetries = 30 // up to 30 retries (5-second intervals = 150s total)
     let resultData: string | null = null
 
     while (maxRetries > 0) {
-      await setTimeout(5000) // Wait 5s
+      await setTimeout(5000) // Wait 5s between checks
 
       const getOptions = {
         method: "GET",
@@ -202,7 +193,7 @@ Years of Experience: ${pitchData.yearsExperience}
 
         if (getResponse.ok) {
           const data = await getResponse.json()
-          // If the agent has returned a string result, consider it complete
+          // If the agent returns a string, consider it complete
           if (data && typeof data === "string") {
             resultData = data
             break
@@ -219,7 +210,7 @@ Years of Experience: ${pitchData.yearsExperience}
       throw new Error("Timed out waiting for agent response. Please try again.")
     }
 
-    // Return success with the agent's pitch text
+    // Return success
     return {
       isSuccess: true,
       message: "Pitch generated successfully via agent",
@@ -228,11 +219,11 @@ Years of Experience: ${pitchData.yearsExperience}
   } catch (error: any) {
     console.error("Error generating pitch with agent:", error)
 
-    // If it looks like a timeout
-    if (typeof error.message === "string" && error.message.includes("timeout")) {
+    if (error.message?.includes("timeout")) {
       return {
         isSuccess: false,
-        message: "The agent took too long to process your request. Please try again or simplify your inputs."
+        message:
+          "The agent took too long to process your request. Please try again or simplify your inputs."
       }
     }
 
