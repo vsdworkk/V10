@@ -4,23 +4,10 @@
  * @description
  * This client component displays and manages the pitch details in a form, allowing users
  * to edit. It also provides an option to re-run AI to regenerate pitch text.
- * 
- * Key features:
- * - Form-based editing for pitch fields
- * - "Re-run AI" button calls /api/finalPitch
- * - "Save Changes" button updates the pitch in the DB
- * - Includes <ExportPitch /> for PDF/Word export
- *
- * @dependencies
- * - React Hook Form for form state
- * - Shadcn UI components (Input, Textarea, Button)
- * - fetch for server route calls
- * - ExportPitch for PDF/Word generation
  *
  * @notes
- * - If pitchWordLimit < 650, starExample2 is hidden. 
- * - pitchContent is stored in the DB on "Save Changes".
- * - The user can export the final pitch using PDF/Word buttons at the bottom.
+ * - Removed: yearsExperience, resumePath fields.
+ * - Removed from STAR schema: why-was-this-a-problem-or-why-did-it-matter, how-would-completing-this-task-help-solve-the-problem, what-did-you-learn-from-this-experience.
  */
 
 import { useForm, FormProvider } from "react-hook-form"
@@ -48,20 +35,20 @@ import { useState } from "react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
-import ExportPitch from "./export-pitch" // <-- NEW IMPORT
+import ExportPitch from "./export-pitch"
 import { cn } from "@/lib/utils"
 import { useStepContext } from "@/app/dashboard/new/_components/progress-bar-wrapper"
 
-// STAR validation schema
+// Updated STAR schema: removed "why-was-this-a-problem-or-why-did-it-matter",
+// "how-would-completing-this-task-help-solve-the-problem", and
+// "what-did-you-learn-from-this-experience".
 const starSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": z.string().optional(),
-    "briefly-describe-the-situation-or-challenge-you-faced": z.string().optional(),
-    "why-was-this-a-problem-or-why-did-it-matter": z.string().optional()
+    "briefly-describe-the-situation-or-challenge-you-faced": z.string().optional()
   }),
   task: z.object({
     "what-was-your-responsibility-in-addressing-this-issue": z.string().optional(),
-    "how-would-completing-this-task-help-solve-the-problem": z.string().optional(),
     "what-constraints-or-requirements-did-you-need-to-consider": z.string().optional()
   }),
   action: z.object({
@@ -74,12 +61,11 @@ const starSchema = z.object({
   }),
   result: z.object({
     "what-positive-outcome-did-you-achieve": z.string().optional(),
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().optional(),
-    "what-did-you-learn-from-this-experience": z.string().optional()
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().optional()
   })
 })
 
-// Main form schema for editing the pitch
+// Main form schema: removed "yearsExperience" and "resumePath".
 const editPitchSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().min(1, "User ID is required"),
@@ -88,11 +74,12 @@ const editPitchSchema = z.object({
   roleLevel: z.string().min(1, "Role level is required"),
   pitchWordLimit: z.number().min(400, "Word limit must be at least 400 words"),
   roleDescription: z.string().optional(),
-  yearsExperience: z.string().min(1, "Years of experience is required"),
   relevantExperience: z.string().min(1, "Relevant experience is required"),
-  resumePath: z.string().optional(),
   albertGuidance: z.string().optional(),
+
+  // Updated starExamples: uses the new starSchema (without the removed fields).
   starExamples: z.array(starSchema).min(1, "At least one STAR example is required"),
+
   pitchContent: z.string().optional(),
   starExamplesCount: z.number().min(1).max(10).default(1)
 })
@@ -109,7 +96,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
   const [isStarCountLocked, setIsStarCountLocked] = useState(false)
   const { markStepCompleted } = useStepContext()
 
-  // Initialize react-hook-form
+  // Initialize react-hook-form with updated default values
   const methods = useForm<EditPitchFormData>({
     resolver: zodResolver(editPitchSchema),
     defaultValues: {
@@ -120,34 +107,36 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
       roleLevel: pitch.roleLevel,
       pitchWordLimit: pitch.pitchWordLimit,
       roleDescription: pitch.roleDescription ?? "",
-      yearsExperience: pitch.yearsExperience,
       relevantExperience: pitch.relevantExperience,
-      resumePath: pitch.resumePath ?? "",
-      starExamples: pitch.starExamples || [{
-        situation: {
-          "where-and-when-did-this-experience-occur": "",
-          "briefly-describe-the-situation-or-challenge-you-faced": "",
-          "why-was-this-a-problem-or-why-did-it-matter": ""
-        },
-        task: {
-          "what-was-your-responsibility-in-addressing-this-issue": "",
-          "how-would-completing-this-task-help-solve-the-problem": "",
-          "what-constraints-or-requirements-did-you-need-to-consider": ""
-        },
-        action: {
-          steps: [{
-            stepNumber: 1,
-            "what-did-you-specifically-do-in-this-step": "",
-            "how-did-you-do-it-tools-methods-or-skills": "",
-            "what-was-the-outcome-of-this-step-optional": ""
-          }]
-        },
-        result: {
-          "what-positive-outcome-did-you-achieve": "",
-          "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-          "what-did-you-learn-from-this-experience": ""
-        }
-      }],
+      albertGuidance: pitch.albertGuidance ?? "",
+      starExamples: pitch.starExamples && pitch.starExamples.length > 0
+        ? pitch.starExamples
+        : [
+            {
+              situation: {
+                "where-and-when-did-this-experience-occur": "",
+                "briefly-describe-the-situation-or-challenge-you-faced": ""
+              },
+              task: {
+                "what-was-your-responsibility-in-addressing-this-issue": "",
+                "what-constraints-or-requirements-did-you-need-to-consider": ""
+              },
+              action: {
+                steps: [
+                  {
+                    stepNumber: 1,
+                    "what-did-you-specifically-do-in-this-step": "",
+                    "how-did-you-do-it-tools-methods-or-skills": "",
+                    "what-was-the-outcome-of-this-step-optional": ""
+                  }
+                ]
+              },
+              result: {
+                "what-positive-outcome-did-you-achieve": "",
+                "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ""
+              }
+            }
+          ],
       pitchContent: pitch.pitchContent ?? "",
       starExamplesCount: pitch.starExamplesCount || 1
     }
@@ -179,7 +168,6 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
           roleLevel: values.roleLevel,
           pitchWordLimit: values.pitchWordLimit,
           roleDescription: values.roleDescription,
-          yearsExperience: values.yearsExperience,
           relevantExperience: values.relevantExperience,
           starExamples: values.starExamples
         })
@@ -208,46 +196,45 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
     }
   }
 
-  // For saving changes to DB
+  // For saving changes to DB (PATCH)
   async function handleSaveChanges(data: EditPitchFormData) {
-    // If pitchWordLimit < 650, remove starExample2
+    // If pitchWordLimit < 650, keep only 1 simplified example
     const patchBody = {
       ...data,
       starExamples: data.starExamples.map(example => {
         if (watchWordLimit < 650) {
+          // Minimal example if under 650
           return {
-            ...example,
             situation: {
               "where-and-when-did-this-experience-occur": "",
-              "briefly-describe-the-situation-or-challenge-you-faced": "",
-              "why-was-this-a-problem-or-why-did-it-matter": ""
+              "briefly-describe-the-situation-or-challenge-you-faced": ""
             },
             task: {
               "what-was-your-responsibility-in-addressing-this-issue": "",
-              "how-would-completing-this-task-help-solve-the-problem": "",
               "what-constraints-or-requirements-did-you-need-to-consider": ""
             },
             action: {
-              steps: [{
-                stepNumber: 1,
-                "what-did-you-specifically-do-in-this-step": "",
-                "how-did-you-do-it-tools-methods-or-skills": "",
-                "what-was-the-outcome-of-this-step-optional": ""
-              }]
+              steps: [
+                {
+                  stepNumber: 1,
+                  "what-did-you-specifically-do-in-this-step": "",
+                  "how-did-you-do-it-tools-methods-or-skills": "",
+                  "what-was-the-outcome-of-this-step-optional": ""
+                }
+              ]
             },
             result: {
               "what-positive-outcome-did-you-achieve": "",
-              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-              "what-did-you-learn-from-this-experience": ""
+              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ""
             }
           }
         } else {
           return example
         }
       }),
-      // Store current step based on the user's progress to allow proper resuming
       currentStep: getCurrentStepFromData(data)
     }
+
     try {
       const res = await fetch(`/api/pitchWizard/${data.id}`, {
         method: "PATCH",
@@ -258,53 +245,55 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
         const err = await res.json()
         throw new Error(err.error || "Failed to update pitch")
       }
-      
+
       // Lock the star examples count after saving
       setIsStarCountLocked(true)
-      
-      // Mark this step as completed in the progress bar
+
+      // Mark partial steps as completed for progress bar
       markStepCompleted(1) // Basic info
-      
-      if (data.yearsExperience && data.relevantExperience) {
+      if (data.relevantExperience) {
         markStepCompleted(2) // Experience
       }
-      
+
       if (data.starExamples && data.starExamples.length > 0) {
-        // Mark each completed example
         data.starExamples.forEach((example, index) => {
-          const baseStep = 4 + (index * 4); // Starting step for this example
-          
-          if (example.situation && 
-              example.situation["where-and-when-did-this-experience-occur"] &&
-              example.situation["briefly-describe-the-situation-or-challenge-you-faced"] &&
-              example.situation["why-was-this-a-problem-or-why-did-it-matter"]) {
-            markStepCompleted(baseStep); // Situation
+          const baseStep = 4 + index * 4 // starting step for example #1
+          if (
+            example.situation &&
+            example.situation["where-and-when-did-this-experience-occur"] &&
+            example.situation["briefly-describe-the-situation-or-challenge-you-faced"]
+          ) {
+            markStepCompleted(baseStep) // Situation
           }
-          
-          if (example.task && 
-              example.task["what-was-your-responsibility-in-addressing-this-issue"] &&
-              example.task["how-would-completing-this-task-help-solve-the-problem"] &&
-              example.task["what-constraints-or-requirements-did-you-need-to-consider"]) {
-            markStepCompleted(baseStep + 1); // Task
+
+          if (
+            example.task &&
+            example.task["what-was-your-responsibility-in-addressing-this-issue"] &&
+            example.task["what-constraints-or-requirements-did-you-need-to-consider"]
+          ) {
+            markStepCompleted(baseStep + 1) // Task
           }
-          
+
+          // If there's at least one action step, mark Action completed
           if (example.action && example.action.steps.length > 0) {
-            markStepCompleted(baseStep + 2); // Action
+            markStepCompleted(baseStep + 2) // Action
           }
-          
-          if (example.result && 
-              example.result["what-positive-outcome-did-you-achieve"] &&
-              example.result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] &&
-              example.result["what-did-you-learn-from-this-experience"]) {
-            markStepCompleted(baseStep + 3); // Result
+
+          // If result fields are present, mark it
+          if (
+            example.result &&
+            example.result["what-positive-outcome-did-you-achieve"] &&
+            example.result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"]
+          ) {
+            markStepCompleted(baseStep + 3) // Result
           }
-        });
+        })
       }
-      
+
       if (data.pitchContent) {
-        markStepCompleted(12) // Review
+        markStepCompleted(12) // Review step
       }
-      
+
       toast({
         title: "Pitch Updated",
         description: "Your changes have been saved."
@@ -322,100 +311,90 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
   // Helper function to determine the current step based on data in the form
   function getCurrentStepFromData(data: EditPitchFormData): number {
     if (data.pitchContent) {
-      return 12; // Review step
+      return 12 // Review step
     }
-    
-    // Check if we have complete STAR examples based on the count
-    const requiredExamplesCount = data.starExamplesCount;
-    
-    // Check if we have all required STAR examples filled out
+
+    const requiredExamplesCount = data.starExamplesCount
     if (data.starExamples && data.starExamples.length >= requiredExamplesCount) {
-      // Check the last required example
-      const lastRequiredExample = data.starExamples[requiredExamplesCount - 1];
-      
-      if (lastRequiredExample && 
-          lastRequiredExample.result && 
-          lastRequiredExample.result["what-positive-outcome-did-you-achieve"]) {
-        return 12; // Ready for review
+      const lastRequiredExample = data.starExamples[requiredExamplesCount - 1]
+      // If that example's result is filled, likely we are at review
+      if (
+        lastRequiredExample &&
+        lastRequiredExample.result &&
+        lastRequiredExample.result["what-positive-outcome-did-you-achieve"]
+      ) {
+        return 12
       }
-      
-      // Check which part of the last example is filled
+      // Check partial fill
       if (lastRequiredExample.action && lastRequiredExample.action.steps.length > 0) {
-        return 3 + (requiredExamplesCount * 4) - 1; // Result step for last example
+        return 3 + requiredExamplesCount * 4 - 1 // result step
       }
-      
-      if (lastRequiredExample.task && 
-          lastRequiredExample.task["what-was-your-responsibility-in-addressing-this-issue"]) {
-        return 3 + (requiredExamplesCount * 4) - 2; // Action step for last example
+      if (lastRequiredExample.task && lastRequiredExample.task["what-was-your-responsibility-in-addressing-this-issue"]) {
+        return 3 + requiredExamplesCount * 4 - 2 // action step
       }
-      
-      if (lastRequiredExample.situation && 
-          lastRequiredExample.situation["where-and-when-did-this-experience-occur"]) {
-        return 3 + (requiredExamplesCount * 4) - 3; // Task step for last example
+      if (lastRequiredExample.situation && lastRequiredExample.situation["where-and-when-did-this-experience-occur"]) {
+        return 3 + requiredExamplesCount * 4 - 3 // task step
       }
-      
-      return 3 + (requiredExamplesCount * 4) - 4; // Situation step for last example
+      return 3 + requiredExamplesCount * 4 - 4 // situation step
     }
-    
-    // If we have some examples but not all required ones
+
+    // If we have some examples but not all
     if (data.starExamples && data.starExamples.length > 0) {
-      const lastExampleIndex = data.starExamples.length - 1;
-      const lastExample = data.starExamples[lastExampleIndex];
-      
-      if (lastExample.result && 
-          lastExample.result["what-positive-outcome-did-you-achieve"]) {
-        // Completed this example, ready for next one
-        return 3 + ((lastExampleIndex + 1) * 4) + 1;
+      const lastExampleIndex = data.starExamples.length - 1
+      const lastExample = data.starExamples[lastExampleIndex]
+
+      if (lastExample.result && lastExample.result["what-positive-outcome-did-you-achieve"]) {
+        // Completed this example, next example or review
+        return 3 + (lastExampleIndex + 1) * 4 + 1
       }
-      
       if (lastExample.action && lastExample.action.steps.length > 0) {
-        return 3 + (lastExampleIndex * 4) + 3; // Result step
+        return 3 + lastExampleIndex * 4 + 3 // result step
       }
-      
-      if (lastExample.task && 
-          lastExample.task["what-was-your-responsibility-in-addressing-this-issue"]) {
-        return 3 + (lastExampleIndex * 4) + 2; // Action step
+      if (
+        lastExample.task &&
+        lastExample.task["what-was-your-responsibility-in-addressing-this-issue"]
+      ) {
+        return 3 + lastExampleIndex * 4 + 2 // action step
       }
-      
-      if (lastExample.situation && 
-          lastExample.situation["where-and-when-did-this-experience-occur"]) {
-        return 3 + (lastExampleIndex * 4) + 1; // Task step
+      if (
+        lastExample.situation &&
+        lastExample.situation["where-and-when-did-this-experience-occur"]
+      ) {
+        return 3 + lastExampleIndex * 4 + 1 // task step
       }
-      
-      return 3 + (lastExampleIndex * 4) + 0; // Situation step
+      return 3 + lastExampleIndex * 4 // situation step
     }
-    
+
     if (data.relevantExperience) {
-      return 3; // Guidance step
+      return 3 // Guidance step
     }
-    
     if (data.roleName) {
-      return 2; // Experience step
+      return 2 // Experience step
     }
-    
-    return 1; // Role information step
+    return 1 // Role information step
   }
 
-  // Dynamically render STAR example fields based on starExamplesCount
+  // Dynamically render STAR example fields
   const renderStarExamples = () => {
-    const count = methods.watch("starExamplesCount");
-    const examples = [];
-    
+    const count = methods.watch("starExamplesCount")
+    const examples = []
+
     for (let i = 0; i < count; i++) {
       examples.push(
         <div key={`star-example-${i}`} className="space-y-4 border p-4 rounded-md">
           <h3 className="font-medium text-lg">STAR Example {i + 1}</h3>
-          
+
           <div className="space-y-4">
+            {/* Situation */}
             <FormField
               control={methods.control}
               name={`starExamples.${i}.situation.where-and-when-did-this-experience-occur`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Situation</FormLabel>
+                  <FormLabel>Situation (Where/When)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe where and when this experience occurred..."
+                      placeholder="Where and when did this experience occur?"
                       className="min-h-24"
                       {...field}
                     />
@@ -424,16 +403,17 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 </FormItem>
               )}
             />
-            
+
+            {/* Task */}
             <FormField
               control={methods.control}
               name={`starExamples.${i}.task.what-was-your-responsibility-in-addressing-this-issue`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Task</FormLabel>
+                  <FormLabel>Task (Responsibility)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="What was your responsibility in addressing this issue..."
+                      placeholder="What was your responsibility in addressing this issue?"
                       className="min-h-24"
                       {...field}
                     />
@@ -442,16 +422,17 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 </FormItem>
               )}
             />
-            
+
+            {/* Action (Just the first step for simplicity) */}
             <FormField
               control={methods.control}
               name={`starExamples.${i}.action.steps.0.what-did-you-specifically-do-in-this-step`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Action</FormLabel>
+                  <FormLabel>Action (Step 1)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="What did you specifically do in this step..."
+                      placeholder="What did you specifically do in this step?"
                       className="min-h-24"
                       {...field}
                     />
@@ -460,16 +441,17 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                 </FormItem>
               )}
             />
-            
+
+            {/* Result */}
             <FormField
               control={methods.control}
               name={`starExamples.${i}.result.what-positive-outcome-did-you-achieve`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Result</FormLabel>
+                  <FormLabel>Result (Positive Outcome)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="What positive outcome did you achieve..."
+                      placeholder="What positive outcome did you achieve?"
                       className="min-h-24"
                       {...field}
                     />
@@ -480,11 +462,10 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
             />
           </div>
         </div>
-      );
+      )
     }
-    
-    return examples;
-  };
+    return examples
+  }
 
   return (
     <div className="space-y-6">
@@ -517,7 +498,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   <FormItem>
                     <FormLabel>Organisation Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Department of Finance" {...field} value={field.value || ""} />
+                      <Input placeholder="e.g. Department of Finance" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -554,7 +535,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               <FormField
                 control={methods.control}
                 name="pitchWordLimit"
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pitch Word Limit</FormLabel>
                     <FormControl>
@@ -580,104 +561,9 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground mt-1">
-                        2 STAR examples are required.
+                        2 (or more) STAR examples are recommended.
                       </p>
                     )}
-                  </FormItem>
-                )}
-              />
-
-              {/* Star Examples Count */}
-              <FormField
-                control={methods.control}
-                name="starExamplesCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of STAR Examples</FormLabel>
-                    <Select
-                      disabled={isStarCountLocked}
-                      value={String(field.value)}
-                      onValueChange={(value) => {
-                        const numValue = parseInt(value, 10);
-                        field.onChange(numValue);
-                        
-                        // Make sure we have the right number of examples in the form
-                        const currentExamples = methods.getValues("starExamples") || [];
-                        const newExamples = [...currentExamples];
-                        
-                        // Add examples if needed
-                        while (newExamples.length < numValue) {
-                          newExamples.push({
-                            situation: {
-                              "where-and-when-did-this-experience-occur": "",
-                              "briefly-describe-the-situation-or-challenge-you-faced": "",
-                              "why-was-this-a-problem-or-why-did-it-matter": ""
-                            },
-                            task: {
-                              "what-was-your-responsibility-in-addressing-this-issue": "",
-                              "how-would-completing-this-task-help-solve-the-problem": "",
-                              "what-constraints-or-requirements-did-you-need-to-consider": ""
-                            },
-                            action: {
-                              steps: [{
-                                stepNumber: 1,
-                                "what-did-you-specifically-do-in-this-step": "",
-                                "how-did-you-do-it-tools-methods-or-skills": "",
-                                "what-was-the-outcome-of-this-step-optional": ""
-                              }]
-                            },
-                            result: {
-                              "what-positive-outcome-did-you-achieve": "",
-                              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-                              "what-did-you-learn-from-this-experience": ""
-                            }
-                          });
-                        }
-                        
-                        // Remove examples if needed
-                        if (newExamples.length > numValue) {
-                          newExamples.length = numValue;
-                        }
-                        
-                        methods.setValue("starExamples", newExamples);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select # of examples" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="6">6</SelectItem>
-                        <SelectItem value="7">7</SelectItem>
-                        <SelectItem value="8">8</SelectItem>
-                        <SelectItem value="9">9</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Role Description */}
-              <FormField
-                control={methods.control}
-                name="roleDescription"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Paste or type the official role description here..."
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -688,21 +574,6 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
               <h2 className="text-lg font-semibold">Experience</h2>
             </div>
             <div className="space-y-4">
-              {/* Years of Experience */}
-              <FormField
-                control={methods.control}
-                name="yearsExperience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 2-5 years" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Relevant Experience */}
               <FormField
                 control={methods.control}
@@ -720,19 +591,12 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                   </FormItem>
                 )}
               />
-
-              {/* Resume path (read-only) */}
-              {pitch.resumePath && (
-                <div className="text-sm text-muted-foreground">
-                  <span className="font-medium">Resume Path:</span> {pitch.resumePath}
-                </div>
-              )}
             </div>
 
             {/* STAR Examples */}
             <div className="space-y-6 mt-6">
               <h3 className="text-lg font-medium border-b pb-2">STAR Examples</h3>
-              
+
               <FormField
                 control={methods.control}
                 name="starExamplesCount"
@@ -743,75 +607,88 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
                       disabled={isStarCountLocked}
                       value={String(field.value)}
                       onValueChange={(value) => {
-                        const numValue = parseInt(value, 10);
-                        field.onChange(numValue);
-                        
-                        // Make sure we have the right number of examples in the form
-                        const currentExamples = methods.getValues("starExamples") || [];
-                        const newExamples = [...currentExamples];
-                        
-                        // Add examples if needed
+                        const numValue = parseInt(value, 10)
+                        field.onChange(numValue)
+
+                        // Adjust starExamples array length
+                        const currentExamples = methods.getValues("starExamples") || []
+                        const newExamples = [...currentExamples]
+
                         while (newExamples.length < numValue) {
                           newExamples.push({
                             situation: {
                               "where-and-when-did-this-experience-occur": "",
-                              "briefly-describe-the-situation-or-challenge-you-faced": "",
-                              "why-was-this-a-problem-or-why-did-it-matter": ""
+                              "briefly-describe-the-situation-or-challenge-you-faced": ""
                             },
                             task: {
                               "what-was-your-responsibility-in-addressing-this-issue": "",
-                              "how-would-completing-this-task-help-solve-the-problem": "",
                               "what-constraints-or-requirements-did-you-need-to-consider": ""
                             },
                             action: {
-                              steps: [{
-                                stepNumber: 1,
-                                "what-did-you-specifically-do-in-this-step": "",
-                                "how-did-you-do-it-tools-methods-or-skills": "",
-                                "what-was-the-outcome-of-this-step-optional": ""
-                              }]
+                              steps: [
+                                {
+                                  stepNumber: 1,
+                                  "what-did-you-specifically-do-in-this-step": "",
+                                  "how-did-you-do-it-tools-methods-or-skills": "",
+                                  "what-was-the-outcome-of-this-step-optional": ""
+                                }
+                              ]
                             },
                             result: {
                               "what-positive-outcome-did-you-achieve": "",
-                              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": "",
-                              "what-did-you-learn-from-this-experience": ""
+                              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ""
                             }
-                          });
+                          })
                         }
-                        
-                        // Remove examples if needed
                         if (newExamples.length > numValue) {
-                          newExamples.length = numValue;
+                          newExamples.length = numValue
                         }
-                        
-                        methods.setValue("starExamples", newExamples);
+                        methods.setValue("starExamples", newExamples)
                       }}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select # of examples" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="6">6</SelectItem>
-                        <SelectItem value="7">7</SelectItem>
-                        <SelectItem value="8">8</SelectItem>
-                        <SelectItem value="9">9</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
+                        {[...Array(10)].map((_, i) => {
+                          const val = i + 1
+                          return (
+                            <SelectItem key={val} value={String(val)}>
+                              {val}
+                            </SelectItem>
+                          )
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <div className="space-y-6">
-                {renderStarExamples()}
-              </div>
+
+              <div className="space-y-6">{renderStarExamples()}</div>
             </div>
+
+            {/* Role Description (optional) */}
+            <div className="my-6 border-b pb-2 pt-4">
+              <h2 className="text-lg font-semibold">Role Description (Optional)</h2>
+            </div>
+            <FormField
+              control={methods.control}
+              name="roleDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Paste or type the official role description here..."
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Final Pitch Content */}
             <div className="my-6 border-b pb-2 pt-4">
@@ -855,11 +732,7 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
       </FormProvider>
 
       {/* ExportPitch component to allow PDF/Word export */}
-      <ExportPitch
-        pitchContent={pitchContent}
-        pitchTitle={pitch.roleName}
-        pitchId={pitch.id}
-      />
+      <ExportPitch pitchContent={pitchContent} pitchTitle={pitch.roleName} pitchId={pitch.id} />
     </div>
   )
 }
