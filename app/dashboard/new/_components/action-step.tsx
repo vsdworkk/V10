@@ -24,6 +24,11 @@ import { cn } from "@/lib/utils"
 import { isString } from "@/types"
 import type { ActionStep as ActionStepType } from "@/types/action-steps-types"
 
+// Add word count helper
+function countWords(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length
+}
+
 interface ActionStepProps {
   /**
    * exampleIndex indicates which starExamples[index] to use
@@ -230,35 +235,43 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <Accordion
-        type="single"
-        collapsible
-        value={openStep}
-        onValueChange={handleValueChange}
-        className="space-y-2"
-      >
-        {steps.map((step) => (
-          <StepItem key={step.id} step={step} onSave={handleSaveStep} />
-        ))}
-      </Accordion>
+    <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
+      <div className="w-full px-8">
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-5">Action</h2>
+          
+          <div className="space-y-4">
+            <Accordion
+              type="single"
+              collapsible
+              value={openStep}
+              onValueChange={handleValueChange}
+              className="space-y-2"
+            >
+              {steps.map((step) => (
+                <StepItem key={step.id} step={step} onSave={handleSaveStep} />
+              ))}
+            </Accordion>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleAddStep}
-        disabled={hasReachedMaxSteps}
-        className="mt-2"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Add Step {steps.length + 1}
-      </Button>
-      {hasReachedMaxSteps && (
-        <p className="text-xs text-muted-foreground">
-          You've reached the maximum number of steps ({MAX_STEPS}).
-        </p>
-      )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddStep}
+              disabled={hasReachedMaxSteps}
+              className="mt-2"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Step {steps.length + 1}
+            </Button>
+            {hasReachedMaxSteps && (
+              <p className="text-xs text-muted-foreground">
+                You've reached the maximum number of steps ({MAX_STEPS}).
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -280,6 +293,11 @@ function StepItem({ step, onSave }: StepItemProps) {
   const [what, setWhat] = useState(step["what-did-you-specifically-do-in-this-step"])
   const [how, setHow] = useState(step["how-did-you-do-it-tools-methods-or-skills"])
   const [outcome, setOutcome] = useState(step["what-was-the-outcome-of-this-step-optional"])
+  
+  // Word counts
+  const whatWords = countWords(what || "")
+  const howWords = countWords(how || "")
+  const outcomeWords = countWords(outcome || "")
 
   useEffect(() => {
     setWhat(step["what-did-you-specifically-do-in-this-step"])
@@ -337,53 +355,59 @@ function StepItem({ step, onSave }: StepItemProps) {
         <div className="space-y-3">
           {/* WHAT */}
           <div className="space-y-1">
-            <FormLabel htmlFor={`step-${step.id}-what`}>
+            <FormLabel htmlFor={`step-${step.id}-what`} className="block text-gray-700 font-medium">
               What did you specifically do in this step?
             </FormLabel>
-            <div className="text-xs text-muted-foreground">
-              • Example: "I analyzed the log files to identify error patterns."
+            <div className="relative">
+              <Textarea
+                id={`step-${step.id}-what`}
+                value={what}
+                onChange={(e) => setWhat(e.target.value)}
+                placeholder="I analyzed the log files to identify error patterns."
+                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+              />
+              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                {whatWords}
+              </div>
             </div>
-            <Textarea
-              id={`step-${step.id}-what`}
-              value={what}
-              onChange={(e) => setWhat(e.target.value)}
-              placeholder="Describe what you did in this step..."
-              className="resize-none"
-            />
           </div>
 
           {/* HOW */}
           <div className="space-y-1">
-            <FormLabel htmlFor={`step-${step.id}-how`}>
+            <FormLabel htmlFor={`step-${step.id}-how`} className="block text-gray-700 font-medium">
               How did you do it? (tools, methods, or skills)
             </FormLabel>
-            <div className="text-xs text-muted-foreground">
-              • Example: "I used log analysis tools and debugging techniques."
+            <div className="relative">
+              <Textarea
+                id={`step-${step.id}-how`}
+                value={how}
+                onChange={(e) => setHow(e.target.value)}
+                placeholder="I used log analysis tools and debugging techniques."
+                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+              />
+              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                {howWords}
+              </div>
             </div>
-            <Textarea
-              id={`step-${step.id}-how`}
-              value={how}
-              onChange={(e) => setHow(e.target.value)}
-              placeholder="Describe how you approached this step..."
-              className="resize-none"
-            />
           </div>
 
           {/* OUTCOME (optional) */}
           <div className="space-y-1">
-            <FormLabel htmlFor={`step-${step.id}-outcome`}>
+            <FormLabel htmlFor={`step-${step.id}-outcome`} className="block text-gray-700 font-medium">
               What was the outcome of this step? (optional)
             </FormLabel>
-            <div className="text-xs text-muted-foreground">
-              • Example: "I pinpointed a memory leak in a specific module."
+            <div className="relative">
+              <Textarea
+                id={`step-${step.id}-outcome`}
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+                placeholder="I pinpointed a memory leak in a specific module."
+                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+              />
+              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                {outcomeWords}
+              </div>
             </div>
-            <Textarea
-              id={`step-${step.id}-outcome`}
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
-              placeholder="Describe the result of this step..."
-              className="resize-none"
-            />
           </div>
 
           <Button type="button" size="sm" className="mt-2" onClick={handleSave}>

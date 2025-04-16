@@ -286,13 +286,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     <FormProvider {...methods}>
       <div className="space-y-8">
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          {/* Optional Step Title (omit if you prefer) */}
-          {currentStepLocal < totalSteps && (
-            <h3 className="text-lg font-medium mb-6 pb-2 border-b">
-              {generateDynamicStepTitle(currentStepLocal, starCount)}
-            </h3>
-          )}
-
           <motion.div
             key={currentStepLocal}
             initial={{ opacity: 0, y: 10 }}
