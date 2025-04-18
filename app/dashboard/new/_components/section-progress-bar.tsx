@@ -28,13 +28,20 @@ const SECTION_LABELS: Record<Section, string> = {
 }
 
 export default function SectionProgressBar({ current, onNavigate }: SectionProgressBarProps) {
+  const isIntro = current === "INTRO"
   return (
     <nav
       aria-label="Wizard progress"
       className="py-2 px-1 sm:px-4 select-none overflow-x-auto"
     >
       <LayoutGroup>
-        <ul role="list" className="flex items-center gap-2">
+        <ul
+          role="list"
+          className={clsx(
+            "flex justify-center items-center",
+            isIntro ? "gap-6" : "gap-4"
+          )}
+        >
           {SECTION_ORDER.map((sec, idx) => {
             const state: "completed" | "active" | "upcoming" =
               idx < SECTION_ORDER.indexOf(current)
@@ -57,7 +64,8 @@ export default function SectionProgressBar({ current, onNavigate }: SectionProgr
                   onClick={() => onNavigate?.(sec)}
                   aria-label={`Step ${idx + 1} of 6: ${SECTION_LABELS[sec]}`}
                   className={clsx(
-                    "flex flex-col items-center text-xs whitespace-nowrap transition-colors",
+                    "flex flex-col items-center whitespace-nowrap transition-colors",
+                    isIntro ? "text-base sm:text-lg" : "text-sm sm:text-base",
                     clickable ? "hover:text-primary focus:outline-none" : "cursor-default",
                     state === "active" && "font-semibold text-primary",
                     state === "completed" && "text-foreground",
@@ -68,12 +76,17 @@ export default function SectionProgressBar({ current, onNavigate }: SectionProgr
                   {state === "active" ? (
                     <motion.span
                       layoutId="progress-dot"
-                      className="w-3 h-3 rounded-full mb-1 bg-primary"
+                      className={clsx(
+                        "rounded-full mb-1",
+                        isIntro ? "w-6 h-6" : "w-4 h-4",
+                        "bg-primary"
+                      )}
                     />
                   ) : (
                     <span
                       className={clsx(
-                        "w-3 h-3 rounded-full mb-1",
+                        "rounded-full mb-1",
+                        isIntro ? "w-6 h-6" : "w-4 h-4",
                         state === "completed" && "bg-primary",
                         state === "upcoming" && "bg-muted"
                       )}
