@@ -245,7 +245,7 @@ export default function GuidanceStep() {
                 <SelectValue placeholder="Count" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 10 }, (_, i) => `${i + 1}`).map((val) => (
+                {["2", "3", "4"].map((val) => (
                   <SelectItem key={val} value={val}>
                     {val}
                   </SelectItem>

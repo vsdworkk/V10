@@ -51,6 +51,15 @@ export async function generateAgentPitchAction(
   pitchData: GenerateAgentPitchParams
 ): Promise<ActionState<string>> {
   try {
+    // Validate number of STAR examples
+    const numExamples = pitchData.starExamples.length;
+    if (numExamples < 2 || numExamples > 4) {
+      return {
+        isSuccess: false,
+        message: `This system requires between 2 and 4 STAR examples (you provided ${numExamples})`
+      };
+    }
+
     // 1) Format the core job description from pitch data. 
     //    (Removed "yearsExperience".)
     const jobDescription = `
@@ -121,13 +130,42 @@ ${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ""}
     const apiKey = "pl_4c3ed9b8d7381ef88414569b8a3b2373"
 
     // 4) Dynamically allocate word counts for intro, conclusion, each STAR example
-    const numExamples = starExamplesArray.length || 1
     const introWordCount = Math.round(pitchData.pitchWordLimit * 0.10)
     const conclusionWordCount = Math.round(pitchData.pitchWordLimit * 0.10)
     const starWordCount = Math.round((pitchData.pitchWordLimit * 0.80) / numExamples)
 
     // 5) POST request to start the agent
+    // Select the appropriate version based on the number of STAR examples
+    // Version mapping:
+    // - v1.2: Optimized for handling 2 STAR examples
+    // - v1.3: Optimized for handling 3 STAR examples
+    // - v1.4: Optimized for handling 4 STAR examples
+    const getAgentVersionLabel = (exampleCount: number) => {
+      switch (exampleCount) {
+        case 2:
+          return "v1.2"; // Version for 2 STAR examples
+        case 3:
+          return "v1.3"; // Version for 3 STAR examples 
+        case 4:
+          return "v1.4"; // Version for 4 STAR examples
+        default:
+          // Fallback to v1.2 if the count is unexpected
+          console.log(`Unexpected STAR example count: ${exampleCount}, defaulting to version v1.2`);
+          return "v1.2";
+      }
+    };
+
+    const workflowLabelName = getAgentVersionLabel(numExamples);
+    console.log(`Using Master_Agent_V1 version ${workflowLabelName} for ${numExamples} STAR examples`);
+
+    // Build callback URL from env or fallback to public URL
+    const callbackUrl = process.env.PROMPTLAYER_CALLBACK_URL || "https://your-domain.com/api/promptlayer-callback";
+
     const postBody = {
+      workflow_label_name: workflowLabelName, // Specify which labeled version to use
+      metadata: {
+        callback_url: callbackUrl
+      },
       input_variables: {
         job_description: jobDescription,
         star_components: starComponents,
@@ -157,8 +195,12 @@ ${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ""}
     )
 
     if (!postResponse.ok) {
-      const errorText = await postResponse.text()
-      throw new Error(`Failed to start agent execution: ${errorText}`)
+      const errorText = await postResponse.text();
+      // Check if the error might be related to version selection
+      if (errorText.includes("version") || errorText.includes("workflow_label_name") || errorText.includes("workflow_version_number")) {
+        throw new Error(`Invalid agent version (${workflowLabelName}): ${errorText}`);
+      }
+      throw new Error(`Failed to start agent execution: ${errorText}`);
     }
 
     const postData = await postResponse.json()
@@ -166,55 +208,19 @@ ${pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : ""}
       throw new Error(postData.message || "Failed to start agent execution")
     }
 
-    // 6) Poll for results
-    const executionId = postData.workflow_version_execution_id
+    // 6) Capture execution ID and respond immediately
+    const executionId = postData.workflow_version_execution_id;
     if (!executionId) {
-      throw new Error("No execution ID received from agent")
+      throw new Error("No execution ID received from agent");
     }
 
-    console.log(`Agent execution started with ID: ${executionId}`)
+    console.log(`Agent execution started with ID: ${executionId}. Awaiting callback at ${callbackUrl}`);
 
-    let maxRetries = 30 // up to 30 retries (5-second intervals = 150s total)
-    let resultData: string | null = null
-
-    while (maxRetries > 0) {
-      await setTimeout(5000) // Wait 5s between checks
-
-      const getOptions = {
-        method: "GET",
-        headers: { "X-API-KEY": apiKey }
-      }
-
-      try {
-        const getResponse = await fetch(
-          `https://api.promptlayer.com/workflow-version-execution-results?workflow_version_execution_id=${executionId}`,
-          getOptions
-        )
-
-        if (getResponse.ok) {
-          const data = await getResponse.json()
-          // If the agent returns a string, consider it complete
-          if (data && typeof data === "string") {
-            resultData = data
-            break
-          }
-        }
-      } catch (error) {
-        console.log(`Polling attempt failed (retries left: ${maxRetries})`, error)
-      }
-
-      maxRetries--
-    }
-
-    if (!resultData) {
-      throw new Error("Timed out waiting for agent response. Please try again.")
-    }
-
-    // Return success
+    // Return success immediately; result will arrive asynchronously via callback
     return {
       isSuccess: true,
-      message: "Pitch generated successfully via agent",
-      data: resultData
+      message: `Agent execution started using version ${workflowLabelName}. Results will be delivered via callback.`,
+      data: executionId // Consumer can track by execution ID if needed
     }
   } catch (error: any) {
     console.error("Error generating pitch with agent:", error)
