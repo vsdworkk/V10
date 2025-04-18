@@ -24,6 +24,53 @@ import { RefreshCw, Save, ArrowRight, ArrowLeft } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 
 import type { SelectPitch } from "@/db/schema/pitches-schema"
+import WizardHeader from "./wizard-header"
+import SectionProgressBar from "./section-progress-bar"
+
+// Helper types & constants
+import type { Section } from "@/types"
+
+const SECTION_ORDER: Section[] = ["INTRO", "ROLE", "EXP", "GUIDE", "STAR", "FINAL"]
+
+function firstStepOfSection(section: Section, starCount: number) {
+  switch (section) {
+    case "INTRO":
+      return 1
+    case "ROLE":
+      return 2
+    case "EXP":
+      return 3
+    case "GUIDE":
+      return 4
+    case "STAR":
+      return 5
+    case "FINAL":
+    default:
+      return 4 + starCount * 4 + 1
+  }
+}
+
+function computeSectionAndHeader(step: number, starCount: number): { section: Section; header: string } {
+  if (step === 1) return { section: "INTRO", header: "Introduction" }
+  if (step === 2) return { section: "ROLE", header: "Role Details" }
+  if (step === 3) return { section: "EXP", header: "Your Experience" }
+  if (step === 4) return { section: "GUIDE", header: "Guidance" }
+
+  const firstStarStep = 5
+  const lastStarStep = 4 + starCount * 4
+  if (step >= firstStarStep && step <= lastStarStep) {
+    const indexWithinStar = step - firstStarStep
+    const exampleIndex = Math.floor(indexWithinStar / 4) + 1 // 1‑based
+    const subStepIndex = indexWithinStar % 4
+    const subStepLabel = ["Situation", "Task", "Action", "Result"][subStepIndex]
+    return {
+      section: "STAR",
+      header: `STAR Example #${exampleIndex} – ${subStepLabel}`
+    }
+  }
+
+  return { section: "FINAL", header: "Finalise" }
+}
 
 /**
  * A single Action step in the STAR "Action" array.
@@ -235,6 +282,20 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
   }, [methods, pitchId, setPitchId, toast, router])
 
+  const { section: currentSection, header: currentHeader } = computeSectionAndHeader(currentStepLocal, starCount)
+
+  // Callback for progress bar navigation
+  const handleSectionNavigate = useCallback(
+    (target: Section) => {
+      const targetStep = firstStepOfSection(target, starCount)
+      // Do not allow forward jumps
+      if (SECTION_ORDER.indexOf(target) < SECTION_ORDER.indexOf(currentSection)) {
+        setCurrentStepLocal(targetStep)
+      }
+    },
+    [currentSection, starCount]
+  )
+
   if (isGeneratingFinalPitch) {
     return (
       <div className="flex flex-col items-center space-y-4 py-8 bg-white rounded-lg shadow-sm border p-6">
@@ -259,6 +320,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
+        {/* Sticky Header + Progress Bar */}
+        <div className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b">
+          <WizardHeader header={currentHeader} />
+          <SectionProgressBar current={currentSection} onNavigate={handleSectionNavigate} />
+        </div>
+
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <motion.div
             key={currentStepLocal}
