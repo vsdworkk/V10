@@ -24,7 +24,6 @@ import { RefreshCw, Save, ArrowRight, ArrowLeft } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 
 import type { SelectPitch } from "@/db/schema/pitches-schema"
-import { useStepContext } from "./progress-bar-wrapper"
 
 /**
  * A single Action step in the STAR "Action" array.
@@ -102,7 +101,6 @@ interface PitchWizardProps {
 export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { setCurrentStep, setTotalSteps } = useStepContext()
 
   const [currentStepLocal, setCurrentStepLocal] = useState(1)
   const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
@@ -128,12 +126,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // Then 4 steps per STAR example => steps 5..(4 + starCount*4)
   // Then 1 final step => (4 + starCount*4) + 1
   const totalSteps = 4 + (starCount * 4) + 1
-
-  // Update context
-  useEffect(() => {
-    setCurrentStep(currentStepLocal)
-    setTotalSteps(totalSteps)
-  }, [currentStepLocal, totalSteps, setCurrentStep, setTotalSteps])
 
   // Renders the step
   function renderStep() {

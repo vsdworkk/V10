@@ -1,12 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useStepContext } from "@/app/dashboard/new/_components/progress-bar-wrapper"
 import { useFormContext } from "react-hook-form"
 
 export default function EditHeader() {
   const [activeSection, setActiveSection] = useState<string>("role")
-  const { completedSteps } = useStepContext()
   
   // Get form context safely, but don't try to use it directly
   const formContext = useFormContext()
@@ -33,11 +31,6 @@ export default function EditHeader() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
   
-  // Determine completion status based on filled sections
-  const isExperienceComplete = completedSteps.includes(2)
-  const isStarComplete = completedSteps.includes(7)
-  const isPitchComplete = completedSteps.includes(12)
-
   return (
     <div className="mb-8">
       <h1 className="text-3xl font-bold tracking-tight">Edit Pitch</h1>

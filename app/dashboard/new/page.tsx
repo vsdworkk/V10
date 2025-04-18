@@ -22,9 +22,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
-import ProgressBarWrapper from "@/app/dashboard/new/_components/progress-bar-wrapper"
 import CheckStoredPitch from "@/app/dashboard/new/_components/check-stored-pitch"
-import DynamicHeader from "./_components/dynamic-header"
 
 export default async function CreateNewPitchPage() {
   // Check if the user is authenticated
@@ -38,13 +36,8 @@ export default async function CreateNewPitchPage() {
   // Render the client-side wizard, passing the userId
   return (
     <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
-      {/* Check if there's a stored pitch ID and redirect if found */}
       <CheckStoredPitch />
-      
-      <ProgressBarWrapper>
-        <DynamicHeader />
-        <PitchWizard userId={userId} />
-      </ProgressBarWrapper>
+      <PitchWizard userId={userId} />
     </div>
   )
 }
