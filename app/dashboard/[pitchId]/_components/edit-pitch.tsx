@@ -37,7 +37,6 @@ import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import ExportPitch from "./export-pitch"
 import { cn } from "@/lib/utils"
-import { useStepContext } from "@/app/dashboard/new/_components/progress-bar-wrapper"
 
 // Updated STAR schema: removed "why-was-this-a-problem-or-why-did-it-matter",
 // "how-would-completing-this-task-help-solve-the-problem", and
@@ -94,7 +93,6 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isStarCountLocked, setIsStarCountLocked] = useState(false)
-  const { markStepCompleted } = useStepContext()
 
   // Initialize react-hook-form with updated default values
   const methods = useForm<EditPitchFormData>({
@@ -248,51 +246,6 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
 
       // Lock the star examples count after saving
       setIsStarCountLocked(true)
-
-      // Mark partial steps as completed for progress bar
-      markStepCompleted(1) // Basic info
-      if (data.relevantExperience) {
-        markStepCompleted(2) // Experience
-      }
-
-      if (data.starExamples && data.starExamples.length > 0) {
-        data.starExamples.forEach((example, index) => {
-          const baseStep = 4 + index * 4 // starting step for example #1
-          if (
-            example.situation &&
-            example.situation["where-and-when-did-this-experience-occur"] &&
-            example.situation["briefly-describe-the-situation-or-challenge-you-faced"]
-          ) {
-            markStepCompleted(baseStep) // Situation
-          }
-
-          if (
-            example.task &&
-            example.task["what-was-your-responsibility-in-addressing-this-issue"] &&
-            example.task["what-constraints-or-requirements-did-you-need-to-consider"]
-          ) {
-            markStepCompleted(baseStep + 1) // Task
-          }
-
-          // If there's at least one action step, mark Action completed
-          if (example.action && example.action.steps.length > 0) {
-            markStepCompleted(baseStep + 2) // Action
-          }
-
-          // If result fields are present, mark it
-          if (
-            example.result &&
-            example.result["what-positive-outcome-did-you-achieve"] &&
-            example.result["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"]
-          ) {
-            markStepCompleted(baseStep + 3) // Result
-          }
-        })
-      }
-
-      if (data.pitchContent) {
-        markStepCompleted(12) // Review step
-      }
 
       toast({
         title: "Pitch Updated",
