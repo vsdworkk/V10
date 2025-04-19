@@ -1,71 +1,89 @@
 /**
  * @description
- * An API route that handles creating or updating a pitch record. 
- * Expects a JSON body with the relevant fields.
+ * POST /api/pitchWizard  
+ * Create **or** update a pitch record (when `id` is present in the body).
  */
 
 import { NextResponse } from "next/server"
-import { createPitchAction, updatePitchAction } from "@/actions/db/pitches-actions"
+import {
+  createPitchAction,
+  updatePitchAction
+} from "@/actions/db/pitches-actions"
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    // Minimal checks for required fields
+    /* ------------------------------------------------------------------ */
+    /* 1.  Basic guard‑rails                                              */
+    /* ------------------------------------------------------------------ */
     if (!body.userId || !body.roleName || !body.roleLevel) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      )
     }
 
-    // starExamples is an array of objects, starExamplesCount is a number
+    /* ------------------------------------------------------------------ */
+    /* 2.  Build the payload expected by Drizzle actions                  */
+    /* ------------------------------------------------------------------ */
     const pitchData = {
+      // ownership / foreign‑key
       userId: body.userId,
+
+      // role information
       roleName: body.roleName,
       organisationName: body.organisationName || null,
       roleLevel: body.roleLevel,
+
+      // misc meta
       pitchWordLimit: body.pitchWordLimit || 650,
       roleDescription: body.roleDescription || "",
-      yearsExperience: body.yearsExperience || "",
       relevantExperience: body.relevantExperience || "",
+
+      // resume upload (optional)
       resumePath: body.resumePath || null,
 
-      // The new field storing an array of starSchema objects
-      starExamples: body.starExamples || [],
+      // NEW — store PromptLayer execution‑id so we can link the callback
+      agentExecutionId: body.agentExecutionId || null,
 
-      albertGuidance: body.albertGuidance || "",
-      pitchContent: body.pitchContent || "",
-      status: body.status || "draft",
-      
-      // This can be 1..10 or more, depending on your wizard
+      // STAR data
+      starExamples: body.starExamples || [],
       starExamplesCount: body.starExamplesCount
         ? parseInt(body.starExamplesCount, 10)
         : 1,
 
-      // Track which step the user is on
+      // generated content
+      albertGuidance: body.albertGuidance || "",
+      pitchContent: body.pitchContent || "",
+
+      // wizard bookkeeping
+      status: body.status || "draft",
       currentStep: body.currentStep || 1
     }
 
-    let result
+    /* ------------------------------------------------------------------ */
+    /* 3.  Persist                                                        */
+    /* ------------------------------------------------------------------ */
+    const result = body.id
+      ? await updatePitchAction(body.id, pitchData, body.userId)
+      : await createPitchAction(pitchData)
 
-    // If an ID is provided, we update
-    if (body.id) {
-      result = await updatePitchAction(body.id, pitchData, body.userId)
-      if (!result.isSuccess) {
-        return NextResponse.json({ error: result.message }, { status: 500 })
-      }
-      return NextResponse.json({ message: "Pitch updated", data: result.data })
-    } 
-    // Otherwise, create a new pitch
-    else {
-      result = await createPitchAction(pitchData)
-      if (!result.isSuccess) {
-        return NextResponse.json({ error: result.message }, { status: 500 })
-      }
-      return NextResponse.json({ message: "Pitch created", data: result.data })
+    if (!result.isSuccess) {
+      return NextResponse.json({ error: result.message }, { status: 500 })
     }
-  } catch (error: any) {
-    console.error("Error in /api/pitchWizard POST:", error)
+
     return NextResponse.json(
-      { error: error.message || "Something went wrong" },
+      {
+        message: body.id ? "Pitch updated" : "Pitch created",
+        data: result.data
+      },
+      { status: 200 }
+    )
+  } catch (error: any) {
+    console.error("Error in POST /api/pitchWizard:", error)
+    return NextResponse.json(
+      { error: error.message || "Internal server error" },
       { status: 500 }
     )
   }

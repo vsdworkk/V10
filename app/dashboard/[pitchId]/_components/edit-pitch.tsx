@@ -31,12 +31,13 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useToast } from "@/lib/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import ExportPitch from "./export-pitch"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase-browser"
 
 // Updated STAR schema: removed "why-was-this-a-problem-or-why-did-it-matter",
 // "how-would-completing-this-task-help-solve-the-problem", and
@@ -80,7 +81,10 @@ const editPitchSchema = z.object({
   starExamples: z.array(starSchema).min(1, "At least one STAR example is required"),
 
   pitchContent: z.string().optional(),
-  starExamplesCount: z.number().min(1).max(10).default(1)
+  starExamplesCount: z.number().min(1).max(10).default(1),
+  
+  // Agent execution ID from PromptLayer
+  agentExecutionId: z.string().optional()
 })
 type EditPitchFormData = z.infer<typeof editPitchSchema>
 
@@ -136,7 +140,8 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
             }
           ],
       pitchContent: pitch.pitchContent ?? "",
-      starExamplesCount: pitch.starExamplesCount || 1
+      starExamplesCount: pitch.starExamplesCount || 1,
+      agentExecutionId: pitch.agentExecutionId ?? ""
     }
   })
 
@@ -149,6 +154,48 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
 
   const watchWordLimit = watch("pitchWordLimit")
   const pitchContent = watch("pitchContent") || ""
+  
+  // Supabase real-time subscription
+  const subscribedRef = useRef<boolean>(false)
+  
+  useEffect(() => {
+    // Avoid duplicate subscriptions
+    if (subscribedRef.current) return
+    subscribedRef.current = true
+    
+    const execId = methods.getValues().agentExecutionId
+    if (!execId) return
+    
+    const channel = supabase
+      .channel(`pitch-exec-${execId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "pitches",
+          filter: `agent_execution_id=eq.${execId}`
+        },
+        payload => {
+          const newHtml = (payload.new as any)?.pitch_content
+          if (newHtml && newHtml.length > 0) {
+            setValue("pitchContent", newHtml, { shouldDirty: true })
+            
+            toast({
+              title: "Pitch ready!",
+              description: "Your AI pitch has been generated."
+            })
+            
+            setGenerating(false)
+          }
+        }
+      )
+      .subscribe()
+      
+    return () => {
+      channel.unsubscribe()
+    }
+  }, []) // Run once on mount
 
   // For re-run AI usage
   const [generating, setGenerating] = useState(false)
@@ -178,18 +225,28 @@ export default function EditPitch({ pitch, userId }: EditPitchProps) {
       if (!data.isSuccess) {
         throw new Error(data.message || "Failed to generate final pitch")
       }
-      setValue("pitchContent", data.data || "", { shouldDirty: true })
+      
+      // Update the agentExecutionId
+      setValue("agentExecutionId", data.data, { shouldDirty: true })
+      
+      // Empty the pitch content - real content will come via realtime updates
+      setValue("pitchContent", "", { shouldDirty: true })
+      
+      // Save the updated form data
+      await handleSaveChanges(methods.getValues())
+      
       toast({
-        title: "Pitch Regenerated",
-        description: "AI pitch has been updated."
+        title: "Pitch Generation Started",
+        description: "AI is generating your pitch. It will appear automatically when ready."
       })
+      
+      // Don't reset the generating state - it will be reset when the subscription receives the result
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive"
       })
-    } finally {
       setGenerating(false)
     }
   }

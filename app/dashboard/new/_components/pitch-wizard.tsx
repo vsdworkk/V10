@@ -135,7 +135,10 @@ const pitchWizardSchema = z.object({
   starExamples: z.array(starExampleSchema).min(1, "At least one STAR example is required."),
 
   // The final text content from the AI
-  pitchContent: z.string().optional()
+  pitchContent: z.string().optional(),
+  
+  // Agent execution ID from PromptLayer
+  agentExecutionId: z.string().optional()
 })
 
 export type PitchWizardFormData = z.infer<typeof pitchWizardSchema>
@@ -246,7 +249,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           throw new Error(result.message || "Failed to generate final pitch")
         }
         
-        methods.setValue("pitchContent", result.data || "", { shouldDirty: true })
+        // Update the form with the execution ID and empty pitch content
+        // The actual content will come later via Supabase realtime
+        methods.setValue("agentExecutionId", result.data, { shouldDirty: true })
+        methods.setValue("pitchContent", "", { shouldDirty: true })
+        
+        // Save the updated form data with the execution ID
+        await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
+        
         setCurrentStepLocal(lastStarStep + 1)
       } catch (error: any) {
         console.error("Error generating pitch:", error)
@@ -400,7 +410,8 @@ function mapExistingDataToDefaults(userId: string, pitchData?: SelectPitch) {
       albertGuidance: "",
       starExamples: [createEmptyStarExample()],
       pitchContent: "",
-      starExamplesCount: "1" as StarCount
+      starExamplesCount: "1" as StarCount,
+      agentExecutionId: undefined
     }
   }
 
@@ -431,7 +442,8 @@ function mapExistingDataToDefaults(userId: string, pitchData?: SelectPitch) {
         ? pitchData.starExamples
         : [createEmptyStarExample()],
     pitchContent: pitchData.pitchContent || "",
-    starExamplesCount: safeStarCount
+    starExamplesCount: safeStarCount,
+    agentExecutionId: pitchData.agentExecutionId || undefined
   }
 }
 
@@ -481,7 +493,8 @@ async function savePitchData(
     starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
     status: "draft",
-    currentStep: 1
+    currentStep: 1,
+    agentExecutionId: data.agentExecutionId
   }
 
   if (pitchId) payload.id = pitchId
@@ -534,7 +547,8 @@ async function submitFinalPitch(
     starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
     status: "final",
-    currentStep: 999
+    currentStep: 999,
+    agentExecutionId: data.agentExecutionId
   }
 
   if (pitchId) payload.id = pitchId

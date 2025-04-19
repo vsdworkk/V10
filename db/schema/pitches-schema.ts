@@ -1,8 +1,10 @@
 /**
- * @description
- * This file defines the "pitches" table schema for APS Pitch Builder.
- * Updated to store an array of STAR examples in `starExamples` JSONB.
+ * db/schema/pitches-schema.ts
+ *
+ * + Added agentExecutionId column (nullable) so we can match
+ *   PromptLayer callbacks back to the correct pitch record.
  */
+
 import {
   pgEnum,
   pgTable,
@@ -14,19 +16,16 @@ import {
 } from "drizzle-orm/pg-core"
 import { profilesTable } from "@/db/schema/profiles-schema"
 
-/**
- * @description
- * Enum for pitch status
- */
+/* ------------------------------------------------------------------ */
+/*  enums & interfaces (unchanged)                                    */
+/* ------------------------------------------------------------------ */
+
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
   "final",
   "submitted"
 ])
 
-/**
- * A single Action step in the STAR "Action" section
- */
 export interface ActionStep {
   stepNumber: number
   "what-did-you-specifically-do-in-this-step": string
@@ -34,12 +33,6 @@ export interface ActionStep {
   "what-was-the-outcome-of-this-step-optional"?: string
 }
 
-/**
- * The structure of a single STAR example.
- * Remove "why-was-this-a-problem-or-why-did-it-matter",
- * "how-would-completing-this-task-help-solve-the-problem",
- * and "what-did-you-learn-from-this-experience".
- */
 export interface StarSchema {
   situation: {
     "where-and-when-did-this-experience-occur"?: string
@@ -58,60 +51,46 @@ export interface StarSchema {
   }
 }
 
-/**
- * We can store multiple STAR examples in `starExamples` (JSONB).
- */
 export type StarJsonbSchema = StarSchema[]
 
-/**
- * Drizzle table definition for "pitches".
- */
+/* ------------------------------------------------------------------ */
+/*  pitches table                                                     */
+/* ------------------------------------------------------------------ */
+
 export const pitchesTable = pgTable("pitches", {
-  // Primary key
   id: uuid("id").defaultRandom().primaryKey().notNull(),
 
-  // Foreign key referencing user profiles
+  /* user relationship */
   userId: text("user_id")
     .references(() => profilesTable.userId, { onDelete: "cascade" })
     .notNull(),
 
-  // Role info
+  /* role information */
   roleName: text("role_name").notNull(),
   organisationName: text("organisation_name"),
   roleLevel: text("role_level").notNull(),
-
-  // Word limit
   pitchWordLimit: integer("pitch_word_limit").default(650).notNull(),
-
-  // Optional job/role description
   roleDescription: text("role_description"),
 
-  // Basic Experience field
+  /* experience & STAR examples */
   relevantExperience: text("relevant_experience").notNull(),
-
-  // Main array of STAR examples
   starExamples: jsonb("star_examples").$type<StarJsonbSchema>(),
 
-  // Guidance from Albert AI
+  /* AI‑related fields */
   albertGuidance: text("albert_guidance"),
-
-  // Final AI-generated pitch text
   pitchContent: text("pitch_content"),
 
-  // Pitch status
+  /** NEW — PromptLayer workflow execution id */
+  agentExecutionId: text("agent_execution_id"),
+
+  /* bookkeeping */
   status: pitchStatusEnum("status").default("draft").notNull(),
-
-  // How many STAR examples the user selected
   starExamplesCount: integer("star_examples_count").default(1).notNull(),
-
-  // Current step in the wizard
   currentStep: integer("current_step").default(1).notNull(),
-
-  // Timestamps
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date())
 })
 
-// Insert and Select types
+/* inferred types */
 export type InsertPitch = typeof pitchesTable.$inferInsert
 export type SelectPitch = typeof pitchesTable.$inferSelect

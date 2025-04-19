@@ -1,20 +1,15 @@
 "use server"
 
 /**
- * @description
- * Provides CRUD actions for managing pitch records in the 'pitches' table.
+ * CRUD helpers for the `pitches` table (Drizzle + Postgres).
  *
- * Key Exports:
- * - createPitchAction: Insert a new pitch record
- * - getPitchByIdAction: Fetch a single pitch by ID for a given user
- * - updatePitchAction: Update an existing pitch's details
- * - getAllPitchesForUserAction: Retrieve all pitches belonging to a specific user
- * - deletePitchAction: Remove a pitch by ID for a specific user
+ * NEW (for realtime callback flow)
+ * ───────────────────────────────
+ * • getPitchByExecutionIdAction
+ * • updatePitchByExecutionId
  *
- * @notes
- * - Each function returns an ActionState<T>, indicating success/failure status.
- * - We rely on Drizzle's typed schemas (pitchesTable) and eq/and conditions.
- * - This file uses the new "starExamples" array field in place of the old "starExample1"/"starExample2".
+ * Both work on the `agentExecutionId` column that stores the
+ * PromptLayer `workflow_version_execution_id`.
  */
 
 import { db } from "@/db/db"
@@ -26,14 +21,10 @@ import {
 import { eq, and, desc } from "drizzle-orm"
 import { ActionState } from "@/types"
 
-/**
- * @function createPitchAction
- * @description
- * Creates a new pitch record in the "pitches" table.
- *
- * @param pitchData - InsertPitch: The new pitch data from the user wizard.
- * @returns Promise<ActionState<SelectPitch>> - The result state (success/failure + data).
- */
+/* ------------------------------------------------------------------ */
+/*  Create                                                            */
+/* ------------------------------------------------------------------ */
+
 export async function createPitchAction(
   pitchData: InsertPitch
 ): Promise<ActionState<SelectPitch>> {
@@ -43,29 +34,17 @@ export async function createPitchAction(
       .values(pitchData)
       .returning()
 
-    return {
-      isSuccess: true,
-      message: "Pitch created successfully",
-      data: newPitch
-    }
-  } catch (error) {
-    console.error("Error creating pitch:", error)
-    return {
-      isSuccess: false,
-      message: "Failed to create pitch"
-    }
+    return { isSuccess: true, message: "Pitch created", data: newPitch }
+  } catch (err) {
+    console.error("createPitchAction:", err)
+    return { isSuccess: false, message: "Failed to create pitch" }
   }
 }
 
-/**
- * @function getPitchByIdAction
- * @description
- * Fetches a single pitch by ID, ensuring it belongs to the specified user.
- *
- * @param id - string: The pitch ID to look up.
- * @param userId - string: The user ID for ownership validation.
- * @returns Promise<ActionState<SelectPitch>> - Success with the pitch record if found, else failure.
- */
+/* ------------------------------------------------------------------ */
+/*  Read                                                              */
+/* ------------------------------------------------------------------ */
+
 export async function getPitchByIdAction(
   id: string,
   userId: string
@@ -77,80 +56,35 @@ export async function getPitchByIdAction(
       .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
       .limit(1)
 
-    if (!pitch) {
-      return {
-        isSuccess: false,
-        message: "Pitch not found or does not belong to this user"
-      }
-    }
-
-    return {
-      isSuccess: true,
-      message: "Pitch retrieved successfully",
-      data: pitch
-    }
-  } catch (error) {
-    console.error("Error fetching pitch by ID:", error)
-    return {
-      isSuccess: false,
-      message: "Failed to fetch pitch"
-    }
+    return pitch
+      ? { isSuccess: true, message: "Pitch found", data: pitch }
+      : { isSuccess: false, message: "Pitch not found or not owned by user" }
+  } catch (err) {
+    console.error("getPitchByIdAction:", err)
+    return { isSuccess: false, message: "Failed to fetch pitch" }
   }
 }
 
-/**
- * @function updatePitchAction
- * @description
- * Updates an existing pitch record with the given data, ensuring user ownership.
- *
- * @param id - string: The unique pitch ID to update.
- * @param updatedData - Partial<InsertPitch>: The fields to modify.
- * @param userId - string: The user ID for ownership validation.
- * @returns Promise<ActionState<SelectPitch>> - Updated pitch record on success, or failure message.
- */
-export async function updatePitchAction(
-  id: string,
-  updatedData: Partial<InsertPitch>,
-  userId: string
+/** Fetch by PromptLayer execution‑ID (no user context needed). */
+export async function getPitchByExecutionIdAction(
+  execId: string
 ): Promise<ActionState<SelectPitch>> {
   try {
-    console.log("Updating pitch with ID:", id, "and data:", updatedData)
+    const [pitch] = await db
+      .select()
+      .from(pitchesTable)
+      .where(eq(pitchesTable.agentExecutionId, execId))
+      .limit(1)
 
-    const [updatedPitch] = await db
-      .update(pitchesTable)
-      .set(updatedData)
-      .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
-      .returning()
-
-    if (!updatedPitch) {
-      return {
-        isSuccess: false,
-        message: "Pitch not found or does not belong to this user"
-      }
-    }
-
-    return {
-      isSuccess: true,
-      message: "Pitch updated successfully",
-      data: updatedPitch as SelectPitch
-    }
-  } catch (error) {
-    console.error("Error updating pitch:", error)
-    return {
-      isSuccess: false,
-      message: "Failed to update pitch"
-    }
+    return pitch
+      ? { isSuccess: true, message: "Pitch found", data: pitch }
+      : { isSuccess: false, message: "No pitch with that execution‑ID" }
+  } catch (err) {
+    console.error("getPitchByExecutionIdAction:", err)
+    return { isSuccess: false, message: "Failed to fetch pitch" }
   }
 }
 
-/**
- * @function getAllPitchesForUserAction
- * @description
- * Retrieves all pitch records belonging to a specific user, newest first.
- *
- * @param userId - string: The user ID to filter by.
- * @returns Promise<ActionState<SelectPitch[]>> - Array of pitches on success, or failure message.
- */
 export async function getAllPitchesForUserAction(
   userId: string
 ): Promise<ActionState<SelectPitch[]>> {
@@ -161,56 +95,81 @@ export async function getAllPitchesForUserAction(
       .where(eq(pitchesTable.userId, userId))
       .orderBy(desc(pitchesTable.createdAt))
 
-    return {
-      isSuccess: true,
-      message: "Pitches retrieved successfully",
-      data: pitches
-    }
-  } catch (error) {
-    console.error("Error fetching all pitches for user:", error)
-    return {
-      isSuccess: false,
-      message: "Failed to retrieve pitches"
-    }
+    return { isSuccess: true, message: "Pitches retrieved", data: pitches }
+  } catch (err) {
+    console.error("getAllPitchesForUserAction:", err)
+    return { isSuccess: false, message: "Failed to retrieve pitches" }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Update                                                            */
+/* ------------------------------------------------------------------ */
+
+export async function updatePitchAction(
+  id: string,
+  updatedData: Partial<InsertPitch>,
+  userId: string
+): Promise<ActionState<SelectPitch>> {
+  try {
+    const [updated] = await db
+      .update(pitchesTable)
+      .set(updatedData)
+      .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
+      .returning()
+
+    return updated
+      ? { isSuccess: true, message: "Pitch updated", data: updated }
+      : { isSuccess: false, message: "Pitch not found or not owned by user" }
+  } catch (err) {
+    console.error("updatePitchAction:", err)
+    return { isSuccess: false, message: "Failed to update pitch" }
   }
 }
 
 /**
- * @function deletePitchAction
- * @description
- * Deletes a pitch by ID, ensuring user ownership for security.
- *
- * @param id - string: The pitch ID to delete.
- * @param userId - string: The user ID used to validate ownership.
- * @returns Promise<ActionState<void>> - `isSuccess` indicates whether the deletion was successful.
+ * Update by `agentExecutionId` – used inside PromptLayer callback where
+ * we do **not** know the userId or pitchId, only the execution‑ID.
  */
+export async function updatePitchByExecutionId(
+  execId: string,
+  updatedData: Partial<InsertPitch>
+): Promise<ActionState<SelectPitch>> {
+  try {
+    const [updated] = await db
+      .update(pitchesTable)
+      .set(updatedData)
+      .where(eq(pitchesTable.agentExecutionId, execId))
+      .returning()
+
+    return updated
+      ? { isSuccess: true, message: "Pitch updated", data: updated }
+      : { isSuccess: false, message: "No pitch with that execution‑ID" }
+  } catch (err) {
+    console.error("updatePitchByExecutionId:", err)
+    return { isSuccess: false, message: "Failed to update pitch" }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Delete                                                            */
+/* ------------------------------------------------------------------ */
+
 export async function deletePitchAction(
   id: string,
   userId: string
 ): Promise<ActionState<void>> {
   try {
-    const result = await db
+    const res = await db
       .delete(pitchesTable)
       .where(and(eq(pitchesTable.id, id), eq(pitchesTable.userId, userId)))
       .returning()
 
-    if (result.length === 0) {
-      return {
-        isSuccess: false,
-        message: "Pitch not found or does not belong to this user"
-      }
-    }
-
-    return {
-      isSuccess: true,
-      message: "Pitch deleted successfully",
-      data: undefined
-    }
-  } catch (error) {
-    console.error("Error deleting pitch:", error)
-    return {
-      isSuccess: false,
-      message: "Failed to delete pitch"
-    }
+    return res.length
+      ? { isSuccess: true, message: "Pitch deleted", data: undefined }
+      : { isSuccess: false, message: "Pitch not found or not owned by user" }
+  } catch (err) {
+    console.error("deletePitchAction:", err)
+    return { isSuccess: false, message: "Failed to delete pitch" }
   }
 }
