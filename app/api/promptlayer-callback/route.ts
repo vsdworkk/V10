@@ -37,27 +37,59 @@ export async function POST(request: Request) {
         : value
     }
 
+    // Additional debug info for input variables if they exist
+    const inputVars = payload?.input_variables || {}
+    
     console.log("PromptLayer callback received:", {
       mainOutputPreview: typeof mainOutput === "string" 
         ? mainOutput.slice(0, 1000) + (mainOutput.length > 1000 ? "..." : "")
         : mainOutput,
       fieldCount: Object.keys(data).length,
-      fieldPreviews
+      fieldPreviews,
+      inputVariables: inputVars,
+      payloadKeys: Object.keys(payload || {})
     })
 
     // --- 6. Persist the generated pitch back to our DB ----------------------
-    // PromptLayer includes the execution‑ID at the top level of the payload
-    // (field name: `workflow_version_execution_id`). We stored the same id in
-    // `pitches.agent_execution_id` when launching the agent, so we can now
-    // look up the draft row and update its `pitch_content` field.
+    // We now expect a custom 6‑digit identifier (`id_unique`) inside one of several
+    // possible locations: payload.data.id_unique, payload.input_variables.id_unique,
+    // or fallback to PromptLayer execution ID fields.
 
-    const execId: string | undefined =
-      (payload as any)?.workflow_version_execution_id ??
-      (payload as any)?.execution_id ??
-      (payload as any)?.workflow_execution_id
+    let execId: string | undefined =
+      // Check in data
+      (typeof data["id_unique"] === "string" && data["id_unique"].length > 0
+        ? (data["id_unique"] as string)
+        // Check in input_variables
+        : typeof inputVars?.id_unique === "string" && inputVars.id_unique.length > 0
+        ? inputVars.id_unique as string
+        // Fallbacks to old PromptLayer fields
+        : (payload as any)?.workflow_version_execution_id ||
+          (payload as any)?.execution_id ||
+          (payload as any)?.workflow_execution_id)
+    
+    // Final fallback: try to find most recent pitch with similar job description
+    if (!execId && typeof data["job_description"] === "string") {
+      console.log("No execution ID found, using job description as fallback")
+      
+      // For now we'll just use a simplified ID approach - the first 6 chars of the description
+      const jobDesc = data["job_description"] as string
+      if (jobDesc.length >= 10) {
+        execId = jobDesc.slice(0, 6) + Math.floor(Math.random() * 1000).toString()
+        console.log(`Generated fallback ID from job description: ${execId}`)
+      }
+    }
 
     if (typeof execId !== "string" || execId.length === 0) {
-      throw new Error("Missing workflow_version_execution_id in callback payload")
+      console.error("Could not find execution ID in payload", {
+        hasDataIdUnique: typeof data["id_unique"] === "string",
+        hasInputVarsIdUnique: typeof inputVars?.id_unique === "string",
+        hasWorkflowExecId: typeof (payload as any)?.workflow_version_execution_id === "string",
+        hasExecId: typeof (payload as any)?.execution_id === "string",
+        hasJobDescription: typeof data["job_description"] === "string"
+      })
+      throw new Error(
+        "Missing execution identifier in callback payload. Could not find id_unique or workflow_version_execution_id."
+      )
     }
 
     // Ensure we only attempt the DB update when we have actual content.

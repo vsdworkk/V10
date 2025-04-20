@@ -1,10 +1,10 @@
 "use server"
 
 /**
- * Server actions that deal with the external PromptLayer “Master_Agent_V1”.
+ * Server actions that deal with the external PromptLayer "Master_Agent_V1".
  * The main export, `generateAgentPitchAction`, kicks‑off the workflow and
- * returns the *workflow_version_execution_id* so the caller can persist it
- * (→ `agentExecutionId`) and subscribe to realtime updates.
+ * returns the *workflow_version_execution_id* so the caller can persist it
+ * (→ `agentExecutionId`) and subscribe to realtime updates.
  */
 
 import { ActionState } from "@/types"
@@ -46,7 +46,7 @@ export async function generateAgentPitchAction(
     if (numExamples < 2 || numExamples > 4) {
       return {
         isSuccess: false,
-        message: `Agent currently supports 2 – 4 STAR examples (you sent ${numExamples}).`
+        message: `Agent currently supports 2 – 4 STAR examples (you sent ${numExamples}).`
       }
     }
 
@@ -100,6 +100,11 @@ export async function generateAgentPitchAction(
     const starComponents = JSON.stringify({ starExamples: starExamplesArray })
 
     /* -------------------------------------------------------------- */
+    /* 2.5 Generate a unique 6‑digit identifier                        */
+    /* -------------------------------------------------------------- */
+    const idUnique = Math.floor(100000 + Math.random() * 900000).toString()
+
+    /* -------------------------------------------------------------- */
     /* 3. Choose agent version                                        */
     /* -------------------------------------------------------------- */
     const getVersion = (n: number) =>
@@ -135,7 +140,8 @@ export async function generateAgentPitchAction(
         User_Experience: pitchData.relevantExperience,
         Intro_Word_Count: introWordCount.toString(),
         Conclusion_Word_Count: conclusionWordCount.toString(),
-        ILS: "Isssdsd"
+        ILS: "Isssdsd",
+        id_unique: idUnique
       },
       return_all_outputs: true
     }
@@ -155,20 +161,25 @@ export async function generateAgentPitchAction(
       )
     }
 
-    const { success, workflow_version_execution_id: execId, message } =
+    const { success, workflow_version_execution_id: _execId, message } =
       await res.json()
 
-    if (!success || !execId) {
-      throw new Error(message || "No execution‑ID returned from PromptLayer")
+    // We ignore the PromptLayer execution‑id for now because the
+    // agent does not reliably return it in the callback.  Instead, we rely on
+    // our own 6‑digit identifier (`idUnique`) which we sent in the input
+    // variables and expect back in the callback payload.
+
+    if (!success) {
+      throw new Error(message || "PromptLayer reported a failure.")
     }
 
     /* -------------------------------------------------------------- */
-    /* 5. Return execution‑ID immediately                             */
+    /* 5. Return our custom identifier immediately                     */
     /* -------------------------------------------------------------- */
     return {
       isSuccess: true,
       message: `Agent version ${workflowLabelName} launched.`,
-      data: execId
+      data: idUnique  // caller should persist this to pitches.agentExecutionId
     }
   } catch (err: any) {
     console.error("generateAgentPitchAction error:", err)

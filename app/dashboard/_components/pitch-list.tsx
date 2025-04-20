@@ -129,13 +129,7 @@ export default function PitchList({ pitches }: PitchListProps) {
                   </Link>
                 )}
                 
-                {/* Edit button for all pitches */}
-                <Link href={pitch.status === "draft" ? `/dashboard/new/${pitch.id}` : `/dashboard/${pitch.id}`}>
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    {pitch.status === "draft" ? "Continue" : "Edit Pitch"}
-                  </Button>
-                </Link>
+
               </CardFooter>
             </Card>
           ))}

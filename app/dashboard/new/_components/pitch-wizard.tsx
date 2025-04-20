@@ -250,11 +250,37 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         }
         
         // Update the form with the execution ID and empty pitch content
-        // The actual content will come later via Supabase realtime
         methods.setValue("agentExecutionId", result.data, { shouldDirty: true })
         methods.setValue("pitchContent", "", { shouldDirty: true })
         
         // Save the updated form data with the execution ID
+        await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
+        
+        // 🔄 Poll backend until pitch content is available
+        const pollIntervalMs = 3000
+        const maxAttempts = 40 // ~2 min
+        let attempt = 0
+        let fetchedContent: string | undefined
+
+        while (attempt < maxAttempts) {
+          const pollRes = await fetch(`/api/pitch-by-exec?execId=${result.data}`)
+          if (pollRes.ok) {
+            const pollJson = await pollRes.json()
+            if (pollJson?.isSuccess && pollJson.data?.pitchContent) {
+              fetchedContent = pollJson.data.pitchContent as string
+              break
+            }
+          }
+          await new Promise(res => setTimeout(res, pollIntervalMs))
+          attempt += 1
+        }
+
+        if (!fetchedContent) {
+          throw new Error("Timed out waiting for generated pitch. Please try again later.")
+        }
+
+        // Inject content into form
+        methods.setValue("pitchContent", fetchedContent, { shouldDirty: true })
         await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
         
         setCurrentStepLocal(lastStarStep + 1)
