@@ -81,6 +81,15 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         gradient: "gradient 8s linear infinite"
+      },
+      fontFamily: {
+        header: [
+          'Poppins',
+          'Playfair Display',
+          'ui-sans-serif',
+          'system-ui',
+          'serif'
+        ]
       }
     }
   },

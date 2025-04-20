@@ -11,6 +11,8 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
+import dynamic from "next/dynamic"
+import PitchEditor from "./_components/pitch-editor"
 
 interface PitchDetailPageProps {
   params: Promise<{ pitchId: string }>
@@ -39,21 +41,18 @@ export default async function PitchDetailPage({ params }: PitchDetailPageProps) 
 
   const pitch = result.data
 
+  // Redirect draft or submitted to wizard flow
+  if (pitch.status === "draft") {
+    redirect(`/dashboard/new/${pitch.id}`)
+  }
+
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
-      <div className="p-6">
-        <h1 className="mb-4 text-2xl font-semibold">{pitch.roleName}</h1>
-        {pitch.organisationName && (
-          <p className="mb-2 text-lg">
-            <strong>Organisation:</strong> {pitch.organisationName}
-          </p>
-        )}
-        {pitch.pitchContent && (
-          <div className="mt-4">
-            <h2 className="font-semibold text-xl">Pitch Content</h2>
-            <p className="mt-2 whitespace-pre-line">{pitch.pitchContent}</p>
-          </div>
-        )}
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="container max-w-5xl mx-auto flex-1 flex flex-col py-6 px-4 sm:px-6">
+        <h1 className="mb-4 text-2xl font-semibold">Edit Pitch</h1>
+        <div className="flex-1 flex flex-col">
+          <PitchEditor pitchId={pitch.id} initialContent={pitch.pitchContent || ""} />
+        </div>
       </div>
     </div>
   )

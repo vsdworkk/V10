@@ -173,3 +173,24 @@ export async function deletePitchAction(
     return { isSuccess: false, message: "Failed to delete pitch" }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Custom Update Helpers                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Persist edited pitch content only. Intended for use by the rich‑text
+ * editor once the pitch is marked as completed/final.
+ */
+export async function savePitchContentAction(
+  id: string,
+  userId: string,
+  content: string
+): Promise<ActionState<SelectPitch>> {
+  // IMPORTANT: never allow editing of a pitch that does not belong to the user
+  return await updatePitchAction(
+    id,
+    { pitchContent: content, updatedAt: new Date() },
+    userId
+  )
+}

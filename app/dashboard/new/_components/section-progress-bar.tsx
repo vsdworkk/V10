@@ -7,6 +7,7 @@ import { motion, LayoutGroup } from "framer-motion"
 interface SectionProgressBarProps {
   current: Section
   onNavigate?: (section: Section) => void
+  className?: string
 }
 
 const SECTION_ORDER: Section[] = [
@@ -27,19 +28,20 @@ const SECTION_LABELS: Record<Section, string> = {
   FINAL: "Finalise"
 }
 
-export default function SectionProgressBar({ current, onNavigate }: SectionProgressBarProps) {
-  const isIntro = current === "INTRO"
+export default function SectionProgressBar({ current, onNavigate, className }: SectionProgressBarProps) {
   return (
     <nav
       aria-label="Wizard progress"
-      className="py-2 px-1 sm:px-4 select-none overflow-x-auto"
+      className={clsx(
+        "py-1 px-1 sm:px-2 select-none overflow-x-auto",
+        className
+      )}
     >
       <LayoutGroup>
         <ul
           role="list"
           className={clsx(
-            "flex justify-center items-center",
-            isIntro ? "gap-6" : "gap-4"
+            "flex justify-center items-center gap-4"
           )}
         >
           {SECTION_ORDER.map((sec, idx) => {
@@ -64,8 +66,7 @@ export default function SectionProgressBar({ current, onNavigate }: SectionProgr
                   onClick={() => onNavigate?.(sec)}
                   aria-label={`Step ${idx + 1} of 6: ${SECTION_LABELS[sec]}`}
                   className={clsx(
-                    "flex flex-col items-center whitespace-nowrap transition-colors",
-                    isIntro ? "text-base sm:text-lg" : "text-sm sm:text-base",
+                    "flex flex-col items-center whitespace-nowrap transition-colors text-sm sm:text-base",
                     clickable ? "hover:text-primary focus:outline-none" : "cursor-default",
                     state === "active" && "font-semibold text-primary",
                     state === "completed" && "text-foreground",
@@ -77,16 +78,13 @@ export default function SectionProgressBar({ current, onNavigate }: SectionProgr
                     <motion.span
                       layoutId="progress-dot"
                       className={clsx(
-                        "rounded-full mb-1",
-                        isIntro ? "w-6 h-6" : "w-4 h-4",
-                        "bg-primary"
+                        "rounded-full mb-0.5 w-4 h-4 bg-primary"
                       )}
                     />
                   ) : (
                     <span
                       className={clsx(
-                        "rounded-full mb-1",
-                        isIntro ? "w-6 h-6" : "w-4 h-4",
+                        "rounded-full mb-0.5 w-4 h-4",
                         state === "completed" && "bg-primary",
                         state === "upcoming" && "bg-muted"
                       )}

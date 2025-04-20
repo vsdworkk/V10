@@ -51,7 +51,7 @@ function firstStepOfSection(section: Section, starCount: number) {
 }
 
 function computeSectionAndHeader(step: number, starCount: number): { section: Section; header: string } {
-  if (step === 1) return { section: "INTRO", header: "Introduction" }
+  if (step === 1) return { section: "INTRO", header: "Welcome to the Pitch Wizard" }
   if (step === 2) return { section: "ROLE", header: "Role Details" }
   if (step === 3) return { section: "EXP", header: "Your Experience" }
   if (step === 4) return { section: "GUIDE", header: "Guidance" }
@@ -358,11 +358,16 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       <div className="space-y-8">
         {/* Sticky Header + Progress Bar */}
         <div className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b flex flex-col items-center py-4">
-          <SectionProgressBar current={currentSection} onNavigate={handleSectionNavigate} />
           <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
+          <div className="mb-6" />
+          <SectionProgressBar
+            current={currentSection}
+            onNavigate={handleSectionNavigate}
+            className="mb-2 mt-0.5"
+          />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-lg shadow-sm border p-6 mt-2">
           <motion.div
             key={currentStepLocal}
             initial={{ opacity: 0, y: 10 }}
