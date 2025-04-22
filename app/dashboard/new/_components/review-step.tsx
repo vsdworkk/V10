@@ -5,11 +5,11 @@
  * ----------
  * Final wizard screen where the user polishes the pitch.
  *
- * NEW:
+ * Enhancements:
+ *  • Accepts `isPitchLoading` from parent. If true or if pitchContent is empty,
+ *    show a loading skeleton rather than the TipTap editor.
  *  • Subscribes to Supabase realtime updates on the row whose
- *    `agent_execution_id` matches the one stored in the form.
- *  • When PromptLayer's callback writes `pitch_content`, we inject it
- *    straight into TipTap – no polling required.
+ *    `agent_execution_id` matches the one stored in the form, to update pitchContent automatically.
  */
 
 import React, { useEffect, useRef } from "react"
@@ -39,16 +39,33 @@ import OrderedListExtension from "@tiptap/extension-ordered-list"
 import ListItemExtension from "@tiptap/extension-list-item"
 import CharacterCountExtension from "@tiptap/extension-character-count"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export default function ReviewStep() {
+interface ReviewStepProps {
+  /** 
+   * If true, show a loading skeleton/spinner instead of the actual pitch content.
+   * This is set when the user transitions from the last STAR step to this step and
+   * we haven't yet received the final pitch text from the agent.
+   */
+  isPitchLoading: boolean
+
+  /** Callback invoked when the pitch content has loaded */
+  onPitchLoaded: () => void
+}
+
+export default function ReviewStep({ isPitchLoading, onPitchLoaded }: ReviewStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
   /* ----------------------------------------------------------- */
-  /* 1️⃣  TipTap initial content                                 */
+  /* 1) Observed pitch content and execution ID from form        */
   /* ----------------------------------------------------------- */
   const pitchContent = watch("pitchContent") || ""
+  const execId = watch("agentExecutionId") || null
 
+  /* ----------------------------------------------------------- */
+  /* 2) Editor setup (TipTap)                                    */
+  /* ----------------------------------------------------------- */
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -59,7 +76,7 @@ export default function ReviewStep() {
       BulletListExtension,
       OrderedListExtension,
       ListItemExtension,
-      CharacterCountExtension.configure({ limit: 10_000 })
+      CharacterCountExtension.configure({ limit: 10000 })
     ],
     content: pitchContent,
     autofocus: false,
@@ -69,17 +86,14 @@ export default function ReviewStep() {
   })
 
   /* ----------------------------------------------------------- */
-  /* 2️⃣  Supabase realtime subscription                          */
+  /* 3) Supabase Realtime subscription for agent exec ID         */
   /* ----------------------------------------------------------- */
   const subscribedRef = useRef<boolean>(false)
 
   useEffect(() => {
-    // Avoid duplicate subscriptions on hot re‑render
+    if (!execId) return
     if (subscribedRef.current) return
     subscribedRef.current = true
-
-    const execId = watch("agentExecutionId" as any) // value saved after /api/finalPitch POST
-    if (!execId) return
 
     const channel = supabase
       .channel(`pitch-exec-${execId}`)
@@ -101,6 +115,9 @@ export default function ReviewStep() {
               title: "Pitch ready!",
               description: "Albert has finished generating your pitch."
             })
+
+            // Step 3 addition: Call the callback from parent
+            onPitchLoaded()
           }
         }
       )
@@ -109,11 +126,56 @@ export default function ReviewStep() {
     return () => {
       channel.unsubscribe()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [execId, editor, toast, setValue, onPitchLoaded])
 
   /* ----------------------------------------------------------- */
-  /* 3️⃣  Loading fallback                                        */
+  /* 4) Loading skeleton if pitch is not ready                   */
+  /* ----------------------------------------------------------- */
+  // If isPitchLoading or no pitch content, show a skeleton/spinner
+  if (isPitchLoading || !pitchContent.trim()) {
+    return (
+      <div className="flex flex-col space-y-4">
+        <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
+          <strong>Generating final pitch...</strong> If you don't see the pitch yet,
+          hang tight – it will appear below once ready.
+        </div>
+
+        <div className="flex flex-col items-center justify-center space-y-3 px-4 py-10 bg-white border rounded-md">
+          <svg
+            className="h-6 w-6 animate-spin text-muted-foreground"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
+          </svg>
+
+          {/* Some skeleton placeholders */}
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+    )
+  }
+
+  /* ----------------------------------------------------------- */
+  /* 5) If content is loaded and not in isPitchLoading state,    */
+  /*    show the final editor                                    */
   /* ----------------------------------------------------------- */
   if (!editor) {
     return (
@@ -144,7 +206,7 @@ export default function ReviewStep() {
   }
 
   /* ----------------------------------------------------------- */
-  /* 4️⃣  Toolbar helpers                                         */
+  /* 6) Editor Toolbar                                           */
   /* ----------------------------------------------------------- */
   const handleBold = () => editor.chain().focus().toggleBold().run()
   const handleItalic = () => editor.chain().focus().toggleItalic().run()
@@ -155,29 +217,29 @@ export default function ReviewStep() {
   const handleUndo = () => editor.chain().focus().undo().run()
   const handleRedo = () => editor.chain().focus().redo().run()
 
-  /* ----------------------------------------------------------- */
-  /* 5️⃣  Render                                                  */
-  /* ----------------------------------------------------------- */
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Your pitch has been generated by&nbsp;Albert from your STAR examples.
-        Feel free to refine the wording or formatting below before submitting.
+        Your pitch is now ready. Feel free to refine the wording or formatting below.
       </p>
 
-      <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
-        <strong>✓ Automatic generation in progress!</strong> If you don't see
-        the pitch yet, hang tight – it will drop in here the moment Albert
-        finishes.
-      </div>
-
-      {/* Toolbar */}
+      {/* Editor Toolbar */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted p-2">
-        <Button type="button" size="sm" variant={editor.isActive("bold") ? "default" : "outline"} onClick={handleBold}>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bold") ? "default" : "outline"}
+          onClick={handleBold}
+        >
           <Bold className="h-4 w-4" />
         </Button>
 
-        <Button type="button" size="sm" variant={editor.isActive("italic") ? "default" : "outline"} onClick={handleItalic}>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("italic") ? "default" : "outline"}
+          onClick={handleItalic}
+        >
           <Italic className="h-4 w-4" />
         </Button>
 
@@ -185,11 +247,21 @@ export default function ReviewStep() {
           <Heading1 className="h-4 w-4" />
         </Button>
 
-        <Button type="button" size="sm" variant={editor.isActive("bulletList") ? "default" : "outline"} onClick={handleBulletList}>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bulletList") ? "default" : "outline"}
+          onClick={handleBulletList}
+        >
           <List className="h-4 w-4" />
         </Button>
 
-        <Button type="button" size="sm" variant={editor.isActive("orderedList") ? "default" : "outline"} onClick={handleOrderedList}>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("orderedList") ? "default" : "outline"}
+          onClick={handleOrderedList}
+        >
           <ListOrdered className="h-4 w-4" />
         </Button>
 
@@ -208,7 +280,7 @@ export default function ReviewStep() {
         </div>
       </div>
 
-      {/* Editor Area */}
+      {/* The Editor Content */}
       <div className="min-h-[300px] rounded-md border p-2">
         <EditorContent editor={editor} />
       </div>

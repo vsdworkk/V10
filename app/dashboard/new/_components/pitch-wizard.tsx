@@ -135,8 +135,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const [currentStepLocal, setCurrentStepLocal] = useState(1)
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
 
-  // final pitch generation states
-  const [isGeneratingFinalPitch, setIsGeneratingFinalPitch] = useState(false)
+  // This is the boolean that shows the placeholder until we get final text
+  const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
 
   // React Hook Form setup
@@ -178,8 +178,16 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     }
 
     // Step: review
-    return <ReviewStep />
+    // Pass in a callback so ReviewStep can also clear isPitchLoading
+    return (
+      <ReviewStep
+        isPitchLoading={isPitchLoading}
+        onPitchLoaded={() => setIsPitchLoading(false)}
+      />
+    )
   }
+
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS!
 
   // ----------------------------------------------------------------
   // "Next" handler
@@ -199,13 +207,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const lastStarStep = 4 + starCount * 4
     if (currentStepLocal === lastStarStep) {
       // user just finished the final STAR sub-step
-      setIsGeneratingFinalPitch(true)
+      setIsPitchLoading(true)
       setFinalPitchError(null)
 
       try {
         // generate final pitch
-        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast)
-
+        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading)
         // move to the final "Review" step
         setCurrentStepLocal(lastStarStep + 1)
       } catch (err: any) {
@@ -217,14 +224,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           variant: "destructive"
         })
       } finally {
-        setIsGeneratingFinalPitch(false)
+        setIsPitchLoading(false)
       }
       return
     }
 
     // otherwise, just move forward
     setCurrentStepLocal((s) => Math.min(s + 1, totalSteps))
-  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast])
+  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast, setIsPitchLoading])
 
   // ----------------------------------------------------------------
   // "Back" handler
@@ -252,10 +259,25 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
   }, [methods, pitchId, setPitchId, toast, router])
 
-  // ----------------------------------------------------------------
-  // If we are generating final pitch, show a loading panel
-  // ----------------------------------------------------------------
-  if (isGeneratingFinalPitch) {
+  // figure out current section for the progress bar
+  const { section: currentSection, header: currentHeader } = computeSectionAndHeader(currentStepLocal, starCount)
+
+  // for jump-back in the progress bar (optional)
+  const handleSectionNavigate = useCallback(
+    (target: Section) => {
+      const targetStep = firstStepOfSection(target, starCount)
+      // Do not allow forward jumps
+      if (SECTION_ORDER.indexOf(target) < SECTION_ORDER.indexOf(currentSection)) {
+        setCurrentStepLocal(targetStep)
+      }
+    },
+    [currentSection, starCount]
+  )
+
+  // NOW, after all hooks are called, we can conditionally render
+  
+  // If we are in the "pitch loading" state, show a loading screen
+  if (isPitchLoading) {
     return (
       <div className="flex flex-col items-center space-y-4 py-8 bg-white rounded-lg shadow-sm border p-6">
         <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10">
@@ -276,24 +298,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     )
   }
 
-  // figure out current section for the progress bar
-  const { section: currentSection, header: currentHeader } = computeSectionAndHeader(currentStepLocal, starCount)
-
-  // for jump-back in the progress bar (optional)
-  const handleSectionNavigate = useCallback(
-    (target: Section) => {
-      const targetStep = firstStepOfSection(target, starCount)
-      // Do not allow forward jumps
-      if (SECTION_ORDER.indexOf(target) < SECTION_ORDER.indexOf(currentSection)) {
-        setCurrentStepLocal(targetStep)
-      }
-    },
-    [currentSection, starCount]
-  )
-
-  // ----------------------------------------------------------------
-  // Render
-  // ----------------------------------------------------------------
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
@@ -386,7 +390,6 @@ function mapExistingDataToDefaults(
     }
   }
 
-  // For safety, check if pitchData.roleLevel is in allowed set, etc.
   const validLevels = ["APS1","APS2","APS3","APS4","APS5","APS6","EL1"] as const
   const safeLevel = (validLevels.includes(pitchData.roleLevel as any)
     ? pitchData.roleLevel
@@ -501,7 +504,8 @@ async function triggerFinalPitch(
   pitchId: string | undefined,
   methods: ReturnType<typeof useForm<PitchWizardFormData>>,
   setPitchId: (id: string) => void,
-  toast: any
+  toast: any,
+  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   // Call /api/finalPitch
   const res = await fetch("/api/finalPitch", {
@@ -535,7 +539,7 @@ async function triggerFinalPitch(
   await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
 
   // optional: Poll for pitchContent
-  await pollForPitchContent(result.data, methods, pitchId, setPitchId, toast)
+  await pollForPitchContent(result.data, methods, pitchId, setPitchId, toast, setIsPitchLoading)
 }
 
 /**
@@ -546,7 +550,8 @@ async function pollForPitchContent(
   methods: ReturnType<typeof useForm<PitchWizardFormData>>,
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
-  toast: any
+  toast: any,
+  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) {
   const pollIntervalMs = 3000
   const maxAttempts = 40 // ~2 minutes
@@ -562,7 +567,9 @@ async function pollForPitchContent(
       const content = pollJson.data.pitchContent as string
       methods.setValue("pitchContent", content, { shouldDirty: true })
 
-      // Save that content to the DB
+      //  Step 3 addition: once we have final pitch, hide the loading state
+      setIsPitchLoading(false)
+
       await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
       return
     }
