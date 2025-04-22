@@ -40,6 +40,7 @@ import ListItemExtension from "@tiptap/extension-list-item"
 import CharacterCountExtension from "@tiptap/extension-character-count"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import AIThinkingLoader from "./ai-thinking-loader"
 
 interface ReviewStepProps {
   /** 
@@ -51,9 +52,12 @@ interface ReviewStepProps {
 
   /** Callback invoked when the pitch content has loaded */
   onPitchLoaded: () => void
+  
+  /** Error message if pitch generation failed */
+  errorMessage?: string | null
 }
 
-export default function ReviewStep({ isPitchLoading, onPitchLoaded }: ReviewStepProps) {
+export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage }: ReviewStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
@@ -134,40 +138,54 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded }: ReviewStep
   // If isPitchLoading or no pitch content, show a skeleton/spinner
   if (isPitchLoading || !pitchContent.trim()) {
     return (
-      <div className="flex flex-col space-y-4">
+      <div className="space-y-4">
         <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
-          <strong>Generating final pitch...</strong> If you don't see the pitch yet,
-          hang tight – it will appear below once ready.
+          <strong>Generating your pitch...</strong> The content will appear below as soon as it's ready.
         </div>
 
-        <div className="flex flex-col items-center justify-center space-y-3 px-4 py-10 bg-white border rounded-md">
-          <svg
-            className="h-6 w-6 animate-spin text-muted-foreground"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            />
-          </svg>
+        {/* Editor toolbar (disabled during loading) */}
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 p-2 opacity-50">
+          <Button type="button" size="sm" variant="outline" disabled>
+            <Bold className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <Italic className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <Heading1 className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <List className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <ListOrdered className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" disabled>
+            <Redo2 className="h-4 w-4" />
+          </Button>
+          <div className="ml-auto text-xs text-muted-foreground">Loading...</div>
+        </div>
 
-          {/* Some skeleton placeholders */}
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-1/3" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-1/2" />
+        {/* Loading animation in the editor area */}
+        <div className="min-h-[300px] rounded-md border p-0">
+          <AIThinkingLoader 
+            visible={true}
+            errorMessage={errorMessage}
+            onCancel={() => {
+              // Set empty content to exit loading state
+              setValue("pitchContent", "<p>Your pitch content...</p>", { shouldDirty: true });
+              onPitchLoaded(); // Reset isLoading in parent
+            }}
+            onComplete={() => {
+              // This shouldn't be needed as the content should
+              // be loaded via Supabase realtime, but just in case
+              onPitchLoaded();
+            }}
+            className="h-full min-h-[300px]"
+          />
         </div>
       </div>
     )

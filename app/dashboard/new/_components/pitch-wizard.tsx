@@ -182,7 +182,11 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     return (
       <ReviewStep
         isPitchLoading={isPitchLoading}
-        onPitchLoaded={() => setIsPitchLoading(false)}
+        onPitchLoaded={() => {
+          setIsPitchLoading(false);
+          setFinalPitchError(null);
+        }}
+        errorMessage={finalPitchError}
       />
     )
   }
@@ -207,14 +211,16 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     const lastStarStep = 4 + starCount * 4
     if (currentStepLocal === lastStarStep) {
       // user just finished the final STAR sub-step
+      // First, move to the Review step immediately
+      setCurrentStepLocal(lastStarStep + 1)
+      // Then set loading state to true so the Review step shows a loading indicator
       setIsPitchLoading(true)
       setFinalPitchError(null)
 
+      // Start the pitch generation process in the background
       try {
         // generate final pitch
-        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading)
-        // move to the final "Review" step
-        setCurrentStepLocal(lastStarStep + 1)
+        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading, setFinalPitchError)
       } catch (err: any) {
         console.error("Final pitch generation error:", err)
         setFinalPitchError(err.message || "An error occurred generating your pitch")
@@ -223,7 +229,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           description: err.message || "Failed to generate pitch",
           variant: "destructive"
         })
-      } finally {
         setIsPitchLoading(false)
       }
       return
@@ -231,7 +236,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
     // otherwise, just move forward
     setCurrentStepLocal((s) => Math.min(s + 1, totalSteps))
-  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast, setIsPitchLoading])
+  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast, setIsPitchLoading, setFinalPitchError])
 
   // ----------------------------------------------------------------
   // "Back" handler
@@ -276,28 +281,6 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
   // NOW, after all hooks are called, we can conditionally render
   
-  // If we are in the "pitch loading" state, show a loading screen
-  if (isPitchLoading) {
-    return (
-      <div className="flex flex-col items-center space-y-4 py-8 bg-white rounded-lg shadow-sm border p-6">
-        <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-        </div>
-        <h3 className="text-xl font-medium">Creating Your Pitch</h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          Generating your final pitch based on your inputs...
-        </p>
-
-        {finalPitchError && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive mt-4 w-full max-w-md">
-            <p className="text-sm font-semibold">Error Occurred:</p>
-            <p className="text-sm">{finalPitchError}</p>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
@@ -505,7 +488,8 @@ async function triggerFinalPitch(
   methods: ReturnType<typeof useForm<PitchWizardFormData>>,
   setPitchId: (id: string) => void,
   toast: any,
-  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
 ) {
   // Call /api/finalPitch
   const res = await fetch("/api/finalPitch", {
@@ -539,7 +523,7 @@ async function triggerFinalPitch(
   await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
 
   // optional: Poll for pitchContent
-  await pollForPitchContent(result.data, methods, pitchId, setPitchId, toast, setIsPitchLoading)
+  await pollForPitchContent(result.data, methods, pitchId, setPitchId, toast, setIsPitchLoading, setFinalPitchError)
 }
 
 /**
@@ -551,7 +535,8 @@ async function pollForPitchContent(
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
   toast: any,
-  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
 ) {
   const pollIntervalMs = 3000
   const maxAttempts = 40 // ~2 minutes
@@ -574,7 +559,19 @@ async function pollForPitchContent(
       return
     }
   }
-  throw new Error("Timed out waiting for generated pitch. Please try again later.")
+  
+  // Instead of throwing an error, set the error message state
+  // and keep the loading state active so the user can see the error in the ReviewStep
+  const errorMessage = "Timed out waiting for generated pitch. You can continue editing or try again later.";
+  setFinalPitchError(errorMessage);
+  toast({
+    title: "Generation Delay",
+    description: errorMessage,
+    variant: "destructive"
+  });
+  
+  // We don't call setIsPitchLoading(false) here because we want to keep showing the loading state
+  // with the error message in the ReviewStep
 }
 
 /**
