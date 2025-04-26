@@ -98,6 +98,7 @@ export async function generateAgentPitchAction(
     )
 
     const starComponents = JSON.stringify({ starExamples: starExamplesArray })
+    console.log("Formatted star components:", starComponents);
 
     /* -------------------------------------------------------------- */
     /* 2.5 Generate a unique 6‑digit identifier                        */

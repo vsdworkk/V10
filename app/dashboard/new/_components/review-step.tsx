@@ -93,7 +93,11 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   /* 3) Supabase Realtime subscription for agent exec ID         */
   /* ----------------------------------------------------------- */
   const subscribedRef = useRef<boolean>(false)
-
+  useEffect(() => {
+    if (editor && pitchContent && pitchContent !== editor.getHTML()) {
+      editor.commands.setContent(pitchContent, false);
+    }
+  }, [editor, pitchContent]);
   useEffect(() => {
     if (!execId) return
     if (subscribedRef.current) return
@@ -131,6 +135,29 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
       channel.unsubscribe()
     }
   }, [execId, editor, toast, setValue, onPitchLoaded])
+
+  // Add custom styles for spacing between sections
+  useEffect(() => {
+    if (editor) {
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .ProseMirror h2 {
+          margin-top: 2rem;
+        }
+        .ProseMirror h3 {
+          margin-top: 1.5rem;
+        }
+        .ProseMirror p {
+          margin-bottom: 1rem;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, [editor]);
 
   /* ----------------------------------------------------------- */
   /* 4) Loading skeleton if pitch is not ready                   */

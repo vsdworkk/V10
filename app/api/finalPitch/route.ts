@@ -34,6 +34,16 @@ export async function POST(request: Request) {
     // Convert pitchWordLimit to a number
     const numericLimit = Number(body.pitchWordLimit)
 
+    // Log the inputs being sent to the agent action
+    console.log("Generating agent pitch with inputs:", {
+      roleName: body.roleName,
+      roleLevel: body.roleLevel,
+      pitchWordLimit: numericLimit,
+      relevantExperience: body.relevantExperience,
+      roleDescription: body.roleDescription || "",
+      starExamples: body.starExamples
+    });
+
     // Call our new agent action
     const agentResult = await generateAgentPitchAction({
       roleName: body.roleName,
