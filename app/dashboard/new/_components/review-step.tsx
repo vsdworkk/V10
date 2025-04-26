@@ -39,8 +39,8 @@ import OrderedListExtension from "@tiptap/extension-ordered-list"
 import ListItemExtension from "@tiptap/extension-list-item"
 import CharacterCountExtension from "@tiptap/extension-character-count"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
 import AIThinkingLoader from "./ai-thinking-loader"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ReviewStepProps {
   /** 
@@ -150,6 +150,12 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         .ProseMirror p {
           margin-bottom: 1rem;
         }
+
+        /* Remove default blue node selection highlight */
+        .ProseMirror-selectednode {
+          outline: none !important;
+          background: transparent !important;
+        }
       `;
       document.head.appendChild(style);
       
@@ -171,7 +177,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         </div>
 
         {/* Editor toolbar (disabled during loading) */}
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 p-2 opacity-50">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md p-3 opacity-60 shadow-lg">
           <Button type="button" size="sm" variant="outline" disabled>
             <Bold className="h-4 w-4" />
           </Button>
@@ -197,7 +203,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         </div>
 
         {/* Loading animation in the editor area */}
-        <div className="min-h-[300px] rounded-md border p-0">
+        <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 dark:bg-gray-900/40 backdrop-blur-md p-0 shadow-inner">
           <AIThinkingLoader 
             visible={true}
             errorMessage={errorMessage}
@@ -269,7 +275,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
       </p>
 
       {/* Editor Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted p-2">
+      <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/60 dark:bg-gray-900/40 backdrop-blur-md p-3 shadow-lg">
         <Button
           type="button"
           size="sm"
@@ -326,9 +332,14 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
       </div>
 
       {/* The Editor Content */}
-      <div className="min-h-[300px] rounded-md border p-2">
-        <EditorContent editor={editor} />
-      </div>
+      <ScrollArea className="h-[50vh] w-full overflow-hidden rounded-xl border border-white/30 bg-white/50 dark:bg-gray-900/40 backdrop-blur-md shadow-inner">
+        <div
+          className="prose prose-slate prose-neutral text-neutral-900 dark:prose-invert max-w-none p-6"
+          style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}
+        >
+          <EditorContent editor={editor} />
+        </div>
+      </ScrollArea>
     </div>
   )
 }

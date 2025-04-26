@@ -285,7 +285,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     <FormProvider {...methods}>
       <div className="space-y-8">
         {/* Sticky Header + Progress Bar */}
-        <div className="sticky top-0 z-30 bg-background/80 backdrop-blur border-b flex flex-col items-center py-4">
+        <div className="bg-background/80 backdrop-blur border-b flex flex-col items-center py-4">
           <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
           <div className="mb-6" />
           <SectionProgressBar
