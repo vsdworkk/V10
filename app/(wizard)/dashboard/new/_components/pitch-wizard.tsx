@@ -23,8 +23,7 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, Save, ArrowRight, ArrowLeft } from "lucide-react"
 import { useToast } from "@/lib/hooks/use-toast"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
-import WizardHeader from "./wizard-header"
-import SectionProgressBar from "./section-progress-bar"
+// import SectionProgressBar from "./section-progress-bar" // <--- We'll place this in the wizard layout aside if needed.
 import type { Section } from "@/types"
 
 // ---------------------------------------------------
@@ -61,7 +60,7 @@ function computeSectionAndHeader(step: number, starCount: number): { section: Se
   const lastStarStep = 4 + starCount * 4
   if (step >= firstStarStep && step <= lastStarStep) {
     const indexWithinStar = step - firstStarStep
-    const exampleIndex = Math.floor(indexWithinStar / 4) + 1 // 1‑based
+    const exampleIndex = Math.floor(indexWithinStar / 4) + 1 // 1-based
     const subStepIndex = indexWithinStar % 4
     const subStepLabel = ["Situation", "Task", "Action", "Result"][subStepIndex]
     return {
@@ -183,15 +182,13 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       <ReviewStep
         isPitchLoading={isPitchLoading}
         onPitchLoaded={() => {
-          setIsPitchLoading(false);
-          setFinalPitchError(null);
+          setIsPitchLoading(false)
+          setFinalPitchError(null)
         }}
         errorMessage={finalPitchError}
       />
     )
   }
-
-  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS!
 
   // ----------------------------------------------------------------
   // "Next" handler
@@ -203,23 +200,18 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       return
     }
 
-    // Save current step's data first
+    // Save current step's data
     const formData = methods.getValues()
     await savePitchData(formData, pitchId, setPitchId, toast)
 
-    // figure out if we are on the last STAR step
+    // if final STAR step, move to review & trigger final pitch generation
     const lastStarStep = 4 + starCount * 4
     if (currentStepLocal === lastStarStep) {
-      // user just finished the final STAR sub-step
-      // First, move to the Review step immediately
       setCurrentStepLocal(lastStarStep + 1)
-      // Then set loading state to true so the Review step shows a loading indicator
       setIsPitchLoading(true)
       setFinalPitchError(null)
 
-      // Start the pitch generation process in the background
       try {
-        // generate final pitch
         await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading, setFinalPitchError)
       } catch (err: any) {
         console.error("Final pitch generation error:", err)
@@ -234,9 +226,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       return
     }
 
-    // otherwise, just move forward
+    // else proceed
     setCurrentStepLocal((s) => Math.min(s + 1, totalSteps))
-  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast, setIsPitchLoading, setFinalPitchError])
+  }, [currentStepLocal, starCount, totalSteps, methods, pitchId, setPitchId, toast])
 
   // ----------------------------------------------------------------
   // "Back" handler
@@ -250,28 +242,25 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // ----------------------------------------------------------------
   const handleSaveAndClose = useCallback(async () => {
     const data = methods.getValues()
-    // Save user's partial draft
     await savePitchData(data, pitchId, setPitchId, toast)
     router.push("/dashboard")
   }, [methods, pitchId, setPitchId, toast, router])
 
   // ----------------------------------------------------------------
-  // "Submit Pitch" handler
+  // "Submit Pitch" handler (final)
   // ----------------------------------------------------------------
   const handleSubmitFinal = useCallback(async () => {
     const data = methods.getValues()
-    // Mark the pitch as final in the DB
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
   }, [methods, pitchId, setPitchId, toast, router])
 
-  // figure out current section for the progress bar
+  // current section & heading
   const { section: currentSection, header: currentHeader } = computeSectionAndHeader(currentStepLocal, starCount)
 
-  // for jump-back in the progress bar (optional)
+  // If you'd like to allow jump-back to older sections:
   const handleSectionNavigate = useCallback(
     (target: Section) => {
       const targetStep = firstStepOfSection(target, starCount)
-      // Do not allow forward jumps
       if (SECTION_ORDER.indexOf(target) < SECTION_ORDER.indexOf(currentSection)) {
         setCurrentStepLocal(targetStep)
       }
@@ -279,21 +268,15 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     [currentSection, starCount]
   )
 
-  // NOW, after all hooks are called, we can conditionally render
-  
+  // Return the entire form + wizard controls
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
-        {/* Sticky Header + Progress Bar */}
-        <div className="bg-background/80 backdrop-blur border-b flex flex-col items-center py-4">
-          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
-          <div className="mb-6" />
-          <SectionProgressBar
-            current={currentSection}
-            onNavigate={handleSectionNavigate}
-            className="mb-2 mt-0.5"
-          />
-        </div>
+        {/* 
+          HEADERS & PROGRESS REMOVED. 
+          We'll rely on the wizard layout to show the vertical sidebar, 
+          so we won't render SectionProgressBar or WizardHeader here.
+        */}
 
         <div className="bg-white rounded-lg shadow-sm border p-6 mt-2">
           <motion.div
@@ -347,9 +330,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   )
 }
 
-// ---------------------------------------------------
-// Helpers
-// ---------------------------------------------------
+// ----------------------------------------------------------------
+//  HELPER FUNCTIONS
+// ----------------------------------------------------------------
 
 function mapExistingDataToDefaults(
   userId: string,
@@ -361,41 +344,76 @@ function mapExistingDataToDefaults(
       userId,
       roleName: "",
       organisationName: "",
-      roleLevel: "APS4" as PitchWizardFormData["roleLevel"],
+      roleLevel: "APS4",
       pitchWordLimit: 650,
       roleDescription: "",
       relevantExperience: "",
       albertGuidance: "",
       starExamples: [createEmptyStarExample()],
-      starExamplesCount: "1" as PitchWizardFormData["starExamplesCount"],
+      starExamplesCount: "1",
       pitchContent: "",
       agentExecutionId: ""
     }
   }
 
   const validLevels = ["APS1","APS2","APS3","APS4","APS5","APS6","EL1"] as const
-  const safeLevel = (validLevels.includes(pitchData.roleLevel as any)
+  type RoleLevelEnum = typeof validLevels[number]; // Derive the enum type
+
+  const determinedLevel = (validLevels.includes(pitchData.roleLevel as any) // Check if DB value is valid
     ? pitchData.roleLevel
-    : "APS4") as PitchWizardFormData["roleLevel"]
+    : "APS4") // Use default if not
 
   const sc = pitchData.starExamplesCount
     ? String(pitchData.starExamplesCount)
     : "1"
-  const safeStarCount = (/^\d+$/.test(sc) ? sc : "1") as PitchWizardFormData["starExamplesCount"]
+
+  // Define valid star counts and derive the enum type
+  const validStarCounts = ["1","2","3","4","5","6","7","8","9","10"] as const;
+  type StarCountEnum = typeof validStarCounts[number];
+
+  const safeStarCount = (validStarCounts.includes(sc as any) ? sc : "1")
 
   return {
     userId: pitchData.userId,
     roleName: pitchData.roleName ?? "",
     organisationName: pitchData.organisationName ?? "",
-    roleLevel: safeLevel,
+    roleLevel: determinedLevel as RoleLevelEnum, // Assert the type here
     pitchWordLimit: pitchData.pitchWordLimit || 650,
     roleDescription: pitchData.roleDescription ?? "",
     relevantExperience: pitchData.relevantExperience ?? "",
     albertGuidance: pitchData.albertGuidance ?? "",
     starExamples: (pitchData.starExamples && pitchData.starExamples.length > 0
-      ? pitchData.starExamples
-      : [createEmptyStarExample()]) as PitchWizardFormData["starExamples"],
-    starExamplesCount: safeStarCount,
+      ? pitchData.starExamples.map(ex => ({ // Map and provide defaults
+          situation: {
+            "where-and-when-did-this-experience-occur": ex.situation?.["where-and-when-did-this-experience-occur"] ?? "",
+            "briefly-describe-the-situation-or-challenge-you-faced": ex.situation?.["briefly-describe-the-situation-or-challenge-you-faced"] ?? "",
+          },
+          task: {
+            "what-was-your-responsibility-in-addressing-this-issue": ex.task?.["what-was-your-responsibility-in-addressing-this-issue"] ?? "",
+            "what-constraints-or-requirements-did-you-need-to-consider": ex.task?.["what-constraints-or-requirements-did-you-need-to-consider"] ?? "",
+          },
+          action: {
+            steps: ex.action?.steps?.map(step => ({
+              stepNumber: step.stepNumber ?? 1,
+              "what-did-you-specifically-do-in-this-step": step["what-did-you-specifically-do-in-this-step"] ?? "",
+              "how-did-you-do-it-tools-methods-or-skills": step["how-did-you-do-it-tools-methods-or-skills"] ?? "",
+              "what-was-the-outcome-of-this-step-optional": step["what-was-the-outcome-of-this-step-optional"],
+            })) ?? [ // Default action step if needed
+              {
+                stepNumber: 1,
+                "what-did-you-specifically-do-in-this-step": "",
+                "how-did-you-do-it-tools-methods-or-skills": "",
+                "what-was-the-outcome-of-this-step-optional": "",
+              }
+            ],
+          },
+          result: {
+            "what-positive-outcome-did-you-achieve": ex.result?.["what-positive-outcome-did-you-achieve"] ?? "",
+            "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": ex.result?.["how-did-this-outcome-benefit-your-team-stakeholders-or-organization"] ?? "",
+          },
+        }))
+      : [createEmptyStarExample()]),
+    starExamplesCount: safeStarCount as StarCountEnum, // Assert the type here
     pitchContent: pitchData.pitchContent ?? "",
     agentExecutionId: pitchData.agentExecutionId ?? ""
   }
@@ -429,7 +447,7 @@ function createEmptyStarExample() {
 }
 
 /**
- * Persists the user's partial draft to the DB (create/update).
+ * Persists user's partial draft (create/update).
  */
 async function savePitchData(
   data: PitchWizardFormData,
@@ -444,10 +462,10 @@ async function savePitchData(
     organisationName: data.organisationName,
     roleLevel: data.roleLevel,
     pitchWordLimit: data.pitchWordLimit,
-    roleDescription: data.roleDescription || "",
-    relevantExperience: data.relevantExperience || "",
-    albertGuidance: data.albertGuidance || "",
-    pitchContent: data.pitchContent || "",
+    roleDescription: data.roleDescription ?? "",
+    relevantExperience: data.relevantExperience ?? "",
+    albertGuidance: data.albertGuidance ?? "",
+    pitchContent: data.pitchContent ?? "",
     starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
     status: "draft",
@@ -480,7 +498,7 @@ async function savePitchData(
 }
 
 /**
- * Called when finishing the final STAR sub-step to generate the final pitch text.
+ * Final pitch generation.
  */
 async function triggerFinalPitch(
   data: PitchWizardFormData,
@@ -491,7 +509,6 @@ async function triggerFinalPitch(
   setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
 ) {
-  // Call /api/finalPitch
   const res = await fetch("/api/finalPitch", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -515,19 +532,21 @@ async function triggerFinalPitch(
     throw new Error(result.message || "Failed to generate final pitch")
   }
 
-  // We have an agentExecutionId now (our 6-digit code).
+  // got an agentExecutionId
   methods.setValue("agentExecutionId", result.data, { shouldDirty: true })
   methods.setValue("pitchContent", "", { shouldDirty: true })
 
-  // Save that agentExecutionId to DB
   await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
 
-  // optional: Poll for pitchContent
-  await pollForPitchContent(result.data, methods, pitchId, setPitchId, toast, setIsPitchLoading, setFinalPitchError)
+  // poll for final content
+  await pollForPitchContent(
+    result.data, methods, pitchId,
+    setPitchId, toast, setIsPitchLoading, setFinalPitchError
+  )
 }
 
 /**
- * Poll our DB (via /api/pitch-by-exec?execId=...) for the final pitchContent.
+ * Poll the DB for pitchContent after generation.
  */
 async function pollForPitchContent(
   execId: string,
@@ -539,43 +558,32 @@ async function pollForPitchContent(
   setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
 ) {
   const pollIntervalMs = 3000
-  const maxAttempts = 40 // ~2 minutes
+  const maxAttempts = 40
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise((res) => setTimeout(res, pollIntervalMs))
-
     const pollRes = await fetch(`/api/pitch-by-exec?execId=${execId}`)
     if (!pollRes.ok) continue
-
     const pollJson = await pollRes.json()
     if (pollJson?.isSuccess && pollJson.data?.pitchContent) {
-      const content = pollJson.data.pitchContent as string
-      methods.setValue("pitchContent", content, { shouldDirty: true })
-
-      //  Step 3 addition: once we have final pitch, hide the loading state
+      methods.setValue("pitchContent", pollJson.data.pitchContent, { shouldDirty: true })
       setIsPitchLoading(false)
-
       await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
       return
     }
   }
-  
-  // Instead of throwing an error, set the error message state
-  // and keep the loading state active so the user can see the error in the ReviewStep
-  const errorMessage = "Timed out waiting for generated pitch. You can continue editing or try again later.";
-  setFinalPitchError(errorMessage);
+
+  const errorMessage = "Timed out waiting for generated pitch. You can continue editing or try again later."
+  setFinalPitchError(errorMessage)
   toast({
     title: "Generation Delay",
     description: errorMessage,
     variant: "destructive"
-  });
-  
-  // We don't call setIsPitchLoading(false) here because we want to keep showing the loading state
-  // with the error message in the ReviewStep
+  })
 }
 
 /**
- * Called in the final ReviewStep to mark pitch as final in DB.
+ * Submit final pitch to DB
  */
 async function submitFinalPitch(
   data: PitchWizardFormData,
@@ -612,15 +620,11 @@ async function submitFinalPitch(
       throw new Error("Failed to submit final pitch.")
     }
 
-    // Clear local storage or other wizard state
     if (typeof window !== "undefined") {
       localStorage.removeItem("currentPitchId")
     }
 
-    toast({
-      title: "Success",
-      description: "Your pitch has been finalized."
-    })
+    toast({ title: "Success", description: "Your pitch has been finalized." })
     router.push("/dashboard")
   } catch (err: any) {
     console.error("submitFinalPitch error:", err)

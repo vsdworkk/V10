@@ -26,7 +26,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { getAllPitchesForUserAction } from "@/actions/db/pitches-actions"
 import { Suspense } from "react"
-import PitchTable from "@/app/dashboard/_components/pitch-table"
+import PitchTable from "@/app/(dashboard)/dashboard/_components/pitch-table"
 import { Skeleton } from "@/components/ui/skeleton"
 
 /**

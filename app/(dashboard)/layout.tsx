@@ -25,7 +25,7 @@
 
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import DashboardSidebar from "./_components/dashboard-sidebar"
+import DashboardSidebar from "./dashboard/_components/dashboard-sidebar"
 
 /**
  * @interface DashboardLayoutProps

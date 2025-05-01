@@ -21,8 +21,8 @@
 
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
-import CheckStoredPitch from "@/app/dashboard/new/_components/check-stored-pitch"
+import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
+import CheckStoredPitch from "@/app/(wizard)/dashboard/new/_components/check-stored-pitch"
 
 export default async function CreateNewPitchPage() {
   // Check if the user is authenticated
