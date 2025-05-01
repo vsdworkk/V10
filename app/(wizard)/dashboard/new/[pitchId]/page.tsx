@@ -12,7 +12,7 @@
  * - `auth` from "@clerk/nextjs/server" for user authentication
  * - `redirect` from "next/navigation" to handle unauthorized access
  * - `getPitchByIdAction` from "@/actions/db/pitches-actions"
- * - `PitchWizard` from "@/app/dashboard/new/_components/pitch-wizard"
+ * - `PitchWizard` from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
  *
  * @notes
  * - This page allows users to resume a draft pitch from where they left off
@@ -24,7 +24,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
-import PitchWizard from "@/app/dashboard/new/_components/pitch-wizard"
+import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 

@@ -1,7 +1,7 @@
 /**
  * @description
  * Server layout for the pitch wizard. Renders a full-screen header,
- * a centered “application card” with a vertical sidebar and wizard content,
+ * a centered "application card" with a vertical sidebar and wizard content,
  * and a footer—all styled to match your design spec.
  */
 
@@ -34,10 +34,11 @@ export default async function PitchWizardLayout({
         }}
       />
 
-      {/* Header */}
+      {/* Header - Updated to position logo far left and image far right */}
       <header id="header" className="bg-white p-6 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center">
+        <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between">
+          {/* Logo positioned with padding from the left edge */}
+          <div className="flex items-center pl-3">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
               <i className="fa-solid fa-briefcase text-white"></i>
             </div>
@@ -45,65 +46,32 @@ export default async function PitchWizardLayout({
               JobFlow
             </span>
           </div>
-          <div className="flex items-center space-x-4">
-            <button className="px-4 py-2 text-gray-600 hover:text-gray-800">
-              <i className="fa-regular fa-bell"></i>
-            </button>
-            <div className="w-10 h-10 rounded-full overflow-hidden">
-              {/* TODO: swap src for the real user avatar */}
-              <img
-                src="/avatars/avatar-placeholder.jpg"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
+         
+        
         </div>
       </header>
-
-      {/* Main “application card” container */}
+      
+      {/* Main "application card" container */}
       <div id="main-container" className="flex items-stretch justify-center p-12">
         <div
           id="application-card"
-          className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-[90%] flex"
+          className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl flex"
         >
           {/* Sidebar with vertical progress */}
-          <aside
+          <div
             id="sidebar"
-            className="w-80 border-r border-gray-100 bg-white p-8"
+            className="w-72 border-r border-gray-100 bg-white p-8 flex items-center shadow-lg"
           >
-            {/* Render the vertical stepper */}
-            <SectionProgressSidebar current={"INTRO"} />
-          </aside>
+            <SectionProgressSidebar />
+          </div>
 
           {/* Your wizard content */}
-          <section id="main-content" className="flex-1 p-10">
+          <section id="main-content" className="flex-1 p-5">
             {children}
           </section>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer id="footer" className="bg-white border-t border-gray-100 py-6">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-500 mb-4 md:mb-0">
-              © 2025 JobFlow. All rights reserved.
-            </p>
-            <div className="flex space-x-6">
-              <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
-                Privacy Policy
-              </span>
-              <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
-                Terms of Service
-              </span>
-              <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
-                Contact Us
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      
     </div>
   );
 }

@@ -1,5 +1,6 @@
-"use client"
+ "use client"
 
+import WizardHeader from "./wizard-header"
 import { useCallback, useState } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -272,59 +273,98 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   return (
     <FormProvider {...methods}>
       <div className="space-y-8">
+        {/* Add global styles for form fields */}
+        <style jsx global>{`
+          .space-y-8 input, 
+          .space-y-8 textarea, 
+          .space-y-8 select {
+            border-color: #f0f0f5 !important;
+            border-width: 1px !important;
+            border-radius: 0.5rem !important;
+            transition: all 0.2s ease-in-out;
+          }
+          
+          .space-y-8 input:focus, 
+          .space-y-8 textarea:focus, 
+          .space-y-8 select:focus {
+            border-color: #e0e0ef !important;
+            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.08) !important;
+          }
+        `}</style>
+
         {/* 
-          HEADERS & PROGRESS REMOVED. 
-          We'll rely on the wizard layout to show the vertical sidebar, 
-          so we won't render SectionProgressBar or WizardHeader here.
+          HEADER MOVED OUTSIDE THE CARD
+          This matches the layout in Image 2
         */}
-
-        <div className="bg-white rounded-lg shadow-sm border p-6 mt-2">
-          <motion.div
-            key={currentStepLocal}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderStep()}
-          </motion.div>
-
-          <div className="flex justify-between pt-8 mt-6 border-t">
-            {/* Back button */}
-            {currentStepLocal > 1 ? (
-              <Button variant="outline" onClick={handleBack} className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            ) : (
-              <div />
-            )}
-
-            <div className="flex space-x-3 ml-auto">
-              {/* Save and Close */}
-              <Button variant="outline" onClick={handleSaveAndClose} className="flex items-center gap-2">
-                <Save className="h-4 w-4" />
-                Save &amp; Close
-              </Button>
-
-              {/* Next or Final Submit */}
-              {currentStepLocal < totalSteps ? (
-                <Button onClick={handleNext} className="flex items-center gap-2">
-                  Next
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={handleSubmitFinal}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Submit Pitch
-                </Button>
-              )}
-            </div>
-          </div>
+        <div className="mb-6">
+          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
         </div>
+
+{/* CARD CONTAINS ONLY THE FORM FIELDS */}
+<div 
+  className="bg-white rounded-2xl overflow-hidden mb-8"
+  style={{ 
+    boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
+  }}
+>
+  <motion.div
+    key={currentStepLocal}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.3 }}
+  >
+    {renderStep()}
+  </motion.div>
+</div>
+
+     {/* BUTTONS MOVED OUTSIDE THE CARD */}
+<div className="pt-10 flex justify-between items-center mt-10">
+  {/* Back button */}
+  {currentStepLocal > 1 ? (
+    <Button 
+      variant="outline" 
+      onClick={handleBack} 
+      className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+    >
+      <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" />
+      Back
+    </Button>
+  ) : (
+    <div />
+  )}
+
+  <div className="flex items-center space-x-4">
+    {/* Save and Close */}
+    <Button 
+      variant="outline" 
+      onClick={handleSaveAndClose} 
+      className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+    >
+      <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+      Save &amp; Close
+    </Button>
+
+    {/* Next or Final Submit */}
+    {currentStepLocal < totalSteps ? (
+      <Button 
+        onClick={handleNext} 
+        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium flex items-center group transition-all duration-200 shadow-sm hover:shadow"
+      >
+        Next Step
+        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1" />
+      </Button>
+    ) : (
+      <Button
+        type="button"
+        onClick={handleSubmitFinal}
+        className="bg-green-600 hover:bg-green-700 font-medium"
+      >
+        Submit Pitch
+      </Button>
+    )}
+  </div>
+</div>
       </div>
     </FormProvider>
   )

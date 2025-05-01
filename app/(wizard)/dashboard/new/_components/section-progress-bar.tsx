@@ -4,7 +4,7 @@ import { Section } from "@/types"
 import clsx from "clsx"
 
 interface SectionProgressSidebarProps {
-  current: Section
+  current?: Section
   onNavigate?: (section: Section) => void
   className?: string
 }
@@ -28,20 +28,14 @@ const STEP_LABELS: Record<Section, string> = {
 }
 
 export default function SectionProgressSidebar({
-  current,
+  current = "INTRO",
   onNavigate,
   className,
 }: SectionProgressSidebarProps) {
   return (
-    <aside
-      aria-label="Wizard steps"
-      className={clsx(
-        "w-80 border-r border-gray-100 bg-white p-8 space-y-6 shadow-lg",
-        className
-      )}
-    >
+    <div className="w-full space-y-6">
       {STEP_ORDER.map((step, idx) => {
-        const isCompleted = STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(current)
+        const isCompleted = current ? STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(current) : false
         const isActive = step === current
         const isUpcoming = !isCompleted && !isActive
 
@@ -55,20 +49,21 @@ export default function SectionProgressSidebar({
             onClick={() => clickable && onNavigate?.(step)}
             aria-current={isActive ? "step" : undefined}
             className={clsx(
-              "flex items-center whitespace-nowrap transition-colors rounded-xl p-4 w-full text-left",
+              "flex items-center whitespace-nowrap transition-all duration-200 rounded-xl p-4 w-full text-left",
               {
                 "bg-blue-50": isActive,
-                "hover:bg-gray-50": clickable,
+                "hover:bg-gray-50 group": clickable || isUpcoming,
               }
             )}
           >
             {/* Step number */}
             <div
               className={clsx(
-                "flex items-center justify-center w-10 h-10 rounded-full font-medium shadow-sm border-2",
+                "flex items-center justify-center w-10 h-10 rounded-full font-medium border-2",
                 {
-                  "bg-blue-500 border-blue-500 text-white": isActive || isCompleted,
-                  "bg-white border-gray-300 text-gray-500": isUpcoming,
+                  "bg-blue-500 border-blue-500 text-white shadow-md": isActive,
+                  "bg-blue-500 border-blue-500 text-white shadow-sm": isCompleted && !isActive,
+                  "bg-white border-gray-300 text-gray-500 shadow-sm": isUpcoming,
                 }
               )}
             >
@@ -78,9 +73,8 @@ export default function SectionProgressSidebar({
             {/* Label */}
             <span
               className={clsx("ml-4 text-sm", {
-                "text-blue-900 font-semibold": isActive,
-                "text-gray-500": isUpcoming,
-                "text-foreground": isCompleted,
+                "text-blue-900": isActive,
+                "text-gray-500": isUpcoming || (isCompleted && !isActive),
               })}
             >
               {STEP_LABELS[step]}
@@ -88,6 +82,6 @@ export default function SectionProgressSidebar({
           </button>
         )
       })}
-    </aside>
+    </div>
   )
 }
