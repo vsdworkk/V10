@@ -131,23 +131,49 @@ export async function updatePitchAction(
  * Update by `agentExecutionId` – used inside PromptLayer callback where
  * we do **not** know the userId or pitchId, only the execution‑ID.
  */
+/**
+ * Update by `agentExecutionId` – used inside PromptLayer callback where
+ * we do **not** know the userId or pitchId, only the execution‑ID.
+ */
 export async function updatePitchByExecutionId(
   execId: string,
   updatedData: Partial<InsertPitch>
 ): Promise<ActionState<SelectPitch>> {
+  console.log(`[updatePitchByExecutionId] Starting with execId: ${execId}`)
+  console.log(`[updatePitchByExecutionId] Updating with data size:`, 
+    updatedData.pitchContent ? updatedData.pitchContent.length + " chars" : "No content")
+  
   try {
+    // First check if the pitch exists
+    const existing = await db
+      .select({ id: pitchesTable.id })
+      .from(pitchesTable)
+      .where(eq(pitchesTable.agentExecutionId, execId))
+      .limit(1)
+    
+    if (existing.length === 0) {
+      console.error(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}`)
+      return { isSuccess: false, message: "No pitch with that execution‑ID" }
+    }
+    
+    console.log(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
+    
     const [updated] = await db
       .update(pitchesTable)
       .set(updatedData)
       .where(eq(pitchesTable.agentExecutionId, execId))
       .returning()
 
-    return updated
-      ? { isSuccess: true, message: "Pitch updated", data: updated }
-      : { isSuccess: false, message: "No pitch with that execution‑ID" }
+    if (!updated) {
+      console.error(`[updatePitchByExecutionId] Update operation returned no records`)
+      return { isSuccess: false, message: "Update operation failed" }
+    }
+    
+    console.log(`[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`)
+    return { isSuccess: true, message: "Pitch updated", data: updated }
   } catch (err) {
-    console.error("updatePitchByExecutionId:", err)
-    return { isSuccess: false, message: "Failed to update pitch" }
+    console.error(`[updatePitchByExecutionId] Error:`, err)
+    return { isSuccess: false, message: `Failed to update pitch: ${err}` }
   }
 }
 

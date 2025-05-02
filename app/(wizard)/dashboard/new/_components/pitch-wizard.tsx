@@ -132,7 +132,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   const { toast } = useToast()
 
   // local wizard state
-  const [currentStepLocal, setCurrentStepLocal] = useState(1)
+  const [currentStepLocal, setCurrentStepLocal] = useState(pitchData?.currentStep || 1)
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
 
   // This is the boolean that shows the placeholder until we get final text
@@ -203,9 +203,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
     // Save current step's data
     const formData = methods.getValues()
-    await savePitchData(formData, pitchId, setPitchId, toast)
+    await savePitchData(formData, pitchId, setPitchId, toast, currentStepLocal)
 
-    // if final STAR step, move to review & trigger final pitch generation
+    // if final STAR step, move to review & trigger final pitch
     const lastStarStep = 4 + starCount * 4
     if (currentStepLocal === lastStarStep) {
       setCurrentStepLocal(lastStarStep + 1)
@@ -213,7 +213,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       setFinalPitchError(null)
 
       try {
-        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading, setFinalPitchError)
+        await triggerFinalPitch(formData, pitchId, methods, setPitchId, toast, setIsPitchLoading, setFinalPitchError, currentStepLocal)
       } catch (err: any) {
         console.error("Final pitch generation error:", err)
         setFinalPitchError(err.message || "An error occurred generating your pitch")
@@ -243,9 +243,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // ----------------------------------------------------------------
   const handleSaveAndClose = useCallback(async () => {
     const data = methods.getValues()
-    await savePitchData(data, pitchId, setPitchId, toast)
+    await savePitchData(data, pitchId, setPitchId, toast, currentStepLocal)
     router.push("/dashboard")
-  }, [methods, pitchId, setPitchId, toast, router])
+  }, [methods, pitchId, setPitchId, toast, router, currentStepLocal])
 
   // ----------------------------------------------------------------
   // "Submit Pitch" handler (final)
@@ -493,7 +493,8 @@ async function savePitchData(
   data: PitchWizardFormData,
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
-  toast: any
+  toast: any,
+  currentStep: number = 1
 ) {
   const payload = {
     ...(pitchId ? { id: pitchId } : {}),
@@ -509,7 +510,7 @@ async function savePitchData(
     starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
     status: "draft",
-    currentStep: 1,
+    currentStep: currentStep,
     agentExecutionId: data.agentExecutionId || null
   }
 
@@ -547,7 +548,8 @@ async function triggerFinalPitch(
   setPitchId: (id: string) => void,
   toast: any,
   setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
+  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
+  currentStep: number
 ) {
   const res = await fetch("/api/finalPitch", {
     method: "POST",
@@ -576,12 +578,13 @@ async function triggerFinalPitch(
   methods.setValue("agentExecutionId", result.data, { shouldDirty: true })
   methods.setValue("pitchContent", "", { shouldDirty: true })
 
-  await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
+  // We want to save the current step when triggering the final pitch
+  await savePitchData(methods.getValues(), pitchId, setPitchId, toast, currentStep)
 
   // poll for final content
   await pollForPitchContent(
     result.data, methods, pitchId,
-    setPitchId, toast, setIsPitchLoading, setFinalPitchError
+    setPitchId, toast, setIsPitchLoading, setFinalPitchError, currentStep
   )
 }
 
@@ -595,7 +598,8 @@ async function pollForPitchContent(
   setPitchId: (id: string) => void,
   toast: any,
   setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>
+  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
+  currentStep: number = 999 // Use a large number as default to represent the final step
 ) {
   const pollIntervalMs = 3000
   const maxAttempts = 40
@@ -608,7 +612,7 @@ async function pollForPitchContent(
     if (pollJson?.isSuccess && pollJson.data?.pitchContent) {
       methods.setValue("pitchContent", pollJson.data.pitchContent, { shouldDirty: true })
       setIsPitchLoading(false)
-      await savePitchData(methods.getValues(), pitchId, setPitchId, toast)
+      await savePitchData(methods.getValues(), pitchId, setPitchId, toast, currentStep)
       return
     }
   }
