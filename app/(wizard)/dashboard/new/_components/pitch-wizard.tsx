@@ -1,7 +1,7 @@
- "use client"
+"use client"
 
 import WizardHeader from "./wizard-header"
-import { useCallback, useState } from "react"
+import { useCallback, useState, useEffect,useRef } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -150,6 +150,43 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // watch starExamplesCount
   const starCount = parseInt(methods.watch("starExamplesCount") || "1", 10)
   const totalSteps = 4 + starCount * 4 + 1
+
+  // ----------------------------------------------------------------
+  // Sidebar Integration - Listen for navigation events
+  // ----------------------------------------------------------------
+  useEffect(() => {
+    // Listen for section navigation events from the sidebar
+    const handleSectionNavigate = (e: any) => {
+      if (e.detail && e.detail.section) {
+        const targetSection = e.detail.section;
+        const targetStep = firstStepOfSection(targetSection, starCount);
+        setCurrentStepLocal(targetStep);
+      }
+    };
+    
+    window.addEventListener("sectionNavigate", handleSectionNavigate);
+    return () => window.removeEventListener("sectionNavigate", handleSectionNavigate);
+  }, [starCount]); 
+
+  const prevStepRef = useRef(1);
+  // Emit current section whenever step changes
+  useEffect(() => {
+  // Compute the current section whenever the step changes
+  const { section } = computeSectionAndHeader(currentStepLocal, starCount);
+  
+  // Dispatch a custom event to notify the layout that the section changed
+  const isForwardNavigation = currentStepLocal > prevStepRef.current;
+  const event = new CustomEvent("sectionChange", { 
+    detail: { 
+      section,
+      isForwardNavigation
+    } 
+  });
+  window.dispatchEvent(event);
+  
+  // Keep track of previous step
+  prevStepRef.current = currentStepLocal;
+}, [currentStepLocal, starCount]);
 
   // ----------------------------------------------------------------
   // Render the step

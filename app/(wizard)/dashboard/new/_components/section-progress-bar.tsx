@@ -1,3 +1,4 @@
+// app/(wizard)/dashboard/new/_components/section-progress-bar.tsx
 "use client"
 
 import { Section } from "@/types"
@@ -5,6 +6,7 @@ import clsx from "clsx"
 
 interface SectionProgressSidebarProps {
   current?: Section
+  maxCompleted?: Section
   onNavigate?: (section: Section) => void
   className?: string
 }
@@ -29,17 +31,20 @@ const STEP_LABELS: Record<Section, string> = {
 
 export default function SectionProgressSidebar({
   current = "INTRO",
+  maxCompleted = "INTRO",
   onNavigate,
   className,
 }: SectionProgressSidebarProps) {
   return (
     <div className="w-full space-y-6">
       {STEP_ORDER.map((step, idx) => {
-        const isCompleted = current ? STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(current) : false
-        const isActive = step === current
-        const isUpcoming = !isCompleted && !isActive
+        // Check if step is completed based on maxCompleted, not current
+        const isCompleted = STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(maxCompleted) || step === maxCompleted;
+        const isActive = step === current;
+        const isUpcoming = !isCompleted && !isActive;
 
-        const clickable = isCompleted && !!onNavigate
+        // Allow clicking on any completed step
+        const clickable = isCompleted && !!onNavigate;
 
         return (
           <button
