@@ -114,6 +114,7 @@ const pitchWizardSchema = z.object({
   albertGuidance: z.string().optional(),
 
   starExamplesCount: z.enum(["1","2","3","4","5","6","7","8","9","10"]).default("1"),
+  starExampleDescriptions: z.array(z.string()).optional(), // Add this line
   starExamples: z.array(starExampleSchema).min(1, "At least one STAR example"),
 
   pitchContent: z.string().optional(),
