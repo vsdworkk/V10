@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       starExamplesCount: body.starExamplesCount
         ? parseInt(body.starExamplesCount, 10)
         : 1,
+      starExampleDescriptions: body.starExampleDescriptions || [],
 
       // generated content
       albertGuidance: body.albertGuidance || "",

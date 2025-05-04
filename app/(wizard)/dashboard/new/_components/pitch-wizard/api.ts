@@ -19,20 +19,35 @@ export async function savePitchData(
   currentStep: number = 1
 ) {
   const payload = createPitchPayload(data, pitchId, currentStep)
+  console.log(`[savePitchData] Saving pitch data for step ${currentStep}`, {
+    pitchId,
+    payloadKeys: Object.keys(payload),
+    hasStarExamples: !!payload.starExamples?.length
+  })
 
   try {
+    console.log(`[savePitchData] Sending request to /api/pitchWizard`)
     const res = await fetch("/api/pitchWizard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
     
+    console.log(`[savePitchData] Response status: ${res.status}`)
     if (!res.ok) {
+      console.error(`[savePitchData] Response not OK: ${res.status} ${res.statusText}`)
       throw new Error("Failed to save pitch data.")
     }
     
     const json = await res.json()
+    console.log(`[savePitchData] Response data:`, {
+      success: !!json.data,
+      id: json.data?.id,
+      message: json.message
+    })
+    
     if (json.data?.id) {
+      console.log(`[savePitchData] Setting pitch ID: ${json.data.id}`)
       setPitchId(json.data.id)
     }
     
@@ -43,7 +58,7 @@ export async function savePitchData(
     
     return json.data
   } catch (err: any) {
-    console.error("savePitchData error:", err)
+    console.error("[savePitchData] Error:", err)
     toast({
       title: "Error",
       description: err.message || "Failed to save draft",

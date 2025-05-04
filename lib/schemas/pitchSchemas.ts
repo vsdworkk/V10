@@ -53,6 +53,9 @@ export const updatePitchSchema = z.object({
 
   // starExamplesCount can be 1..10
   starExamplesCount: z.number().min(1).max(10).optional(),
+  
+  // starExampleDescriptions for short descriptions of each STAR example
+  starExampleDescriptions: z.array(z.string()).optional(),
 
   // Add fields like currentStep or status if needed
 })

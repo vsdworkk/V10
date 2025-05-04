@@ -69,6 +69,7 @@ export function mapExistingDataToDefaults(
       albertGuidance: "",
       starExamples: [createEmptyStarExample()],
       starExamplesCount: "1",
+      starExampleDescriptions: [],
       pitchContent: "",
       agentExecutionId: ""
     }
@@ -132,6 +133,7 @@ export function mapExistingDataToDefaults(
         }))
       : [createEmptyStarExample()]),
     starExamplesCount: safeStarCount as StarCountEnum, // Assert the type here
+    starExampleDescriptions: pitchData.starExampleDescriptions || [],
     pitchContent: pitchData.pitchContent ?? "",
     agentExecutionId: pitchData.agentExecutionId ?? ""
   }
@@ -154,6 +156,7 @@ export function createPitchPayload(data: PitchWizardFormData, pitchId: string | 
     pitchContent: data.pitchContent ?? "",
     starExamples: data.starExamples,
     starExamplesCount: parseInt(data.starExamplesCount, 10),
+    starExampleDescriptions: data.starExampleDescriptions || [],
     status,
     currentStep,
     agentExecutionId: data.agentExecutionId || null

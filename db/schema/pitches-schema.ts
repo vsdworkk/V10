@@ -75,6 +75,7 @@ export const pitchesTable = pgTable("pitches", {
   /* experience & STAR examples */
   relevantExperience: text("relevant_experience").notNull(),
   starExamples: jsonb("star_examples").$type<StarJsonbSchema>(),
+  starExampleDescriptions: text("star_example_descriptions").array(),
 
   /* AI‑related fields */
   albertGuidance: text("albert_guidance"),

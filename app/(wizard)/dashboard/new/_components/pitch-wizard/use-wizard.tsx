@@ -89,58 +89,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
   )
 
   // Validate fields for the current step
-  const validateCurrentStep = useCallback(async () => {
-    if (currentStep === 1) {
-      // Intro step has no validation
-      return true
-    } else if (currentStep === 2) {
-      // Role Details step
-      return await methods.trigger(['roleName', 'organisationName', 'roleLevel', 'pitchWordLimit'])
-    } else if (currentStep === 3) {
-      // Experience step
-      return await methods.trigger(['roleDescription'])
-    } else if (currentStep === 4) {
-      // Guidance step - optional
-      return true
-    } else {
-      // STAR steps
-      const firstStarStep = 5
-      const lastStarStep = 4 + starCount * 4
-      
-      if (currentStep >= firstStarStep && currentStep <= lastStarStep) {
-        const stepInStar = currentStep - firstStarStep
-        const exampleIndex = Math.floor(stepInStar / 4)
-        const subStepIndex = stepInStar % 4
-        
-        if (subStepIndex === 0) {
-          // Situation step
-          return await methods.trigger([
-            `starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`,
-            `starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`
-          ])
-        } else if (subStepIndex === 1) {
-          // Task step
-          return await methods.trigger([
-            `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`,
-            `starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`
-          ])
-        } else if (subStepIndex === 2) {
-          // Action step
-          return await methods.trigger([
-            `starExamples.${exampleIndex}.action.steps`
-          ])
-        } else if (subStepIndex === 3) {
-          // Result step
-          return await methods.trigger([
-            `starExamples.${exampleIndex}.result.what-positive-outcome-did-you-achieve`,
-            `starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`
-          ])
-        }
-      }
-      
-      return true
-    }
-  }, [currentStep, methods, starCount])
+  // Removed inline validateCurrentStep function
 
   // Handler for "Next" button
   const handleNext = useCallback(async () => {
@@ -151,7 +100,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     }
 
     // Validate current step fields
-    const isValid = await validateCurrentStep()
+    const isValid = await validateStep(currentStep, starCount, methods)
     if (!isValid) return
 
     // Save current step's data
@@ -184,7 +133,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
     // Proceed to next step
     setCurrentStep((s) => Math.min(s + 1, totalSteps))
-  }, [currentStep, starCount, totalSteps, methods, pitchId, toast, validateCurrentStep])
+  }, [currentStep, starCount, totalSteps, methods, pitchId, toast])
 
   // Handler for "Back" button
   const handleBack = useCallback(() => {
