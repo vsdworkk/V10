@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
 import { useParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent
+} from "@/components/ui/accordion"
 
 export default function GuidanceStep() {
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
@@ -35,6 +41,7 @@ export default function GuidanceStep() {
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState<number>(0)
+  const [tipsOpen, setTipsOpen] = useState<string | undefined>("guidance-tips")
 
   // Use a key string to detect changes - only used for manual refresh
   const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${
@@ -262,12 +269,40 @@ export default function GuidanceStep() {
         {/* AI Suggestion Panel */}
         {!loading && !error && albertGuidance && (
           <>
-            <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-6">
-              <Lightbulb className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
-              <p className="text-gray-800">
-                Our AI Albert has analysed your experience against the job description and suggests the below STAR examples. Feel free to use your own.
-              </p>
-            </div>
+            {/* Guidance Tips Accordion */}
+            <Accordion 
+              type="single" 
+              collapsible 
+              value={tipsOpen} 
+              onValueChange={setTipsOpen}
+              className="w-full mb-6"
+            >
+              <AccordionItem 
+                value="guidance-tips" 
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center mr-4">
+                      <Lightbulb className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-lg font-medium text-gray-800">AI-Powered Guidance</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 pt-2">
+                  <div className="space-y-5 text-gray-700">
+                    <ul className="list-disc pl-6 space-y-3">
+                      <li>
+                        We've analysed your experience against the job requirements and identified key experiences that could strengthen your application. Below are AI-suggested experiences that highlight your relevant skills.
+                      </li>
+                      <li>
+                        These are recommendations only - you're welcome to use your own examples that better showcase your qualifications.
+                      </li>
+                    </ul>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             {/* AI Suggestions Card */}
             <Card className="bg-gray-50 border border-gray-200 rounded-xl">
