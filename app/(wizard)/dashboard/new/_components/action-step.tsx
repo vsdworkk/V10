@@ -282,13 +282,12 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
               <span className="text-lg font-medium text-gray-900">Tips</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="px-8 py-4 text-gray-700">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
+          <AccordionContent className="px-6 pb-6 pt-2">
+            <div className="space-y-5 text-gray-700">
               <p className="text-base text-gray-900">
                 Think about the overarching steps you took to complete the assigned task, for example:
               </p>
-              
-              <div className="space-y-4 mt-4 ml-6">
+              <div className="space-y-4 ml-6">
                 <p className="text-base text-gray-700">
                   <span className="font-bold">Step 1:</span> Consulting stakeholders or researching the issue.
                 </p>
@@ -299,8 +298,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                   <span className="font-bold">Step 3:</span> Presenting results or gathering feedback.
                 </p>
               </div>
-              
-              <p className="mt-6 text-base text-gray-900">
+              <p className="text-base text-gray-900">
                 Don't worry about formal or perfect wording, instead focus on clearly explaining what you did and how you did it in each step.
               </p>
             </div>
