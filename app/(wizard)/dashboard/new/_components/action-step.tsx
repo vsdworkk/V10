@@ -1,7 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import { useState, useEffect } from "react"
 import { v4 as uuidv4 } from "uuid"
 import {
@@ -78,8 +78,8 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
           step["what-did-you-specifically-do-in-this-step"] &&
           step["how-did-you-do-it-tools-methods-or-skills"]
         ),
-        // optional fields for display
-        title: step["what-did-you-specifically-do-in-this-step"] || "",
+        // Set fixed title for display
+        title: `Step ${index + 1}`,
         description: `How: ${
           step["how-did-you-do-it-tools-methods-or-skills"] || ""
         }\nOutcome: ${
@@ -118,7 +118,8 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
               "how-did-you-do-it-tools-methods-or-skills": howText,
               "what-was-the-outcome-of-this-step-optional": outcomeText,
               isCompleted: Boolean(title && howText),
-              title,
+              // Set fixed title for display
+              title: `Step ${index + 1}`,
               description: `How: ${howText}\n${
                 outcomeText ? `Outcome: ${outcomeText}` : ""
               }`
@@ -144,7 +145,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         "how-did-you-do-it-tools-methods-or-skills": "",
         "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
-        title: "",
+        title: "Step 1",
         description: ""
       }
     ])
@@ -193,7 +194,8 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
           "how-did-you-do-it-tools-methods-or-skills": how,
           "what-was-the-outcome-of-this-step-optional": outcome,
           isCompleted: Boolean(what.trim() && how.trim()),
-          title: what,
+          // Keep title as Step N instead of setting it to the 'what' value
+          title: `Step ${step.position}`,
           description: `How: ${how}\n${outcome ? `Outcome: ${outcome}` : ""}`
         }
       }
@@ -217,7 +219,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       "how-did-you-do-it-tools-methods-or-skills": "",
       "what-was-the-outcome-of-this-step-optional": "",
       isCompleted: false,
-      title: "",
+      title: "Step 1",
       description: ""
     }
 
@@ -336,11 +338,8 @@ function StepItem({ step, onSave }: StepItemProps) {
                 !step.isCompleted && "text-muted-foreground"
               )}
             >
-              {step.isCompleted
-                ? what
-                : `Step ${step.position}: ${
-                    what || "Not yet completed"
-                  }`}
+              {/* Always show "Step N" regardless of completion status or content */}
+              {`Step ${step.position}`}
             </span>
           </div>
           {step.isCompleted && (
