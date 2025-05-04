@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import { useToast } from "@/lib/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -232,10 +232,6 @@ export default function GuidanceStep() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold">Albert's Guidance</h2>
-      </div>
-  
       {/* Fixed height container with overflow */}
       <div className="h-[500px] overflow-y-auto pr-2 flex flex-col gap-6">
        

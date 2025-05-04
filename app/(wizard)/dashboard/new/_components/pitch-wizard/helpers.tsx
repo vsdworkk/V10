@@ -9,7 +9,7 @@ export function computeSectionAndHeader(step: number, starCount: number): { sect
   if (step === 1) return { section: "INTRO", header: "Welcome to the Pitch Wizard" }
   if (step === 2) return { section: "ROLE", header: "Role Details" }
   if (step === 3) return { section: "EXP", header: "Your Experience" }
-  if (step === 4) return { section: "GUIDE", header: "Guidance" }
+  if (step === 4) return { section: "GUIDE", header: "AI Guidance" }
 
   const firstStarStep = 5
   const lastStarStep = 4 + starCount * 4
