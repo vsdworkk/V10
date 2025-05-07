@@ -1,70 +1,82 @@
+import { NextRequest, NextResponse } from "next/server"
+
 /**
- * @description
- * API route for generating Albert's guidance suggestions.
- * Expects a JSON payload with:
- *  - roleName
- *  - roleLevel
- *  - pitchWordLimit
- *  - relevantExperience
- *  - (optional) roleDescription
+ * This endpoint receives:
+ *    jobDescription, experience, idUnique (optional)
  *
- * Returns an ActionState-like JSON with { isSuccess, message, data? }.
+ * Then calls PromptLayer's "AI Guidance" workflow, 
+ * sending `id_unique` in the input so the callback 
+ * can contain it for matching with our DB record.
  */
-import { NextResponse } from "next/server"
-import { generatePitchAction } from "@/actions/ai-actions"
-
-export const maxDuration = 55 // 55 seconds
-
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
+    const { jobDescription, experience, idUnique } = await req.json()
 
-    // Basic validation
-    if (!body.roleName || !body.roleLevel || !body.pitchWordLimit || !body.relevantExperience) {
+    if (!jobDescription || !experience) {
       return NextResponse.json(
-        { isSuccess: false, message: "Missing required fields for guidance" },
+        { error: "Job description and experience are required" },
         { status: 400 }
       )
     }
 
-    // Call generatePitchAction with mode="guidance"
-    const aiResult = await generatePitchAction({
-      roleName: body.roleName,
-      roleLevel: body.roleLevel,
-      pitchWordLimit: Number(body.pitchWordLimit),
-      relevantExperience: body.relevantExperience,
-      roleDescription: body.roleDescription || "",
-      mode: "guidance"
-    })
+    // If no unique ID was provided, we can generate a fallback
+    const uniqueId = idUnique || Math.floor(100000 + Math.random() * 900000).toString()
 
-    if (!aiResult.isSuccess) {
-      return NextResponse.json({ isSuccess: false, message: aiResult.message }, { status: 500 })
-    }
-
-    return NextResponse.json(
-      { isSuccess: true, message: aiResult.message, data: aiResult.data },
-      { status: 200 }
-    )
-  } catch (error: any) {
-    console.error("Error in /api/albertGuidance POST:", error)
-
-    if (
-      error.message?.includes("timeout") ||
-      error.name === "AbortError" ||
-      error.code === "ETIMEDOUT"
-    ) {
+    const promptLayerApiKey = process.env.AGENT_API_KEY
+    if (!promptLayerApiKey) {
       return NextResponse.json(
-        {
-          isSuccess: false,
-          message:
-            "The request took too long to process. Please try again or use a shorter description."
-        },
-        { status: 504 }
+        { error: "PromptLayer API key not configured" },
+        { status: 500 }
       )
     }
 
+    // For demonstration: "AI Guidance" workflow at promptlayer
+    // We'll pass `id_unique` in the input variables
+    const callbackUrl = process.env.ALBERTGUIDANCE_CALLBACK_URL 
+      || "/api/albertGuidance/albertguidancecallback"
+
+    const response = await fetch(
+      "https://api.promptlayer.com/workflows/AI Guidance/run",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": promptLayerApiKey,
+        },
+        body: JSON.stringify({
+          workflow_label_name: "v1", 
+          input_variables: {
+            job_description: jobDescription,
+            User_Experience: experience,
+            id_unique: uniqueId
+          },
+          metadata: {
+            source: "webapp",
+            callback_url: callbackUrl
+          },
+          return_all_outputs: false
+        }),
+      }
+    )
+
+    const data = await response.json()
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: "Failed to call PromptLayer agent", details: data },
+        { status: response.status }
+      )
+    }
+
+    // Return our unique ID so the frontend can store it
+    return NextResponse.json({
+      success: true,
+      data: uniqueId,
+      message: "Agent execution started successfully"
+    })
+  } catch (error: any) {
+    console.error("Error calling PromptLayer agent:", error)
     return NextResponse.json(
-      { isSuccess: false, message: error.message || "Internal server error" },
+      { error: "Internal server error", details: String(error) },
       { status: 500 }
     )
   }

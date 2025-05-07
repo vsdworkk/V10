@@ -16,100 +16,93 @@ import {
   AccordionContent
 } from "@/components/ui/accordion"
 
+/**
+ * GuidanceStep
+ * -----------
+ * 1. Generates a unique 6-digit ID on each new request for guidance.
+ * 2. Saves that ID to the form's `agentExecutionId` field and to DB,
+ *    so that PromptLayer can call back using this ID in `agentExecutionId`.
+ * 3. If you want polling, you can add it (see step 4 in your instructions).
+ */
 export default function GuidanceStep() {
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
   const params = useParams()
-  
-  // Watch the starExamplesCount from the form
-  const starExamplesCount = watch("starExamplesCount")
 
-  // Watch fields needed to build the request for guidance:
+  // Form fields that matter for requesting guidance
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
   const pitchWordLimit = watch("pitchWordLimit")
   const relevantExperience = watch("relevantExperience")
   const roleDescription = watch("roleDescription")
+  const albertGuidance = watch("albertGuidance") // previously returned guidance, if any
+  const starExamplesCount = watch("starExamplesCount")
 
-  // The form context also stores "albertGuidance"
-  const albertGuidance = watch("albertGuidance")
-  
-  // Watch star example descriptions
+  // Just for tracking small changes
   const starExampleDescriptions = watch("starExampleDescriptions") || []
 
-  // Local states for request feedback
+  // Local state
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState<number>(0)
+  const [hasInitialized, setHasInitialized] = useState(false)
   const [tipsOpen, setTipsOpen] = useState<string | undefined>("guidance-tips")
 
-  // Use a key string to detect changes - only used for manual refresh
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${
-    relevantExperience && relevantExperience.slice(0, 50)
-  }|${roleDescription && roleDescription.slice(0, 50)}`
-
+  const isRequestInProgressRef = useRef(false)
   const lastFetchKeyRef = useRef<string>("")
 
-  // Track if we've initialized this component to avoid repeated fetches
-  const [hasInitialized, setHasInitialized] = useState(false)
+  // Build a quick "hash" of the form data to detect changes
+  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${relevantExperience?.slice(0, 50)}|${roleDescription?.slice(0, 50)}`
 
-  // Saves guidance to the database (if pitchId is known)
-  const saveGuidanceToDatabase = async (guidance: string) => {
-    try {
-      const pitchId = params?.pitchId
-      if (!pitchId) {
-        console.log("No pitch ID available yet. Guidance will be saved when the pitch is created.")
-        return
-      }
+  /**
+   * Called once if we want auto-fetch on mount
+   */
+  useEffect(() => {
+    if (hasInitialized || isRequestInProgressRef.current) return
 
-      // For existing pitches, update albertGuidance
-      const formData = getValues()
-      const payload = {
-        id: pitchId as string,
-        userId: formData.userId,
-        albertGuidance: guidance,
-        starExamplesCount: parseInt(formData.starExamplesCount, 10),
-        starExampleDescriptions: formData.starExampleDescriptions || []
-      }
+    setHasInitialized(true)
 
-      const response = await fetch(`/api/pitchWizard/${pitchId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        console.error("Failed to save guidance to database:", await response.text())
-      }
-    } catch (error) {
-      console.error("Error saving guidance to database:", error)
+    // Optional: if there's no existing guidance, we can auto-fetch
+    if (!albertGuidance) {
+      void fetchGuidance()
     }
-  }
+  }, [hasInitialized, albertGuidance])
 
-  // Fetches guidance from the AI backend
+  /**
+   * The main function that triggers new guidance from the AI (PromptLayer).
+   */
   const fetchGuidance = useCallback(async () => {
+    if (isRequestInProgressRef.current) {
+      console.log("Request is already in progress, skipping.")
+      return
+    }
+
+    // Check required fields
     if (!roleName || !roleLevel || !pitchWordLimit || !relevantExperience) {
       setError("Missing required fields. Please complete Step 2 first.")
       return
     }
 
     try {
+      isRequestInProgressRef.current = true
       setLoading(true)
       setError(null)
 
-      // Set up a 60-second timeout
+      // Generate a unique 6-digit identifier
+      const idUnique = Math.floor(100000 + Math.random() * 900000).toString()
+      console.log("Fetching guidance with unique ID:", idUnique)
+
+      // 60-second timeout
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 60000)
 
+      // Make request to our local Next.js API
       const response = await fetch("/api/albertGuidance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          roleName,
-          roleLevel,
-          pitchWordLimit,
-          relevantExperience,
-          roleDescription
+          jobDescription: roleDescription,
+          experience: relevantExperience,
+          idUnique
         }),
         signal: controller.signal
       })
@@ -125,32 +118,110 @@ export default function GuidanceStep() {
       }
 
       const data = await response.json()
-      if (!data.isSuccess) {
-        throw new Error(data.message || "Error generating guidance")
+      if (!data.success) {
+        throw new Error(data.error || "Error generating guidance")
       }
 
-      // Store the returned guidance in the form state
-      setValue("albertGuidance", data.data, { shouldDirty: true })
+      // Save the unique ID in the form's agentExecutionId
+      setValue("agentExecutionId", data.data, { shouldDirty: true })
 
-      // Save to DB if possible
-      await saveGuidanceToDatabase(data.data)
+      // Get the pitchId from URL parameters
+      const formData = getValues()
+      const currentPitchId = params?.pitchId
+      
+      console.log("Current Pitch ID:", currentPitchId)
+      
+      // Update DB pitch if we have a pitchId from URL parameters
+      if (currentPitchId) {
+        // Get current form values for required fields
+        const formData = getValues();
+        
+        // Create a payload that meets the schema requirements
+        const payload = {
+          id: currentPitchId as string,
+          userId: formData.userId,
+          roleName: formData.roleName,
+          roleLevel: formData.roleLevel,
+          pitchWordLimit: formData.pitchWordLimit,
+          relevantExperience: formData.relevantExperience || "",
+          agentExecutionId: data.data // The execution ID we want to update
+        };
+        
+        console.log("Updating pitch with execution ID:", data.data);
+        
+        // Patch the pitchWizard so that agentExecutionId is stored
+        const updateResponse = await fetch(`/api/pitchWizard/${currentPitchId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        if (!updateResponse.ok) {
+          console.error("Failed to update pitch with execution ID:", await updateResponse.text());
+          
+          // If that fails, try the savePitchData approach instead
+          try {
+            console.log("Trying alternative approach to update execution ID");
+            const allFormData = getValues();
+            const updatedFormData = {
+              ...allFormData,
+              agentExecutionId: data.data
+            };
+            
+            // Post to /api/pitchWizard instead of the [pitchId] route
+            const fallbackResponse = await fetch("/api/pitchWizard", {
+              method: "POST", 
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: currentPitchId,
+                userId: formData.userId,
+                roleName: formData.roleName,
+                roleLevel: formData.roleLevel,
+                pitchWordLimit: formData.pitchWordLimit,
+                relevantExperience: formData.relevantExperience || "",
+                agentExecutionId: data.data,
+                currentStep: 4 // Guidance step
+              })
+            });
+            
+            if (!fallbackResponse.ok) {
+              console.error("Fallback update also failed:", await fallbackResponse.text());
+            } else {
+              console.log("Successfully updated execution ID using fallback approach");
+            }
+          } catch (updateErr) {
+            console.error("Error in fallback update:", updateErr);
+          }
+        } else {
+          console.log("Successfully updated pitch with execution ID");
+        }
+      } else {
+        console.error("No pitch ID found in URL parameters")
+      }
 
-      setRetryCount(0) // reset on success
+      // We do not actually get the final text right away if the agent
+      // uses a callback. If your agent returns text immediately, store it:
+      // e.g. setValue("albertGuidance", data.albertText, { shouldDirty: true })
+
+      // If your route does return "AI text" right away, you'd do:
+      // setValue("albertGuidance", data.guidance, { shouldDirty: true })
+
       lastFetchKeyRef.current = formDataKey
     } catch (err: any) {
-      const errorMessage =
-        err.name === "AbortError"
-          ? "Request timed out. Please try again."
-          : err.message
+      console.error("fetchGuidance error:", err)
+      const msg = err.name === "AbortError" 
+        ? "Request timed out. Please try again."
+        : err.message
 
-      setError(errorMessage)
+      setError(msg)
       toast({
         title: "Error",
-        description: errorMessage,
+        description: msg,
         variant: "destructive"
       })
     } finally {
       setLoading(false)
+      isRequestInProgressRef.current = false
     }
   }, [
     roleName,
@@ -159,106 +230,89 @@ export default function GuidanceStep() {
     relevantExperience,
     roleDescription,
     setValue,
-    formDataKey,
-    toast
+    toast,
+    params,
+    getValues,
+    formDataKey
   ])
 
-  // Only run once at component mount or if albertGuidance is empty
-  useEffect(() => {
-    if (!hasInitialized) {
-      setHasInitialized(true)
-
-      // If there's no existing guidance, fetch it
-      if (!albertGuidance && !loading) {
-        void fetchGuidance()
-      }
-    }
-  }, [hasInitialized, albertGuidance, loading, fetchGuidance])
-
-  const handleRetry = () => {
-    setRetryCount((prev) => prev + 1)
-    void fetchGuidance()
-  }
-
+  /**
+   * If the user wants to manually refresh guidance:
+   */
   const handleManualRefresh = () => {
-    setValue("albertGuidance", "", { shouldDirty: false })
-    setRetryCount(0)
+    // Optionally clear existing text
+    setValue("albertGuidance", "", { shouldDirty: true })
     void fetchGuidance()
   }
 
-  // Button-based selection for STAR examples count
-  const handleStarExamplesCountChange = (value: string) => {
-    setValue(
-      "starExamplesCount",
-      value as "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10",
-      { shouldDirty: true }
-    )
+  /**
+   * Basic UI - e.g. Retry or Loading states.
+   */
+  const handleRetry = () => {
+    void fetchGuidance()
+  }
 
-    // Initialize or resize the starExampleDescriptions array
+  // This updates starExamplesCount in the form state
+  const handleStarExamplesCountChange = (value: string) => {
+    setValue("starExamplesCount", value as PitchWizardFormData["starExamplesCount"], {
+      shouldDirty: true
+    })
+
+    // Keep starExampleDescriptions array in sync
     const currentDescriptions = getValues("starExampleDescriptions") || []
     const newCount = parseInt(value, 10)
-    
-    // Make sure the array has the right number of slots
-    const newDescriptions = [...currentDescriptions]
-    while (newDescriptions.length < newCount) {
-      newDescriptions.push("")
+    const newArr = [...currentDescriptions]
+    while (newArr.length < newCount) {
+      newArr.push("")
     }
+    // slice any extras
+    const finalArr = newArr.slice(0, newCount)
+    setValue("starExampleDescriptions", finalArr, { shouldDirty: true })
+
+    // If we have a pitchId, patch the DB
+    const formData = getValues()
+    const currentPitchId = params?.pitchId
     
-    setValue("starExampleDescriptions", newDescriptions.slice(0, newCount), { shouldDirty: true })
-
-    const pitchId = params?.pitchId
-    if (pitchId) {
-      const formData = getValues()
+    if (currentPitchId) {
       const payload = {
-        id: pitchId as string,
+        id: currentPitchId,
         userId: formData.userId,
-        starExamplesCount: parseInt(value, 10),
-        starExampleDescriptions: newDescriptions.slice(0, newCount)
+        starExamplesCount: newCount,
+        starExampleDescriptions: finalArr
       }
-
-      fetch(`/api/pitchWizard/${pitchId}`, {
+      void fetch(`/api/pitchWizard/${currentPitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      }).catch((error) => {
-        console.error("Error saving star examples count:", error)
       })
     }
   }
 
-  // Handle STAR example description changes
-  const handleDescriptionChange = (index: number, value: string) => {
-    const descriptions = getValues("starExampleDescriptions") || []
-    const newDescriptions = [...descriptions]
-    newDescriptions[index] = value
-    setValue("starExampleDescriptions", newDescriptions, { shouldDirty: true })
-  }
+  // Keep it to 1..4 for quick UI
+  const possibleStarCounts = ["1","2","3","4"]
 
-  // Get the number of STAR examples to display
-  const examplesCount = parseInt(starExamplesCount, 10) || 2 // Default to 2 if not set
+  const starCount = starExamplesCount || "2"
 
   return (
     <div className="p-6">
-      {/* Fixed height container with overflow */}
       <div className="h-[500px] overflow-y-auto pr-2 flex flex-col gap-6">
-       
-        {/* Loading state */}
+
+        {/* If loading */}
         {loading && (
           <div className="flex flex-col items-center space-y-2 py-4">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-            <p>Loading...</p>
+            <p>Requesting AI Guidance...</p>
           </div>
         )}
 
-        {/* Error state */}
-        {error && (
+        {/* If error */}
+        {error && !loading && (
           <div className="bg-red-50 p-4 rounded-xl border border-red-200">
             <p className="text-sm text-red-600 mb-3">{error}</p>
             <Button 
               onClick={handleRetry} 
               variant="outline" 
-              size="sm" 
-              disabled={loading}
+              size="sm"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
@@ -266,119 +320,69 @@ export default function GuidanceStep() {
           </div>
         )}
 
-        {/* AI Suggestion Panel */}
+        {/* If there's existing albertGuidance, show it here. 
+            For demonstration, we keep the text as is. */}
         {!loading && !error && albertGuidance && (
-          <>
-            {/* Guidance Tips Accordion */}
-            <Accordion 
-              type="single" 
-              collapsible 
-              value={tipsOpen} 
-              onValueChange={setTipsOpen}
-              className="w-full mb-6"
-            >
-              <AccordionItem 
-                value="guidance-tips" 
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+          <Card className="bg-gray-50 border border-gray-200 rounded-xl">
+            <CardContent className="pt-6">
+              <div className="whitespace-pre-wrap text-sm">
+                {albertGuidance}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Show a button to forcibly refresh guidance if user wants */}
+        <Button variant="outline" size="sm" onClick={handleManualRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Guidance
+        </Button>
+
+        {/* Example: user chooses how many STAR examples to do */}
+        <div className="space-y-4">
+          <p className="text-gray-700 font-medium">
+            How many STAR examples do you want to include?
+          </p>
+          <div className="grid grid-cols-4 gap-4">
+            {possibleStarCounts.map(val => (
+              <button
+                key={val}
+                onClick={() => handleStarExamplesCountChange(val)}
+                className={`h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                  starCount === val
+                    ? "bg-blue-100 text-blue-700 font-medium"
+                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                }`}
               >
-                <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center mr-4">
-                      <Lightbulb className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <span className="text-lg font-medium text-gray-800">AI-Powered Guidance</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6 pt-2">
-                  <div className="space-y-5 text-gray-700">
-                    <ul className="list-disc pl-6 space-y-3">
-                      <li>
-                        We've analysed your experience against the job requirements and identified key experiences that could strengthen your application. Below are AI-suggested experiences that highlight your relevant skills.
-                      </li>
-                      <li>
-                        These are recommendations only - you're welcome to use your own examples that better showcase your qualifications.
-                      </li>
-                    </ul>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            {/* AI Suggestions Card */}
-            <Card className="bg-gray-50 border border-gray-200 rounded-xl">
-              <CardContent className="pt-6">
-                <div className="whitespace-pre-wrap text-sm">{albertGuidance}</div>
-              </CardContent>
-            </Card>
-
-            {/* STAR Example Selection */}
-            <div className="space-y-4">
-              <p className="text-gray-700 font-medium">How many STAR examples would you like to include in your pitch?</p>
-              <div className="grid grid-cols-4 gap-4">
-                {["1", "2", "3", "4"].map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => handleStarExamplesCountChange(val)}
-                    className={`h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${
-                      starExamplesCount === val
-                        ? "bg-blue-50 border-2 border-blue-500 text-blue-700"
-                        : "bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-500"
-                    }`}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* STAR Example Descriptions */}
-            <div className="space-y-4">
-              <p className="text-gray-700 font-medium">In one short sentence, describe each STAR example (max 50 chars):</p>
-              
-              <div className="space-y-4">
-                {Array.from({ length: examplesCount }).map((_, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <label className="w-32 text-sm font-medium text-gray-700 flex-shrink-0">
-                      STAR Example {index + 1}:
-                    </label>
-                    <Input
-                      className="flex-1 p-3 bg-white shadow-sm border border-gray-200 rounded-xl"
-                      placeholder={`Enter example ${index + 1}`}
-                      maxLength={50}
-                      value={getValues("starExampleDescriptions")?.[index] || ""}
-                      onChange={(e) => handleDescriptionChange(index, e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-        
-        {/* No Guidance Yet */}
-        {!loading && !error && !albertGuidance && (
-          <div className="rounded-md bg-amber-50 p-4 border border-amber-200 mb-6">
-            <p className="text-muted-foreground text-sm mb-3">
-              Guidance is not available. Please ensure you've completed Step 2 
-              (Experience) fully, then try again.
-            </p>
-            <Button
-              onClick={handleRetry}
-              variant="outline"
-              size="sm"
-              disabled={
-                loading ||
-                !roleName ||
-                !roleLevel ||
-                !pitchWordLimit ||
-                !relevantExperience
-              }
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
+                {val}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Tips for this step */}
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          value={tipsOpen}
+          onValueChange={setTipsOpen}
+        >
+          <AccordionItem value="guidance-tips" className="border-none">
+            <AccordionTrigger className="py-4 px-4 text-sm font-normal bg-blue-50 hover:bg-blue-100 hover:no-underline text-blue-700 rounded-xl flex gap-2 items-center">
+              <Lightbulb className="h-4 w-4" />
+              <span>Tips for this step</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
+              <ul className="list-disc pl-5 space-y-2">
+                <li>The AI will analyze your experience and the job requirements to provide guidance.</li>
+                <li>This guidance will help you craft effective STAR examples that highlight relevant skills.</li>
+                <li>You can request new guidance at any time by clicking the Refresh button.</li>
+                <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   )
