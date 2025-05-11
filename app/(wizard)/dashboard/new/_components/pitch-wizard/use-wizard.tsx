@@ -168,6 +168,9 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     currentSection,
     currentHeader,
     starCount,
+    // Pitch ID state
+    pitchId,
+    setPitchId,
     // Loading states
     isPitchLoading,
     finalPitchError,

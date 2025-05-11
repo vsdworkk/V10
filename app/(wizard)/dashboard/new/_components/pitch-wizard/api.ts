@@ -24,6 +24,7 @@ export async function savePitchData(
     payloadKeys: Object.keys(payload),
     hasStarExamples: !!payload.starExamples?.length
   })
+  console.log("[savePitchData] Payload being sent:", payload);
 
   try {
     console.log(`[savePitchData] Sending request to /api/pitchWizard`)
@@ -33,14 +34,16 @@ export async function savePitchData(
       body: JSON.stringify(payload)
     })
     
-    console.log(`[savePitchData] Response status: ${res.status}`)
+    console.log(`[savePitchData] Response status: ${res.status} ${res.statusText}`);
     if (!res.ok) {
-      console.error(`[savePitchData] Response not OK: ${res.status} ${res.statusText}`)
-      throw new Error("Failed to save pitch data.")
+      const errorText = await res.text();
+      console.error(`[savePitchData] Response not OK. Status: ${res.status}. Body:`, errorText);
+      throw new Error("Failed to save pitch data.");
     }
     
     const json = await res.json()
-    console.log(`[savePitchData] Response data:`, {
+    console.log("[savePitchData] Full API Response JSON:", json);
+    console.log(`[savePitchData] Response data (parsed):`, {
       success: !!json.data,
       id: json.data?.id,
       message: json.message

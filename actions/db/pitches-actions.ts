@@ -18,7 +18,7 @@ import {
   SelectPitch,
   pitchesTable
 } from "@/db/schema/pitches-schema"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, or } from "drizzle-orm"
 import { ActionState } from "@/types"
 
 /* ------------------------------------------------------------------ */
@@ -70,15 +70,26 @@ export async function getPitchByExecutionIdAction(
   execId: string
 ): Promise<ActionState<SelectPitch>> {
   try {
-    const [pitch] = await db
+    // First try to find by agentExecutionId
+    let [pitch] = await db
       .select()
       .from(pitchesTable)
       .where(eq(pitchesTable.agentExecutionId, execId))
       .limit(1)
 
+    // If not found, try finding by pitch ID
+    if (!pitch) {
+      console.log(`[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`)
+      ;[pitch] = await db
+        .select()
+        .from(pitchesTable)
+        .where(eq(pitchesTable.id, execId))
+        .limit(1)
+    }
+
     return pitch
       ? { isSuccess: true, message: "Pitch found", data: pitch }
-      : { isSuccess: false, message: "No pitch with that execution‑ID" }
+      : { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
   } catch (err) {
     console.error("getPitchByExecutionIdAction:", err)
     return { isSuccess: false, message: "Failed to fetch pitch" }
@@ -131,10 +142,6 @@ export async function updatePitchAction(
  * Update by `agentExecutionId` – used inside PromptLayer callback where
  * we do **not** know the userId or pitchId, only the execution‑ID.
  */
-/**
- * Update by `agentExecutionId` – used inside PromptLayer callback where
- * we do **not** know the userId or pitchId, only the execution‑ID.
- */
 export async function updatePitchByExecutionId(
   execId: string,
   updatedData: Partial<InsertPitch>
@@ -144,24 +151,42 @@ export async function updatePitchByExecutionId(
     updatedData.pitchContent ? updatedData.pitchContent.length + " chars" : "No content")
   
   try {
-    // First check if the pitch exists
-    const existing = await db
+    // First check if the pitch exists by agentExecutionId
+    let existing = await db
       .select({ id: pitchesTable.id })
       .from(pitchesTable)
       .where(eq(pitchesTable.agentExecutionId, execId))
       .limit(1)
     
+    // If not found by agentExecutionId, try finding by pitch ID 
+    // (this supports our new approach where pitch ID = execution ID)
     if (existing.length === 0) {
-      console.error(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}`)
-      return { isSuccess: false, message: "No pitch with that execution‑ID" }
+      console.log(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`)
+      existing = await db
+        .select({ id: pitchesTable.id })
+        .from(pitchesTable)
+        .where(eq(pitchesTable.id, execId))
+        .limit(1)
+    }
+    
+    if (existing.length === 0) {
+      console.error(`[updatePitchByExecutionId] No record found with agentExecutionId or id: ${execId}`)
+      return { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
     }
     
     console.log(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
     
+    // Update by either agentExecutionId or id, depending on which one is more likely to match
     const [updated] = await db
       .update(pitchesTable)
       .set(updatedData)
-      .where(eq(pitchesTable.agentExecutionId, execId))
+      .where(
+        // Try both the agentExecutionId and the id fields
+        or(
+          eq(pitchesTable.agentExecutionId, execId),
+          eq(pitchesTable.id, execId)
+        )
+      )
       .returning()
 
     if (!updated) {

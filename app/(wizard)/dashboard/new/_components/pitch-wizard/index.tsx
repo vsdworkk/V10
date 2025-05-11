@@ -34,6 +34,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     currentSection,
     currentHeader,
     starCount,
+    pitchId,
     isPitchLoading,
     finalPitchError,
     handleNext,
@@ -52,7 +53,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     // Step 3 => Experience
     if (currentStep === 3) return <ExperienceStep />
     // Step 4 => Guidance
-    if (currentStep === 4) return <GuidanceStep />
+    if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
 
     // Next: starExamples sub-steps
     const firstStarStep = 5

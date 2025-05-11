@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
-import { useToast } from "@/lib/hooks/use-toast"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
+import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import { useParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
 import {
   Accordion,
   AccordionItem,
@@ -16,243 +15,102 @@ import {
   AccordionContent
 } from "@/components/ui/accordion"
 
-/**
- * GuidanceStep
- * -----------
- * 1. Generates a unique 6-digit ID on each new request for guidance.
- * 2. Saves that ID to the form's `agentExecutionId` field and to DB,
- *    so that PromptLayer can call back using this ID in `agentExecutionId`.
- * 3. If you want polling, you can add it (see step 4 in your instructions).
- */
-export default function GuidanceStep() {
-  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
-  const { toast } = useToast()
-  const params = useParams()
+interface GuidanceStepProps {
+  pitchId?: string; // Accept pitchId as an optional prop
+}
 
+export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepProps) { // Destructure and rename prop
+  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+  const params = useParams(); // Keep for other potential uses or fallback
+  
   // Form fields that matter for requesting guidance
+  const userId = watch("userId")
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
-  const pitchWordLimit = watch("pitchWordLimit")
   const relevantExperience = watch("relevantExperience")
   const roleDescription = watch("roleDescription")
-  const albertGuidance = watch("albertGuidance") // previously returned guidance, if any
+  const albertGuidance = watch("albertGuidance") // existing guidance
   const starExamplesCount = watch("starExamplesCount")
-
-  // Just for tracking small changes
-  const starExampleDescriptions = watch("starExampleDescriptions") || []
-
-  // Local state
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
-  const [tipsOpen, setTipsOpen] = useState<string | undefined>("guidance-tips")
-
-  const isRequestInProgressRef = useRef(false)
-  const lastFetchKeyRef = useRef<string>("")
-
-  // Build a quick "hash" of the form data to detect changes
-  const formDataKey = `${roleName}|${roleLevel}|${pitchWordLimit}|${relevantExperience?.slice(0, 50)}|${roleDescription?.slice(0, 50)}`
-
-  /**
-   * Called once if we want auto-fetch on mount
-   */
+  
+  // Determine the definitive pitch ID to use
+  // Prioritize the ID from props (coming from useWizard state)
+  // Fallback to URL params if necessary (though less ideal now)
+  const definitivePitchId = pitchIdFromProp || params?.pitchId as string;
+  
+  // Use our custom hook
+  const { 
+    isLoading, 
+    guidance, 
+    error, 
+    requestId, 
+    fetchGuidance,
+    reset 
+  } = useAiGuidance();
+  
+  // Initialize - request guidance if needed
   useEffect(() => {
-    if (hasInitialized || isRequestInProgressRef.current) return
-
-    setHasInitialized(true)
-
-    // Optional: if there's no existing guidance, we can auto-fetch
-    if (!albertGuidance) {
-      void fetchGuidance()
+    console.log("[GuidanceStep] Initial guidance check - albertGuidance:", albertGuidance ? "present" : "not present", 
+                "isLoading:", isLoading, "definitivePitchId:", definitivePitchId);
+                
+    // Ensure definitivePitchId is available before fetching
+    if (!albertGuidance && roleDescription && relevantExperience && !isLoading && userId && definitivePitchId) {
+      console.log("[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance");
+      fetchGuidance(
+        roleDescription,
+        relevantExperience,
+        userId,
+        definitivePitchId // Use the definitivePitchId
+      );
+    } else if (albertGuidance) {
+      console.log("[GuidanceStep] Not fetching guidance as it already exists in form state");
     }
-  }, [hasInitialized, albertGuidance])
-
-  /**
-   * The main function that triggers new guidance from the AI (PromptLayer).
-   */
-  const fetchGuidance = useCallback(async () => {
-    if (isRequestInProgressRef.current) {
-      console.log("Request is already in progress, skipping.")
-      return
-    }
-
-    // Check required fields
-    if (!roleName || !roleLevel || !pitchWordLimit || !relevantExperience) {
-      setError("Missing required fields. Please complete Step 2 first.")
-      return
-    }
-
-    try {
-      isRequestInProgressRef.current = true
-      setLoading(true)
-      setError(null)
-
-      // Generate a unique 6-digit identifier
-      const idUnique = Math.floor(100000 + Math.random() * 900000).toString()
-      console.log("Fetching guidance with unique ID:", idUnique)
-
-      // 60-second timeout
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000)
-
-      // Make request to our local Next.js API
-      const response = await fetch("/api/albertGuidance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobDescription: roleDescription,
-          experience: relevantExperience,
-          idUnique
-        }),
-        signal: controller.signal
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        if (response.status === 504) {
-          throw new Error("The request timed out. Please try again later.")
-        }
-        const errText = await response.text()
-        throw new Error(errText || "Failed to fetch guidance")
+    // Add definitivePitchId to dependency array if it can change and trigger re-fetch
+  }, [albertGuidance, roleDescription, relevantExperience, isLoading, userId, fetchGuidance, definitivePitchId]);
+  
+  // Update form when guidance is received
+  useEffect(() => {
+    console.log("[GuidanceStep] useEffect for guidance update triggered. Hook guidance:", guidance, "isLoading:", isLoading);
+    
+    // When guidance exists, update the form and ensure loading is stopped
+    if (guidance) {
+      console.log("[GuidanceStep] Setting albertGuidance in form with:", guidance);
+      setValue("albertGuidance", guidance, { shouldDirty: true });
+      if (requestId) {
+        console.log("[GuidanceStep] Setting agentExecutionId in form with:", requestId);
+        setValue("agentExecutionId", requestId, { shouldDirty: true });
       }
-
-      const data = await response.json()
-      if (!data.success) {
-        throw new Error(data.error || "Error generating guidance")
-      }
-
-      // Save the unique ID in the form's agentExecutionId
-      setValue("agentExecutionId", data.data, { shouldDirty: true })
-
-      // Get the pitchId from URL parameters
-      const formData = getValues()
-      const currentPitchId = params?.pitchId
-      
-      console.log("Current Pitch ID:", currentPitchId)
-      
-      // Update DB pitch if we have a pitchId from URL parameters
-      if (currentPitchId) {
-        // Get current form values for required fields
-        const formData = getValues();
-        
-        // Create a payload that meets the schema requirements
-        const payload = {
-          id: currentPitchId as string,
-          userId: formData.userId,
-          roleName: formData.roleName,
-          roleLevel: formData.roleLevel,
-          pitchWordLimit: formData.pitchWordLimit,
-          relevantExperience: formData.relevantExperience || "",
-          agentExecutionId: data.data // The execution ID we want to update
-        };
-        
-        console.log("Updating pitch with execution ID:", data.data);
-        
-        // Patch the pitchWizard so that agentExecutionId is stored
-        const updateResponse = await fetch(`/api/pitchWizard/${currentPitchId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        
-        if (!updateResponse.ok) {
-          console.error("Failed to update pitch with execution ID:", await updateResponse.text());
-          
-          // If that fails, try the savePitchData approach instead
-          try {
-            console.log("Trying alternative approach to update execution ID");
-            const allFormData = getValues();
-            const updatedFormData = {
-              ...allFormData,
-              agentExecutionId: data.data
-            };
-            
-            // Post to /api/pitchWizard instead of the [pitchId] route
-            const fallbackResponse = await fetch("/api/pitchWizard", {
-              method: "POST", 
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: currentPitchId,
-                userId: formData.userId,
-                roleName: formData.roleName,
-                roleLevel: formData.roleLevel,
-                pitchWordLimit: formData.pitchWordLimit,
-                relevantExperience: formData.relevantExperience || "",
-                agentExecutionId: data.data,
-                currentStep: 4 // Guidance step
-              })
-            });
-            
-            if (!fallbackResponse.ok) {
-              console.error("Fallback update also failed:", await fallbackResponse.text());
-            } else {
-              console.log("Successfully updated execution ID using fallback approach");
-            }
-          } catch (updateErr) {
-            console.error("Error in fallback update:", updateErr);
-          }
-        } else {
-          console.log("Successfully updated pitch with execution ID");
-        }
-      } else {
-        console.error("No pitch ID found in URL parameters")
-      }
-
-      // We do not actually get the final text right away if the agent
-      // uses a callback. If your agent returns text immediately, store it:
-      // e.g. setValue("albertGuidance", data.albertText, { shouldDirty: true })
-
-      // If your route does return "AI text" right away, you'd do:
-      // setValue("albertGuidance", data.guidance, { shouldDirty: true })
-
-      lastFetchKeyRef.current = formDataKey
-    } catch (err: any) {
-      console.error("fetchGuidance error:", err)
-      const msg = err.name === "AbortError" 
-        ? "Request timed out. Please try again."
-        : err.message
-
-      setError(msg)
-      toast({
-        title: "Error",
-        description: msg,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-      isRequestInProgressRef.current = false
     }
-  }, [
-    roleName,
-    roleLevel,
-    pitchWordLimit,
-    relevantExperience,
-    roleDescription,
-    setValue,
-    toast,
-    params,
-    getValues,
-    formDataKey
-  ])
-
-  /**
-   * If the user wants to manually refresh guidance:
-   */
+  }, [guidance, requestId, setValue, isLoading]);
+  
+  // Handle manual refresh
   const handleManualRefresh = () => {
-    // Optionally clear existing text
-    setValue("albertGuidance", "", { shouldDirty: true })
-    void fetchGuidance()
-  }
-
-  /**
-   * Basic UI - e.g. Retry or Loading states.
-   */
-  const handleRetry = () => {
-    void fetchGuidance()
-  }
-
-  // This updates starExamplesCount in the form state
+    if (!roleDescription || !relevantExperience || !userId) {
+      return; // Don't fetch if required fields are missing
+    }
+    // Ensure definitivePitchId is available before fetching
+    if (!definitivePitchId) {
+      console.error("Cannot refresh guidance: Pitch ID is missing.");
+      // Optionally, set an error state here for the user
+      return;
+    }
+    
+    console.log("[GuidanceStep] Manual refresh initiated - clearing state");
+    reset(); // Clear existing state
+    setValue("albertGuidance", "", { shouldDirty: true });
+    
+    // Adding a slight delay before fetching to ensure state is reset
+    setTimeout(() => {
+      console.log("[GuidanceStep] Calling fetchGuidance after reset");
+      fetchGuidance(
+        roleDescription,
+        relevantExperience,
+        userId,
+        definitivePitchId // Use the definitivePitchId
+      );
+    }, 100);
+  };
+  
+  // This part remains largely unchanged from your original code
   const handleStarExamplesCountChange = (value: string) => {
     setValue("starExamplesCount", value as PitchWizardFormData["starExamplesCount"], {
       shouldDirty: true
@@ -271,16 +129,16 @@ export default function GuidanceStep() {
 
     // If we have a pitchId, patch the DB
     const formData = getValues()
-    const currentPitchId = params?.pitchId
     
-    if (currentPitchId) {
+    // Use definitivePitchId here as well for consistency
+    if (definitivePitchId) {
       const payload = {
-        id: currentPitchId,
+        id: definitivePitchId,
         userId: formData.userId,
         starExamplesCount: newCount,
         starExampleDescriptions: finalArr
       }
-      void fetch(`/api/pitchWizard/${currentPitchId}`, {
+      void fetch(`/api/pitchWizard/${definitivePitchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -288,29 +146,30 @@ export default function GuidanceStep() {
     }
   }
 
-  // Keep it to 1..4 for quick UI
   const possibleStarCounts = ["1","2","3","4"]
-
   const starCount = starExamplesCount || "2"
+  const [tipsOpen, setTipsOpen] = useState<string | undefined>("guidance-tips")
+  
+  // Log form state of albertGuidance before rendering
+  console.log("[GuidanceStep] Rendering with albertGuidance (from form watch):", albertGuidance);
 
   return (
     <div className="p-6">
       <div className="h-[500px] overflow-y-auto pr-2 flex flex-col gap-6">
-
         {/* If loading */}
-        {loading && (
+        {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-            <p>Requesting AI Guidance...</p>
+            <p>Generating AI Guidance...</p>
           </div>
         )}
 
         {/* If error */}
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="bg-red-50 p-4 rounded-xl border border-red-200">
             <p className="text-sm text-red-600 mb-3">{error}</p>
             <Button 
-              onClick={handleRetry} 
+              onClick={handleManualRefresh} 
               variant="outline" 
               size="sm"
             >
@@ -320,9 +179,8 @@ export default function GuidanceStep() {
           </div>
         )}
 
-        {/* If there's existing albertGuidance, show it here. 
-            For demonstration, we keep the text as is. */}
-        {!loading && !error && albertGuidance && (
+        {/* If there's existing guidance, show it */}
+        {!isLoading && !error && albertGuidance && (
           <Card className="bg-gray-50 border border-gray-200 rounded-xl">
             <CardContent className="pt-6">
               <div className="whitespace-pre-wrap text-sm">
@@ -332,13 +190,13 @@ export default function GuidanceStep() {
           </Card>
         )}
 
-        {/* Show a button to forcibly refresh guidance if user wants */}
-        <Button variant="outline" size="sm" onClick={handleManualRefresh}>
+        {/* Refresh button */}
+        <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={isLoading}>
           <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh Guidance
+          {isLoading ? "Generating..." : "Refresh Guidance"}
         </Button>
 
-        {/* Example: user chooses how many STAR examples to do */}
+        {/* STAR examples count selector - unchanged */}
         <div className="space-y-4">
           <p className="text-gray-700 font-medium">
             How many STAR examples do you want to include?
@@ -360,7 +218,7 @@ export default function GuidanceStep() {
           </div>
         </div>
 
-        {/* Tips for this step */}
+        {/* Tips accordion - unchanged */}
         <Accordion
           type="single"
           collapsible
@@ -375,8 +233,8 @@ export default function GuidanceStep() {
             </AccordionTrigger>
             <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
               <ul className="list-disc pl-5 space-y-2">
-                <li>The AI will analyze your experience and the job requirements to provide guidance.</li>
-                <li>This guidance will help you craft effective STAR examples that highlight relevant skills.</li>
+                <li>The AI will analyze your experience and job requirements to provide guidance.</li>
+                <li>This guidance helps you craft effective STAR examples that highlight relevant skills.</li>
                 <li>You can request new guidance at any time by clicking the Refresh button.</li>
                 <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
               </ul>
@@ -385,5 +243,5 @@ export default function GuidanceStep() {
         </Accordion>
       </div>
     </div>
-  )
+  );
 }
