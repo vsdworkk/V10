@@ -14,6 +14,8 @@ import {
   AccordionTrigger,
   AccordionContent
 } from "@/components/ui/accordion"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface GuidanceStepProps {
   pitchId?: string; // Accept pitchId as an optional prop
@@ -31,6 +33,7 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
   const roleDescription = watch("roleDescription")
   const albertGuidance = watch("albertGuidance") // existing guidance
   const starExamplesCount = watch("starExamplesCount")
+  const starExampleDescriptions = watch("starExampleDescriptions") || []
   
   // Determine the definitive pitch ID to use
   // Prioritize the ID from props (coming from useWizard state)
@@ -81,7 +84,7 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
     }
   }, [guidance, requestId, setValue, isLoading]);
   
-  // This part remains largely unchanged from your original code
+  // Handle STAR example count change
   const handleStarExamplesCountChange = (value: string) => {
     setValue("starExamplesCount", value as PitchWizardFormData["starExamplesCount"], {
       shouldDirty: true
@@ -117,9 +120,30 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
     }
   }
 
+  // Handle STAR example description change
+  const handleDescriptionChange = (index: number, value: string) => {
+    const updatedDescriptions = [...starExampleDescriptions];
+    updatedDescriptions[index] = value;
+    setValue("starExampleDescriptions", updatedDescriptions, { shouldDirty: true });
+    
+    // Update the database if we have a pitch ID
+    if (definitivePitchId) {
+      const payload = {
+        id: definitivePitchId,
+        userId: getValues("userId"),
+        starExampleDescriptions: updatedDescriptions
+      };
+      void fetch(`/api/pitchWizard/${definitivePitchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    }
+  };
+
   const possibleStarCounts = ["1","2","3","4"]
   const starCount = starExamplesCount || "2"
-  const [tipsOpen, setTipsOpen] = useState<string | undefined>("guidance-tips")
+  const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
   
   // Log form state of albertGuidance before rendering
   console.log("[GuidanceStep] Rendering with albertGuidance (from form watch):", albertGuidance);
@@ -127,6 +151,29 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
   return (
     <div className="p-6">
       <div className="h-[500px] overflow-y-auto pr-2 flex flex-col gap-6">
+        {/* Tips accordion - moved to top */}
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          value={tipsOpen}
+          onValueChange={setTipsOpen}
+        >
+          <AccordionItem value="guidance-tips" className="border-none">
+            <AccordionTrigger className="py-4 px-4 text-sm font-normal bg-blue-50 hover:bg-blue-100 hover:no-underline text-blue-700 rounded-xl flex gap-2 items-center">
+              <Lightbulb className="h-4 w-4" />
+              <span>Tips for this step</span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
+              <ul className="list-disc pl-5 space-y-2">
+                <li>The AI will analyze your experience and job requirements to provide guidance.</li>
+                <li>This guidance helps you craft effective STAR examples that highlight relevant skills.</li>
+                <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
         {/* If loading */}
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
@@ -153,7 +200,7 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
           </Card>
         )}
 
-        {/* STAR examples count selector - unchanged */}
+        {/* STAR examples count selector */}
         <div className="space-y-4">
           <p className="text-gray-700 font-medium">
             How many STAR examples do you want to include?
@@ -175,28 +222,30 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
           </div>
         </div>
 
-        {/* Tips accordion - unchanged */}
-        <Accordion
-          type="single"
-          collapsible
-          className="w-full"
-          value={tipsOpen}
-          onValueChange={setTipsOpen}
-        >
-          <AccordionItem value="guidance-tips" className="border-none">
-            <AccordionTrigger className="py-4 px-4 text-sm font-normal bg-blue-50 hover:bg-blue-100 hover:no-underline text-blue-700 rounded-xl flex gap-2 items-center">
-              <Lightbulb className="h-4 w-4" />
-              <span>Tips for this step</span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
-              <ul className="list-disc pl-5 space-y-2">
-                <li>The AI will analyze your experience and job requirements to provide guidance.</li>
-                <li>This guidance helps you craft effective STAR examples that highlight relevant skills.</li>
-                <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        {/* STAR example descriptions */}
+        {parseInt(starCount, 10) > 0 && (
+          <div className="space-y-4">
+            <p className="text-gray-700 font-medium">
+              In one sentence describe each STAR example you'll include:
+            </p>
+            <div className="space-y-4">
+              {Array.from({ length: parseInt(starCount, 10) }).map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <Label htmlFor={`star-example-${index}`}>
+                    STAR Example {index + 1}
+                  </Label>
+                  <Input
+                    id={`star-example-${index}`}
+                    placeholder={`Brief description of STAR example ${index + 1}`}
+                    value={starExampleDescriptions[index] || ""}
+                    onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                    className="bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
