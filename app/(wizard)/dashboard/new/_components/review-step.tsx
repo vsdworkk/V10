@@ -8,15 +8,14 @@
  * Enhancements:
  *  • Accepts `isPitchLoading` from parent. If true or if pitchContent is empty,
  *    show a loading skeleton rather than the TipTap editor.
- *  • Subscribes to Supabase realtime updates on the row whose
- *    `agent_execution_id` matches the one stored in the form, to update pitchContent automatically.
+ *  • Uses the usePitchGeneration hook to handle the pitch generation and status polling
  */
 
 import React, { useEffect, useRef } from "react"
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
 import { useToast } from "@/lib/hooks/use-toast"
-import { supabase } from "@/lib/supabase-browser"
+import { usePitchGeneration } from "@/lib/hooks/use-pitch-generation"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import {
   Bold,
   Italic,
@@ -58,7 +57,7 @@ interface ReviewStepProps {
 }
 
 export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage }: ReviewStepProps) {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
+  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
   /* ----------------------------------------------------------- */
@@ -66,9 +65,19 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   /* ----------------------------------------------------------- */
   const pitchContent = watch("pitchContent") || ""
   const execId = watch("agentExecutionId") || null
+  
+  /* ----------------------------------------------------------- */
+  /* 2) Use the new pitch generation hook                        */
+  /* ----------------------------------------------------------- */
+  const { 
+    isLoading: isPitchGenerating, 
+    pitchContent: generatedPitchContent, 
+    error: pitchGenerationError,
+    generatePitch 
+  } = usePitchGeneration();
 
   /* ----------------------------------------------------------- */
-  /* 2) Editor setup (TipTap)                                    */
+  /* 3) Editor setup (TipTap)                                    */
   /* ----------------------------------------------------------- */
   const editor = useEditor({
     extensions: [
@@ -90,51 +99,73 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   })
 
   /* ----------------------------------------------------------- */
-  /* 3) Supabase Realtime subscription for agent exec ID         */
+  /* 4) Effect to update editor content when pitch content changes */
   /* ----------------------------------------------------------- */
-  const subscribedRef = useRef<boolean>(false)
   useEffect(() => {
     if (editor && pitchContent && pitchContent !== editor.getHTML()) {
       editor.commands.setContent(pitchContent, false);
     }
   }, [editor, pitchContent]);
+
+  /* ----------------------------------------------------------- */
+  /* 5) Effect to trigger pitch generation when component mounts  */
+  /* ----------------------------------------------------------- */
+  const initRef = useRef<boolean>(false);
   useEffect(() => {
-    if (!execId) return
-    if (subscribedRef.current) return
-    subscribedRef.current = true
-
-    const channel = supabase
-      .channel(`pitch-exec-${execId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "pitches",
-          filter: `agent_execution_id=eq.${execId}`
-        },
-        payload => {
-          const newHtml = (payload.new as any)?.pitch_content
-          if (newHtml && newHtml.length > 0) {
-            setValue("pitchContent", newHtml, { shouldDirty: true })
-            editor?.commands.setContent(newHtml, false)
-
-            toast({
-              title: "Pitch ready!",
-              description: "Albert has finished generating your pitch."
-            })
-
-            // Step 3 addition: Call the callback from parent
-            onPitchLoaded()
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      channel.unsubscribe()
+    // Only run this once and only if we have an execution ID but no pitch content
+    if (!initRef.current && execId && (!pitchContent || pitchContent.trim() === '') && !isPitchGenerating) {
+      initRef.current = true;
+      
+      // Get the required data from the form
+      const formData = getValues();
+      
+      // Trigger pitch generation
+      generatePitch({
+        userId: formData.userId || "", // Ensure userId is never undefined
+        pitchId: execId, // Pass the pitch ID - it will be used as the execution ID
+        roleName: formData.roleName,
+        organisationName: formData.organisationName || "",
+        roleLevel: formData.roleLevel,
+        pitchWordLimit: formData.pitchWordLimit,
+        roleDescription: formData.roleDescription || "",
+        relevantExperience: formData.relevantExperience || "",
+        albertGuidance: formData.albertGuidance || "",
+        starExamples: formData.starExamples || [],
+        starExamplesCount: parseInt(formData.starExamplesCount || "0", 10)
+      });
     }
-  }, [execId, editor, toast, setValue, onPitchLoaded])
+  }, [execId, pitchContent, isPitchGenerating, generatePitch, getValues]);
+
+  /* ----------------------------------------------------------- */
+  /* 6) Effect to handle generated pitch content                 */
+  /* ----------------------------------------------------------- */
+  useEffect(() => {
+    if (generatedPitchContent) {
+      setValue("pitchContent", generatedPitchContent, { shouldDirty: true });
+      editor?.commands.setContent(generatedPitchContent, false);
+      
+      toast({
+        title: "Pitch ready!",
+        description: "Albert has finished generating your pitch."
+      });
+      
+      // Call the callback from parent
+      onPitchLoaded();
+    }
+  }, [generatedPitchContent, editor, setValue, toast, onPitchLoaded]);
+
+  /* ----------------------------------------------------------- */
+  /* 7) Effect to handle pitch generation error                 */
+  /* ----------------------------------------------------------- */
+  useEffect(() => {
+    if (pitchGenerationError) {
+      toast({
+        title: "Error generating pitch",
+        description: pitchGenerationError,
+        variant: "destructive"
+      });
+    }
+  }, [pitchGenerationError, toast]);
 
   // Add custom styles for spacing between sections
   useEffect(() => {
@@ -166,10 +197,10 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   }, [editor]);
 
   /* ----------------------------------------------------------- */
-  /* 4) Loading skeleton if pitch is not ready                   */
+  /* 8) Loading skeleton if pitch is not ready                   */
   /* ----------------------------------------------------------- */
   // If isPitchLoading or no pitch content, show a skeleton/spinner
-  if (isPitchLoading || !pitchContent.trim()) {
+  if (isPitchLoading || isPitchGenerating || !pitchContent.trim()) {
     return (
       <div className="space-y-4">
         <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
@@ -206,7 +237,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 dark:bg-gray-900/40 backdrop-blur-md p-0 shadow-inner">
           <AIThinkingLoader 
             visible={true}
-            errorMessage={errorMessage}
+            errorMessage={pitchGenerationError || errorMessage}
             onCancel={() => {
               // Set empty content to exit loading state
               setValue("pitchContent", "<p>Your pitch content...</p>", { shouldDirty: true });
@@ -214,7 +245,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
             }}
             onComplete={() => {
               // This shouldn't be needed as the content should
-              // be loaded via Supabase realtime, but just in case
+              // be loaded via the hook, but just in case
               onPitchLoaded();
             }}
             className="h-full min-h-[300px]"
@@ -225,7 +256,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   }
 
   /* ----------------------------------------------------------- */
-  /* 5) If content is loaded and not in isPitchLoading state,    */
+  /* 9) If content is loaded and not in isPitchLoading state,    */
   /*    show the final editor                                    */
   /* ----------------------------------------------------------- */
   if (!editor) {
@@ -257,7 +288,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   }
 
   /* ----------------------------------------------------------- */
-  /* 6) Editor Toolbar                                           */
+  /* 10) Editor Toolbar                                           */
   /* ----------------------------------------------------------- */
   const handleBold = () => editor.chain().focus().toggleBold().run()
   const handleItalic = () => editor.chain().focus().toggleItalic().run()

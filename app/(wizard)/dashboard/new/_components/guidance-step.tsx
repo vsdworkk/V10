@@ -43,8 +43,7 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
     guidance, 
     error, 
     requestId, 
-    fetchGuidance,
-    reset 
+    fetchGuidance 
   } = useAiGuidance();
   
   // Initialize - request guidance if needed
@@ -81,34 +80,6 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
       }
     }
   }, [guidance, requestId, setValue, isLoading]);
-  
-  // Handle manual refresh
-  const handleManualRefresh = () => {
-    if (!roleDescription || !relevantExperience || !userId) {
-      return; // Don't fetch if required fields are missing
-    }
-    // Ensure definitivePitchId is available before fetching
-    if (!definitivePitchId) {
-      console.error("Cannot refresh guidance: Pitch ID is missing.");
-      // Optionally, set an error state here for the user
-      return;
-    }
-    
-    console.log("[GuidanceStep] Manual refresh initiated - clearing state");
-    reset(); // Clear existing state
-    setValue("albertGuidance", "", { shouldDirty: true });
-    
-    // Adding a slight delay before fetching to ensure state is reset
-    setTimeout(() => {
-      console.log("[GuidanceStep] Calling fetchGuidance after reset");
-      fetchGuidance(
-        roleDescription,
-        relevantExperience,
-        userId,
-        definitivePitchId // Use the definitivePitchId
-      );
-    }, 100);
-  };
   
   // This part remains largely unchanged from your original code
   const handleStarExamplesCountChange = (value: string) => {
@@ -168,14 +139,6 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
         {error && !isLoading && (
           <div className="bg-red-50 p-4 rounded-xl border border-red-200">
             <p className="text-sm text-red-600 mb-3">{error}</p>
-            <Button 
-              onClick={handleManualRefresh} 
-              variant="outline" 
-              size="sm"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
           </div>
         )}
 
@@ -189,12 +152,6 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
             </CardContent>
           </Card>
         )}
-
-        {/* Refresh button */}
-        <Button variant="outline" size="sm" onClick={handleManualRefresh} disabled={isLoading}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          {isLoading ? "Generating..." : "Refresh Guidance"}
-        </Button>
 
         {/* STAR examples count selector - unchanged */}
         <div className="space-y-4">
@@ -235,7 +192,6 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
               <ul className="list-disc pl-5 space-y-2">
                 <li>The AI will analyze your experience and job requirements to provide guidance.</li>
                 <li>This guidance helps you craft effective STAR examples that highlight relevant skills.</li>
-                <li>You can request new guidance at any time by clicking the Refresh button.</li>
                 <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
               </ul>
             </AccordionContent>
