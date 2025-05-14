@@ -16,6 +16,7 @@ import TaskStep from "../task-step"
 import ActionStep from "../action-step"
 import ResultStep from "../result-step"
 import ReviewStep from "../review-step"
+import PitchConfirmationDialog from "../pitch-confirmation-dialog"
 import { Button } from "@/components/ui/button"
 
 // Custom hook
@@ -37,6 +38,11 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     pitchId,
     isPitchLoading,
     finalPitchError,
+    showConfirmDialog,
+    setShowConfirmDialog,
+    handleConfirmPitchGeneration,
+    handleCancelPitchGeneration,
+    isPitchGenerationConfirmed,
     handleNext,
     handleBack,
     handleSaveAndClose,
@@ -102,6 +108,14 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           }
         `}</style>
 
+        {/* Confirmation Dialog */}
+        <PitchConfirmationDialog
+          isOpen={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          onConfirm={handleConfirmPitchGeneration}
+          onCancel={handleCancelPitchGeneration}
+        />
+
         {/* Header section */}
         <div className="mb-6">
           <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
@@ -127,12 +141,15 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
         {/* Navigation buttons */}
         <div className="pt-10 flex justify-between items-center mt-10">
-          {/* Back button */}
-          {currentStep > 1 ? (
+          {/* Back button - only show when not on the review step */}
+          {currentStep > 1 && currentStep < totalSteps ? (
             <Button 
               variant="outline" 
-              onClick={handleBack} 
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+              onClick={handleBack}
+              disabled={isPitchGenerationConfirmed}
+              className={`px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal ${
+                isPitchGenerationConfirmed ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" />
               Back
@@ -142,15 +159,17 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           )}
 
           <div className="flex items-center space-x-4">
-            {/* Save and Close */}
-            <Button 
-              variant="outline" 
-              onClick={handleSaveAndClose} 
-              className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
-            >
-              <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
-              Save &amp; Close
-            </Button>
+            {/* Save and Close - Only show when NOT on the final review step */}
+            {currentStep < totalSteps && (
+              <Button 
+                variant="outline" 
+                onClick={handleSaveAndClose} 
+                className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+              >
+                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                Save &amp; Close
+              </Button>
+            )}
 
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
@@ -165,7 +184,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
               <Button
                 type="button"
                 onClick={handleSubmitFinal}
-                className="bg-green-600 hover:bg-green-700 font-medium"
+                className="bg-green-600 hover:bg-green-700 font-medium px-6 py-3 ml-auto"
               >
                 Submit Pitch
               </Button>

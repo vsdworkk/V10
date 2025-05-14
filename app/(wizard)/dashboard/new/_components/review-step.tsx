@@ -203,7 +203,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   if (isPitchLoading || isPitchGenerating || !pitchContent.trim()) {
     return (
       <div className="space-y-4">
-        <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
+        <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-center font-medium">
           <strong>Generating your pitch...</strong> The content will appear below as soon as it's ready.
         </div>
 
@@ -301,9 +301,11 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Your pitch is now ready. Feel free to refine the wording or formatting below.
-      </p>
+      <div className="flex flex-col gap-3">
+        <p className="text-center text-base font-medium text-gray-700 pb-2">
+          Your pitch is now ready. Feel free to refine the wording or formatting below.
+        </p>
+      </div>
 
       {/* Editor Toolbar */}
       <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/60 dark:bg-gray-900/40 backdrop-blur-md p-3 shadow-lg">

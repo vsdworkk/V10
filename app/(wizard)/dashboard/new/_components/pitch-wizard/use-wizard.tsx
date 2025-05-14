@@ -26,6 +26,13 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const pendingFormDataRef = useRef<PitchWizardFormData | null>(null)
+  
+  // Track if pitch generation has been confirmed
+  const [isPitchGenerationConfirmed, setIsPitchGenerationConfirmed] = useState(false)
+  
   // React Hook Form setup
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
@@ -43,6 +50,38 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
   // Keep track of previous step for animations
   const prevStepRef = useRef(1)
+
+  // Disable form fields when pitch generation is confirmed
+  useEffect(() => {
+    if (isPitchGenerationConfirmed && !isPitchLoading) {
+      // Lock the form by setting it to readOnly mode
+      const formElement = document.querySelector('form');
+      if (formElement) {
+        const inputs = formElement.querySelectorAll('input, textarea, select');
+        inputs.forEach((input: Element) => {
+          if (input instanceof HTMLElement) {
+            input.setAttribute('readonly', 'true');
+            input.setAttribute('disabled', 'true');
+          }
+        });
+      }
+      
+      // Also disable sidebar navigation items (except for the FINAL section)
+      const sidebarLinks = document.querySelectorAll('[data-section]');
+      sidebarLinks.forEach((link: Element) => {
+        if (link instanceof HTMLElement) {
+          const section = link.dataset.section;
+          if (section && section !== "FINAL") {
+            link.classList.add('opacity-50', 'pointer-events-none');
+            link.setAttribute('aria-disabled', 'true');
+            
+            // Add a tooltip explaining why it's disabled
+            link.setAttribute('title', 'Navigation locked: Pitch generation has started');
+          }
+        }
+      });
+    }
+  }, [isPitchGenerationConfirmed, isPitchLoading]);
 
   // Emit current section whenever step changes
   useEffect(() => {
@@ -67,29 +106,92 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
   useEffect(() => {
     const handleSectionNavigate = (e: any) => {
       if (e.detail && e.detail.section) {
-        const targetSection = e.detail.section
-        const targetStep = firstStepOfSection(targetSection, starCount)
-        setCurrentStep(targetStep)
+        const targetSection = e.detail.section;
+        
+        // If pitch generation is confirmed, only allow navigation to FINAL section
+        if (isPitchGenerationConfirmed && targetSection !== "FINAL") {
+          toast({
+            title: "Navigation locked",
+            description: "You can't go back after pitch generation has started.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const targetStep = firstStepOfSection(targetSection, starCount);
+        setCurrentStep(targetStep);
       }
     }
     
     window.addEventListener("sectionNavigate", handleSectionNavigate)
     return () => window.removeEventListener("sectionNavigate", handleSectionNavigate)
-  }, [starCount])
+  }, [starCount, isPitchGenerationConfirmed, toast])
 
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
     (target: Section) => {
+      // If pitch generation is confirmed, only allow navigation to FINAL section
+      if (isPitchGenerationConfirmed && target !== "FINAL") {
+        toast({
+          title: "Navigation locked",
+          description: "You can't go back after pitch generation has started.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const targetStep = firstStepOfSection(target, starCount)
       if (targetStep <= currentStep) {
         setCurrentStep(targetStep)
       }
     },
-    [currentStep, starCount]
+    [currentStep, starCount, isPitchGenerationConfirmed, toast]
   )
 
-  // Validate fields for the current step
-  // Removed inline validateCurrentStep function
+  // Handler for proceeding with pitch generation
+  const handleConfirmPitchGeneration = useCallback(async () => {
+    const lastStarStep = 4 + starCount * 4;
+    
+    // Only proceed if we've saved form data and we're at the last STAR step
+    if (pendingFormDataRef.current && currentStep === lastStarStep) {
+      // Close the confirmation dialog
+      setShowConfirmDialog(false);
+      
+      // Navigate to the review step
+      setCurrentStep(lastStarStep + 1);
+      setIsPitchLoading(true);
+      setFinalPitchError(null);
+      
+      // Mark pitch generation as confirmed
+      setIsPitchGenerationConfirmed(true);
+      
+      try {
+        await triggerFinalPitch(
+          pendingFormDataRef.current,
+          pitchId,
+          methods,
+          setPitchId,
+          toast,
+          setIsPitchLoading,
+          setFinalPitchError,
+          currentStep
+        );
+      } catch (err) {
+        // Error handling is done in the triggerFinalPitch function
+        // Even if there's an error, we keep isPitchGenerationConfirmed true
+        // to prevent going back and changing inputs
+      }
+      
+      // Clear the pending form data
+      pendingFormDataRef.current = null;
+    }
+  }, [currentStep, methods, pitchId, starCount, toast]);
+  
+  // Handler for cancelling pitch generation
+  const handleCancelPitchGeneration = useCallback(() => {
+    setShowConfirmDialog(false);
+    pendingFormDataRef.current = null;
+  }, []);
 
   // Handler for "Next" button
   const handleNext = useCallback(async () => {
@@ -110,25 +212,12 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     // Check if we're moving from last STAR step to review
     const lastStarStep = 4 + starCount * 4
     if (currentStep === lastStarStep) {
-      setCurrentStep(lastStarStep + 1)
-      setIsPitchLoading(true)
-      setFinalPitchError(null)
-
-      try {
-        await triggerFinalPitch(
-          formData, 
-          pitchId, 
-          methods, 
-          setPitchId, 
-          toast, 
-          setIsPitchLoading, 
-          setFinalPitchError, 
-          currentStep
-        )
-      } catch (err) {
-        // Error handling is done in the triggerFinalPitch function
-      }
-      return
+      // Store the form data for later use
+      pendingFormDataRef.current = formData;
+      
+      // Show the confirmation dialog
+      setShowConfirmDialog(true);
+      return;
     }
 
     // Proceed to next step
@@ -137,8 +226,18 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
   // Handler for "Back" button
   const handleBack = useCallback(() => {
+    // If pitch generation is confirmed, prevent going back
+    if (isPitchGenerationConfirmed) {
+      toast({
+        title: "Navigation locked",
+        description: "You can't go back after pitch generation has started.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setCurrentStep((s) => Math.max(s - 1, 1))
-  }, [])
+  }, [isPitchGenerationConfirmed, toast])
 
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
@@ -174,6 +273,13 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     // Loading states
     isPitchLoading,
     finalPitchError,
+    // Confirmation dialog state
+    showConfirmDialog,
+    setShowConfirmDialog,
+    handleConfirmPitchGeneration,
+    handleCancelPitchGeneration,
+    // Pitch generation status
+    isPitchGenerationConfirmed,
     // Actions
     handleNext,
     handleBack,
