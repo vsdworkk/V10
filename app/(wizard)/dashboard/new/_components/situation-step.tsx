@@ -1,7 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import { useEffect, useState } from "react"
 import {
   FormField,

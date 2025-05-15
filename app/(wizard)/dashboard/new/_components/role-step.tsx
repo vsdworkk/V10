@@ -24,7 +24,7 @@ We replaced old roleLevel items with APS1, APS2, APS3, APS4, APS5, APS6, EL1.
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard"
+import { PitchWizardFormData } from "./pitch-wizard/schema"
 import {
   FormField,
   FormItem,
