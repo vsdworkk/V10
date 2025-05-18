@@ -25,7 +25,8 @@
 
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import DashboardSidebar from "./dashboard/_components/dashboard-sidebar"
+import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
+import DashboardShell from "./dashboard/_components/dashboard-shell"
 
 /**
  * @interface DashboardLayoutProps
@@ -57,13 +58,13 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      <DashboardSidebar userId={userId} />
+  const profile = await getProfileByUserIdAction(userId)
+  const hasStripeCustomerId =
+    profile.isSuccess && profile.data?.stripeCustomerId
 
-      <main className="flex-1 p-8 bg-white shadow-sm m-4 rounded-lg">
-        {children}
-      </main>
-    </div>
+  return (
+    <DashboardShell hasStripeCustomerId={!!hasStripeCustomerId}>
+      {children}
+    </DashboardShell>
   )
 }

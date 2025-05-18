@@ -101,4 +101,17 @@ npm run dev
 View the full workshop on [X](https://x.com/mckaywrigley/status/1891544731496206365) and [YouTube](https://www.youtube.com/watch?v=Y4n_p9w8pGY).
 
 Or sign up for [Takeoff](https://www.jointakeoff.com/) to get access to the full workshop in course form.
+
 # V10
+
+## Responsive Design Approach
+
+The dashboard and pitch wizard have been updated with mobile first utilities using Tailwind CSS. The sidebar collapses into a drawer on small screens and the wizard progress is displayed horizontally. Layout paddings adjust at the `sm` breakpoint so the interface fits on phones.
+
+To test the application in a mobile emulator:
+
+1. Run `npm run dev`.
+2. Open the browser developer tools and enable device emulation (Chrome DevTools: toggle the device toolbar).
+3. Verify layouts from 320&nbsp;px wide up to desktop sizes.
+
+Touch targets and font sizes follow Tailwind defaults for accessibility.

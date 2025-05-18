@@ -20,11 +20,61 @@
  * - OPTIMIZATION: Now accepts userId as a prop to avoid redundant auth checks.
  */
 
-"use server"
+"use client"
 
 import Link from "next/link"
 import { FileText, Plus, Settings } from "lucide-react"
-import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
+
+interface DashboardSidebarProps {
+  hasStripeCustomerId?: boolean
+  onLinkClick?: () => void
+}
+
+export default function DashboardSidebar({
+  hasStripeCustomerId,
+  onLinkClick
+}: DashboardSidebarProps) {
+  return (
+    <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
+      <div className="p-5 border-b">
+        <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
+      </div>
+
+      <nav className="p-3 space-y-1">
+        <Link
+          href="/dashboard"
+          onClick={onLinkClick}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+        >
+          <FileText className="h-4 w-4" />
+          All Pitches
+        </Link>
+
+        <Link
+          href="/dashboard/new?new=true"
+          onClick={onLinkClick}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Create New Pitch
+        </Link>
+
+        {hasStripeCustomerId && (
+          <div className="pt-2 mt-2 border-t">
+            <Link
+              href="/dashboard/settings"
+              onClick={onLinkClick}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </Link>
+          </div>
+        )}
+      </nav>
+    </div>
+  )
+}
 
 /**
  * @interface DashboardSidebarProps
@@ -41,10 +91,13 @@ interface DashboardSidebarProps {
  * - We'll rely on Clerk for user info if we need to conditionally display items.
  * - For now, we just show a static list of links for pitch management.
  */
-export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+export default async function DashboardSidebar({
+  userId
+}: DashboardSidebarProps) {
   // Get the user's profile to check if they have a Stripe customer ID
   const profileResult = await getProfileByUserIdAction(userId)
-  const hasStripeCustomerId = profileResult.isSuccess && profileResult.data?.stripeCustomerId
+  const hasStripeCustomerId =
+    profileResult.isSuccess && profileResult.data?.stripeCustomerId
 
   return (
     <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">

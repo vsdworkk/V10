@@ -52,14 +52,15 @@ export default function ExperienceStep() {
   return (
     <motion.div
       className="space-y-8 bg-white rounded-2xl border border-gray-100 overflow-hidden"
-      style={{ 
-        boxShadow: '0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)' 
+      style={{
+        boxShadow:
+          "0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)"
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-8 space-y-8">
         {/* Relevant Experience */}
         <div className="space-y-4">
           <FormField
@@ -67,7 +68,9 @@ export default function ExperienceStep() {
             name="relevantExperience"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700 mb-4 block">Relevant Experience (Copy and Paste Your Resume Here)</FormLabel>
+                <FormLabel className="text-sm font-medium text-gray-700 mb-4 block">
+                  Relevant Experience (Copy and Paste Your Resume Here)
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Describe achievements, responsibilities, and skills relevant to this role..."

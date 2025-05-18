@@ -15,10 +15,14 @@ export default function PitchTable({ pitches }: PitchTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Filter pitches based on search query
-  const filteredPitches = pitches.filter(pitch =>
-    pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (pitch.organisationName && pitch.organisationName.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredPitches = pitches.filter(
+    pitch =>
+      pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (pitch.organisationName &&
+        pitch.organisationName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()))
   )
 
   return (
@@ -33,7 +37,9 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         </Link>
       </div>
 
-      <p className="text-gray-600 text-sm">View and manage your pitches below</p>
+      <p className="text-gray-600 text-sm">
+        View and manage your pitches below
+      </p>
 
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="relative w-full max-w-md">
@@ -41,12 +47,15 @@ export default function PitchTable({ pitches }: PitchTableProps) {
             type="text"
             placeholder="Search pitches..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-3 pr-4 py-1.5 w-full shadow-sm"
           />
         </div>
         <div className="flex items-center">
-          <Button variant="outline" className="flex items-center gap-2 shadow-sm">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 shadow-sm"
+          >
             <Filter className="h-4 w-4" />
             <span>Filter</span>
           </Button>
@@ -54,7 +63,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       </div>
 
       <div className="border rounded-md shadow-md overflow-hidden">
-        <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 border-b font-medium text-gray-500 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 p-3 bg-gray-50 border-b font-medium text-gray-500 text-sm">
           <div>ROLE</div>
           <div>ORGANISATION</div>
           <div>STATUS</div>
@@ -67,10 +76,10 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           </div>
         ) : (
           <div className="divide-y">
-            {filteredPitches.map((pitch) => (
+            {filteredPitches.map(pitch => (
               <div
                 key={pitch.id}
-                className="grid grid-cols-4 gap-4 p-2.5 items-center hover:bg-gray-50 transition-colors"
+                className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 p-2.5 items-center hover:bg-gray-50 transition-colors"
               >
                 {/* Role Name */}
                 <div>
@@ -105,7 +114,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {/* Resume button only for drafts */}
                   {pitch.status === "draft" && (
                     <Link href={`/dashboard/new/${pitch.id}`}>
@@ -136,7 +145,8 @@ export default function PitchTable({ pitches }: PitchTableProps) {
 
         {filteredPitches.length > 0 && (
           <div className="p-2 border-t text-xs text-gray-500 bg-gray-50">
-            Showing 1 to {filteredPitches.length} of {filteredPitches.length} results
+            Showing 1 to {filteredPitches.length} of {filteredPitches.length}{" "}
+            results
           </div>
         )}
       </div>
