@@ -144,7 +144,7 @@ export default function GuidanceStep({
     const formData = getValues()
 
     // Use definitivePitchId here as well for consistency
-    if (definitivePitchId) {
+    if (definitivePitchId && formData.userId) {
       void partialUpdatePitch(definitivePitchId, formData.userId, {
         starExamplesCount: newCount,
         starExampleDescriptions: finalArr
@@ -161,8 +161,9 @@ export default function GuidanceStep({
     })
 
     // Update the database if we have a pitch ID
-    if (definitivePitchId) {
-      void partialUpdatePitch(definitivePitchId, getValues("userId"), {
+    const currentUserId = getValues("userId")
+    if (definitivePitchId && currentUserId) {
+      void partialUpdatePitch(definitivePitchId, currentUserId, {
         starExampleDescriptions: updatedDescriptions
       })
     }
