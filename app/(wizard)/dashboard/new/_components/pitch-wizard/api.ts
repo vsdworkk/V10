@@ -27,8 +27,8 @@ export async function savePitchData(
   console.log("[savePitchData] Payload being sent:", payload)
 
   try {
-    console.log(`[savePitchData] Sending request to /api/pitchWizard`)
-    const res = await fetch("/api/pitchWizard", {
+    console.log(`[savePitchData] Sending request to /api/pitches`)
+    const res = await fetch("/api/pitches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -224,7 +224,7 @@ export async function submitFinalPitch(
   const payload = createPitchPayload(data, pitchId, 999, "final")
 
   try {
-    const res = await fetch("/api/pitchWizard", {
+    const res = await fetch("/api/pitches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
