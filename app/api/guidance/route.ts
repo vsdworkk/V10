@@ -1,3 +1,4 @@
+// API route to request AI guidance for a pitch
 import { NextRequest, NextResponse } from 'next/server';
 import { updatePitchByExecutionId } from '@/actions/db/pitches-actions';
 

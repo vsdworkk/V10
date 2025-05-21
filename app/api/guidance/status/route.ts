@@ -1,3 +1,4 @@
+// Poll AI guidance generation status
 import { NextRequest, NextResponse } from 'next/server';
 import { getPitchByExecutionIdAction } from '@/actions/db/pitches-actions';
 

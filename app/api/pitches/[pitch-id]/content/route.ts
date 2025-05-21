@@ -1,3 +1,4 @@
+// API route to update pitch content for a specific pitch ID
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { savePitchContentAction } from "@/actions/db/pitches-actions"
@@ -18,7 +19,10 @@ export async function PATCH(
     const content: string = body.pitchContent ?? ""
 
     if (typeof content !== "string") {
-      return NextResponse.json({ error: "Invalid pitchContent" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid pitchContent" },
+        { status: 400 }
+      )
     }
 
     const result = await savePitchContentAction(pitchId, userId, content)
@@ -35,7 +39,10 @@ export async function PATCH(
       { status: 200 }
     )
   } catch (error: any) {
-    console.error("PATCH /api/pitchContent/[pitchId] error:", error)
-    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 })
+    console.error("PATCH /api/pitches/[pitchId]/content error:", error)
+    return NextResponse.json(
+      { error: error.message || "Server error" },
+      { status: 500 }
+    )
   }
-} 
+}
