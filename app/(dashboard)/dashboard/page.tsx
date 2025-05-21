@@ -39,20 +39,20 @@ function PitchTableSkeleton() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-32" />
       </div>
-      <Skeleton className="h-4 w-full max-w-md mb-4" />
-      <div className="flex items-center justify-between gap-4 mb-4">
+      <Skeleton className="mb-4 h-4 w-full max-w-md" />
+      <div className="mb-4 flex items-center justify-between gap-4">
         <Skeleton className="h-10 w-full max-w-md" />
         <Skeleton className="h-10 w-24" />
       </div>
-      <div className="border rounded-md">
-        <div className="grid grid-cols-4 gap-4 p-4 border-b">
+      <div className="rounded-md border">
+        <div className="grid grid-cols-4 gap-4 border-b p-4">
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
         </div>
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="grid grid-cols-4 gap-4 p-4 border-b">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="grid grid-cols-4 gap-4 border-b p-4">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-20" />
@@ -69,7 +69,7 @@ function PitchTableSkeleton() {
  */
 async function PitchTableFetcher() {
   const { userId } = await auth()
-  
+
   // This should never happen since the layout already checks for auth,
   // but we handle it for type safety
   if (!userId) {
@@ -80,7 +80,7 @@ async function PitchTableFetcher() {
       </div>
     )
   }
-  
+
   // Fetch all pitches for this user
   const pitchesRes = await getAllPitchesForUserAction(userId)
 

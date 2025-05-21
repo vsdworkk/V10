@@ -9,18 +9,21 @@ Updated to match new schema with kebab-case question fields.
  */
 export interface ActionStep {
   // UI-specific properties
-  id: string;
-  position: number;
-  isCompleted: boolean;
-  
+  id: string
+  position: number
+  isCompleted: boolean
+
   // Maps to the specific questions in database schema
-  "what-did-you-specifically-do-in-this-step": string;
-  "how-did-you-do-it-tools-methods-or-skills": string;
-  "what-was-the-outcome-of-this-step-optional"?: string;
-  
+  "what-did-you-specifically-do-in-this-step": string
+  "how-did-you-do-it-tools-methods-or-skills": string
+  "what-was-the-outcome-of-this-step-optional"?: string
+
   // Legacy properties - to be removed after migration
-  title?: string;
-  description?: string;
+  title?: string
+  description?: string
 }
 
-export type ActionStepFormData = Omit<ActionStep, 'id' | 'position' | 'isCompleted'>; 
+export type ActionStepFormData = Omit<
+  ActionStep,
+  "id" | "position" | "isCompleted"
+>

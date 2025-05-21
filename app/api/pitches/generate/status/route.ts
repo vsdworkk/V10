@@ -1,3 +1,4 @@
+// Poll for pitch generation completion by execution ID
 import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
 
@@ -13,35 +14,38 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    // Note: The requestId is actually the pitch ID
+    // getPitchByExecutionIdAction is designed to look up by BOTH agentExecutionId and id fields
+    // This is the exact same pattern used by the guidance system
     const result = await getPitchByExecutionIdAction(requestId)
     console.log(
-      `Status check for requestId ${requestId}: ${result.isSuccess ? "found" : "not found"}`
+      `Pitch status check for requestId ${requestId}: ${result.isSuccess ? "found" : "not found"}`
     )
 
     if (!result.isSuccess) {
       return NextResponse.json({
         status: "pending",
-        message: "Guidance not found or still processing"
+        message: "Pitch not found or still processing"
       })
     }
 
-    // If we have guidance, return it
-    if (result.data?.albertGuidance) {
+    // If we have pitch content, return it
+    if (result.data?.pitchContent) {
       return NextResponse.json({
         status: "completed",
-        guidance: result.data.albertGuidance
+        pitchContent: result.data.pitchContent
       })
     }
 
     // Otherwise, it's still processing
     return NextResponse.json({
       status: "pending",
-      message: "Guidance still processing"
+      message: "Pitch still processing"
     })
-  } catch (error) {
-    console.error("Error checking guidance status:", error)
+  } catch (error: any) {
+    console.error("Error checking pitch status:", error)
     return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     )
   }

@@ -7,18 +7,21 @@ interface SettingsInterfaceProps {
   userId: string
 }
 
-export default async function SettingsInterface({ userId }: SettingsInterfaceProps) {
+export default async function SettingsInterface({
+  userId
+}: SettingsInterfaceProps) {
   // Get the user's profile to check if they have a Stripe customer ID
   const profileResult = await getProfileByUserIdAction(userId)
-  const hasStripeCustomerId = profileResult.isSuccess && profileResult.data?.stripeCustomerId
-  
+  const hasStripeCustomerId =
+    profileResult.isSuccess && profileResult.data?.stripeCustomerId
+
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="max-w-3xl space-y-8">
       {hasStripeCustomerId && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-lg bg-white p-6 shadow">
           <ManageBilling />
         </div>
       )}
     </div>
   )
-} 
+}

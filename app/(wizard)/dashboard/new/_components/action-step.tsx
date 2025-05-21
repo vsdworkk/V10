@@ -215,7 +215,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6">
       {/* Tips Accordion */}
       <Accordion
         type="single"
@@ -226,19 +226,19 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       >
         <AccordionItem
           value="tips-panel"
-          className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
-          <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
+          <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center mr-3 shadow-md border border-amber-200">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 shadow-md">
                 <div className="relative">
                   <Lightbulb
-                    className="h-5 w-5 text-amber-400 drop-shadow-sm"
+                    className="size-5 text-amber-400 drop-shadow-sm"
                     style={{
                       filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/30 to-amber-300/0 rounded-full" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/30 to-amber-300/0" />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Tips</span>
@@ -250,7 +250,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 Think about the overarching steps you took to complete the
                 assigned task, for example:
               </p>
-              <div className="space-y-4 ml-6">
+              <div className="ml-6 space-y-4">
                 <p className="text-base text-gray-700">
                   <span className="font-bold">Step 1:</span> Consulting
                   stakeholders or researching the issue.
@@ -275,18 +275,18 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
       {/* Action Section */}
       <div className="w-full">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="px-6 py-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center mr-3 shadow-md border border-blue-200">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md">
                 <div className="relative">
                   <Check
-                    className="h-5 w-5 text-blue-500 drop-shadow-sm"
+                    className="size-5 text-blue-500 drop-shadow-sm"
                     style={{
                       filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/30 to-blue-300/0 rounded-full" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500/30 to-blue-300/0" />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Action</span>
@@ -313,9 +313,9 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 size="sm"
                 onClick={handleAddStep}
                 disabled={hasReachedMaxSteps}
-                className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-600 hover:border-gray-300 hover:text-gray-700 transition-all duration-200 flex items-center justify-center group mt-4"
+                className="group mt-4 flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-4 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:text-gray-700"
               >
-                <Plus className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                <Plus className="mr-2 size-4 transition-transform group-hover:scale-110" />
                 Add Step {steps.length + 1}
               </Button>
               {hasReachedMaxSteps && (
@@ -369,18 +369,18 @@ function StepItem({ step, onSave }: StepItemProps) {
     <AccordionItem
       value={step.id}
       className={cn(
-        "border rounded-xl overflow-hidden transition-colors duration-200",
+        "overflow-hidden rounded-xl border transition-colors duration-200",
         step.isCompleted
           ? "border-blue-100 bg-blue-50"
           : "border-gray-200 hover:border-gray-300"
       )}
     >
-      <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
-        <div className="flex items-center justify-between w-full">
+      <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
+        <div className="flex w-full items-center justify-between">
           <div className="flex items-center">
             <div
               className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-sm",
+                "flex size-8 items-center justify-center rounded-full text-sm font-medium shadow-sm",
                 step.isCompleted
                   ? "bg-blue-500 text-white"
                   : "bg-gray-100 text-gray-600"
@@ -408,7 +408,7 @@ function StepItem({ step, onSave }: StepItemProps) {
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-what`}
-              className="block text-gray-700 font-medium"
+              className="block font-medium text-gray-700"
             >
               What did you specifically do in this step?
             </FormLabel>
@@ -418,7 +418,7 @@ function StepItem({ step, onSave }: StepItemProps) {
                 value={what}
                 onChange={e => setWhat(e.target.value)}
                 placeholder="I analyzed the log files to identify error patterns."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                className="min-h-24 w-full rounded-2xl border-l-4 border-gray-200 bg-gray-50 p-4 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {whatWords}
@@ -430,7 +430,7 @@ function StepItem({ step, onSave }: StepItemProps) {
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-how`}
-              className="block text-gray-700 font-medium"
+              className="block font-medium text-gray-700"
             >
               How did you do it? (tools, methods, or skills)
             </FormLabel>
@@ -440,7 +440,7 @@ function StepItem({ step, onSave }: StepItemProps) {
                 value={how}
                 onChange={e => setHow(e.target.value)}
                 placeholder="I used log analysis tools and debugging techniques."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                className="min-h-24 w-full rounded-2xl border-l-4 border-gray-200 bg-gray-50 p-4 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {howWords}
@@ -452,7 +452,7 @@ function StepItem({ step, onSave }: StepItemProps) {
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-outcome`}
-              className="block text-gray-700 font-medium"
+              className="block font-medium text-gray-700"
             >
               What was the outcome of this step? (optional)
             </FormLabel>
@@ -462,7 +462,7 @@ function StepItem({ step, onSave }: StepItemProps) {
                 value={outcome}
                 onChange={e => setOutcome(e.target.value)}
                 placeholder="I pinpointed a memory leak in a specific module."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                className="min-h-24 w-full rounded-2xl border-l-4 border-gray-200 bg-gray-50 p-4 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {outcomeWords}
@@ -472,7 +472,7 @@ function StepItem({ step, onSave }: StepItemProps) {
 
           <Button
             type="button"
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow mt-2"
+            className="mt-2 rounded-xl bg-blue-500 px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-600 hover:shadow"
             onClick={handleSave}
           >
             Save Step {step.position}

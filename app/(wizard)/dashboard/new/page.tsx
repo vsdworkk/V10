@@ -14,7 +14,7 @@
  *
  * @notes
  * - The wizard is a multi-step process collecting role/experience/STAR data
- * - Actual DB insertion is done by calling "/api/pitchWizard" in the final step
+ * - Actual DB insertion is done by calling "/api/pitches" in the final step
  */
 
 "use server"
@@ -35,7 +35,7 @@ export default async function CreateNewPitchPage() {
 
   // Render the client-side wizard, passing the userId
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <div className="container mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <CheckStoredPitch />
       <PitchWizard userId={userId} />
     </div>

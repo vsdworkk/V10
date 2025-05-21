@@ -41,41 +41,44 @@ interface DashboardSidebarProps {
  * - We'll rely on Clerk for user info if we need to conditionally display items.
  * - For now, we just show a static list of links for pitch management.
  */
-export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+export default async function DashboardSidebar({
+  userId
+}: DashboardSidebarProps) {
   // Get the user's profile to check if they have a Stripe customer ID
   const profileResult = await getProfileByUserIdAction(userId)
-  const hasStripeCustomerId = profileResult.isSuccess && profileResult.data?.stripeCustomerId
+  const hasStripeCustomerId =
+    profileResult.isSuccess && profileResult.data?.stripeCustomerId
 
   return (
-    <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
-      <div className="p-5 border-b">
+    <div className="w-64 shrink-0 border-r bg-white shadow-sm">
+      <div className="border-b p-5">
         <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
       </div>
 
-      <nav className="p-3 space-y-1">
+      <nav className="space-y-1 p-3">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
         >
-          <FileText className="h-4 w-4" />
+          <FileText className="size-4" />
           All Pitches
         </Link>
 
         <Link
           href="/dashboard/new?new=true"
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Create New Pitch
         </Link>
 
         {hasStripeCustomerId && (
-          <div className="pt-2 mt-2 border-t">
+          <div className="mt-2 border-t pt-2">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="size-4" />
               Settings
             </Link>
           </div>

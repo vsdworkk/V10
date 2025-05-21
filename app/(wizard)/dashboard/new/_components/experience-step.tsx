@@ -51,15 +51,16 @@ export default function ExperienceStep() {
 
   return (
     <motion.div
-      className="space-y-8 bg-white rounded-2xl border border-gray-100 overflow-hidden"
-      style={{ 
-        boxShadow: '0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)' 
+      className="space-y-8 overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      style={{
+        boxShadow:
+          "0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)"
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="p-8 space-y-8">
+      <div className="space-y-8 p-8">
         {/* Relevant Experience */}
         <div className="space-y-4">
           <FormField
@@ -67,11 +68,13 @@ export default function ExperienceStep() {
             name="relevantExperience"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700 mb-4 block">Relevant Experience (Copy and Paste Your Resume Here)</FormLabel>
+                <FormLabel className="mb-4 block text-sm font-medium text-gray-700">
+                  Relevant Experience (Copy and Paste Your Resume Here)
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Describe achievements, responsibilities, and skills relevant to this role..."
-                    className="w-full min-h-[300px] p-6 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 resize-none"
+                    className="min-h-[300px] w-full resize-none rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     {...field}
                   />
                 </FormControl>

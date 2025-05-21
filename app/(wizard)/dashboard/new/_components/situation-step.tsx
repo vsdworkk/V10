@@ -67,13 +67,13 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
     .filter(Boolean).length
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
+    <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
       {/* Card layout with "Situation" heading inside */}
       <div className="w-full px-8">
         {/* Card starts directly with Situation heading */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
           {/* Bold "Situation" heading */}
-          <h2 className="text-xl font-bold text-gray-800 mb-5">Situation</h2>
+          <h2 className="mb-5 text-xl font-bold text-gray-800">Situation</h2>
 
           {/* Field 1: Where and when */}
           <div className="mb-6">
@@ -82,13 +82,13 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     Where and when did this experience occur?
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className={`w-full p-4 border-l-4 ${getBorderColor(whereAndWhenQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
+                        className={`w-full border-l-4 p-4 ${getBorderColor(whereAndWhenQuality)} min-h-24 rounded-2xl bg-gray-50 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400`}
                         {...field}
                         placeholder="In my role at ABC Corp in 2024."
                       />
@@ -111,13 +111,13 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     Briefly describe the situation or challenge you faced.
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className={`w-full p-4 border-l-4 ${getBorderColor(situationOrChallengeQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
+                        className={`w-full border-l-4 p-4 ${getBorderColor(situationOrChallengeQuality)} min-h-24 rounded-2xl bg-gray-50 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400`}
                         {...field}
                         placeholder="Our team faced a software problem just weeks before launching an important product."
                       />
