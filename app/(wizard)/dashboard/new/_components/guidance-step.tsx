@@ -16,15 +16,19 @@ import {
 } from "@/components/ui/accordion"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { partialUpdatePitch } from "@/lib/utils"
 
 interface GuidanceStepProps {
-  pitchId?: string; // Accept pitchId as an optional prop
+  pitchId?: string // Accept pitchId as an optional prop
 }
 
-export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepProps) { // Destructure and rename prop
+export default function GuidanceStep({
+  pitchId: pitchIdFromProp
+}: GuidanceStepProps) {
+  // Destructure and rename prop
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
-  const params = useParams(); // Keep for other potential uses or fallback
-  
+  const params = useParams() // Keep for other potential uses or fallback
+
   // Form fields that matter for requesting guidance
   const userId = watch("userId")
   const roleName = watch("roleName")
@@ -34,61 +38,96 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
   const albertGuidance = watch("albertGuidance") // existing guidance
   const starExamplesCount = watch("starExamplesCount")
   const starExampleDescriptions = watch("starExampleDescriptions") || []
-  
+
   // Determine the definitive pitch ID to use
   // Prioritize the ID from props (coming from useWizard state)
   // Fallback to URL params if necessary (though less ideal now)
-  const definitivePitchId = pitchIdFromProp || params?.pitchId as string;
-  
+  const definitivePitchId = pitchIdFromProp || (params?.pitchId as string)
+
   // Use our custom hook
-  const { 
-    isLoading, 
-    guidance, 
-    error, 
-    requestId, 
-    fetchGuidance 
-  } = useAiGuidance();
-  
+  const { isLoading, guidance, error, requestId, fetchGuidance } =
+    useAiGuidance()
+
   // Initialize - request guidance if needed
   useEffect(() => {
-    console.log("[GuidanceStep] Initial guidance check - albertGuidance:", albertGuidance ? "present" : "not present", 
-                "isLoading:", isLoading, "definitivePitchId:", definitivePitchId);
-                
+    console.log(
+      "[GuidanceStep] Initial guidance check - albertGuidance:",
+      albertGuidance ? "present" : "not present",
+      "isLoading:",
+      isLoading,
+      "definitivePitchId:",
+      definitivePitchId
+    )
+
     // Ensure definitivePitchId is available before fetching
-    if (!albertGuidance && roleDescription && relevantExperience && !isLoading && userId && definitivePitchId) {
-      console.log("[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance");
+    if (
+      !albertGuidance &&
+      roleDescription &&
+      relevantExperience &&
+      !isLoading &&
+      userId &&
+      definitivePitchId
+    ) {
+      console.log(
+        "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
+      )
       fetchGuidance(
         roleDescription,
         relevantExperience,
         userId,
         definitivePitchId // Use the definitivePitchId
-      );
+      )
     } else if (albertGuidance) {
-      console.log("[GuidanceStep] Not fetching guidance as it already exists in form state");
+      console.log(
+        "[GuidanceStep] Not fetching guidance as it already exists in form state"
+      )
     }
     // Add definitivePitchId to dependency array if it can change and trigger re-fetch
-  }, [albertGuidance, roleDescription, relevantExperience, isLoading, userId, fetchGuidance, definitivePitchId]);
-  
+  }, [
+    albertGuidance,
+    roleDescription,
+    relevantExperience,
+    isLoading,
+    userId,
+    fetchGuidance,
+    definitivePitchId
+  ])
+
   // Update form when guidance is received
   useEffect(() => {
-    console.log("[GuidanceStep] useEffect for guidance update triggered. Hook guidance:", guidance, "isLoading:", isLoading);
-    
+    console.log(
+      "[GuidanceStep] useEffect for guidance update triggered. Hook guidance:",
+      guidance,
+      "isLoading:",
+      isLoading
+    )
+
     // When guidance exists, update the form and ensure loading is stopped
     if (guidance) {
-      console.log("[GuidanceStep] Setting albertGuidance in form with:", guidance);
-      setValue("albertGuidance", guidance, { shouldDirty: true });
+      console.log(
+        "[GuidanceStep] Setting albertGuidance in form with:",
+        guidance
+      )
+      setValue("albertGuidance", guidance, { shouldDirty: true })
       if (requestId) {
-        console.log("[GuidanceStep] Setting agentExecutionId in form with:", requestId);
-        setValue("agentExecutionId", requestId, { shouldDirty: true });
+        console.log(
+          "[GuidanceStep] Setting agentExecutionId in form with:",
+          requestId
+        )
+        setValue("agentExecutionId", requestId, { shouldDirty: true })
       }
     }
-  }, [guidance, requestId, setValue, isLoading]);
-  
+  }, [guidance, requestId, setValue, isLoading])
+
   // Handle STAR example count change
   const handleStarExamplesCountChange = (value: string) => {
-    setValue("starExamplesCount", value as PitchWizardFormData["starExamplesCount"], {
-      shouldDirty: true
-    })
+    setValue(
+      "starExamplesCount",
+      value as PitchWizardFormData["starExamplesCount"],
+      {
+        shouldDirty: true
+      }
+    )
 
     // Keep starExampleDescriptions array in sync
     const currentDescriptions = getValues("starExampleDescriptions") || []
@@ -103,50 +142,41 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
 
     // If we have a pitchId, patch the DB
     const formData = getValues()
-    
+
     // Use definitivePitchId here as well for consistency
     if (definitivePitchId) {
-      const payload = {
-        id: definitivePitchId,
-        userId: formData.userId,
+      void partialUpdatePitch(definitivePitchId, formData.userId, {
         starExamplesCount: newCount,
         starExampleDescriptions: finalArr
-      }
-      void fetch(`/api/pitchWizard/${definitivePitchId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
       })
     }
   }
 
   // Handle STAR example description change
   const handleDescriptionChange = (index: number, value: string) => {
-    const updatedDescriptions = [...starExampleDescriptions];
-    updatedDescriptions[index] = value;
-    setValue("starExampleDescriptions", updatedDescriptions, { shouldDirty: true });
-    
+    const updatedDescriptions = [...starExampleDescriptions]
+    updatedDescriptions[index] = value
+    setValue("starExampleDescriptions", updatedDescriptions, {
+      shouldDirty: true
+    })
+
     // Update the database if we have a pitch ID
     if (definitivePitchId) {
-      const payload = {
-        id: definitivePitchId,
-        userId: getValues("userId"),
+      void partialUpdatePitch(definitivePitchId, getValues("userId"), {
         starExampleDescriptions: updatedDescriptions
-      };
-      void fetch(`/api/pitchWizard/${definitivePitchId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      })
     }
-  };
+  }
 
-  const possibleStarCounts = ["1","2","3","4"]
+  const possibleStarCounts = ["1", "2", "3", "4"]
   const starCount = starExamplesCount || "2"
   const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
-  
+
   // Log form state of albertGuidance before rendering
-  console.log("[GuidanceStep] Rendering with albertGuidance (from form watch):", albertGuidance);
+  console.log(
+    "[GuidanceStep] Rendering with albertGuidance (from form watch):",
+    albertGuidance
+  )
 
   return (
     <div className="p-6">
@@ -166,9 +196,18 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
             </AccordionTrigger>
             <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
               <ul className="list-disc pl-5 space-y-2">
-                <li>The AI will analyze your experience and job requirements to provide guidance.</li>
-                <li>This guidance helps you craft effective STAR examples that highlight relevant skills.</li>
-                <li>Choose how many STAR examples you want to include in your pitch (1-4).</li>
+                <li>
+                  The AI will analyze your experience and job requirements to
+                  provide guidance.
+                </li>
+                <li>
+                  This guidance helps you craft effective STAR examples that
+                  highlight relevant skills.
+                </li>
+                <li>
+                  Choose how many STAR examples you want to include in your
+                  pitch (1-4).
+                </li>
               </ul>
             </AccordionContent>
           </AccordionItem>
@@ -229,24 +268,28 @@ export default function GuidanceStep({ pitchId: pitchIdFromProp }: GuidanceStepP
               In one sentence describe each STAR example you'll include:
             </p>
             <div className="space-y-4">
-              {Array.from({ length: parseInt(starCount, 10) }).map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <Label htmlFor={`star-example-${index}`}>
-                    STAR Example {index + 1}
-                  </Label>
-                  <Input
-                    id={`star-example-${index}`}
-                    placeholder={`Brief description of STAR example ${index + 1}`}
-                    value={starExampleDescriptions[index] || ""}
-                    onChange={(e) => handleDescriptionChange(index, e.target.value)}
-                    className="bg-white/80 backdrop-blur-sm"
-                  />
-                </div>
-              ))}
+              {Array.from({ length: parseInt(starCount, 10) }).map(
+                (_, index) => (
+                  <div key={index} className="space-y-2">
+                    <Label htmlFor={`star-example-${index}`}>
+                      STAR Example {index + 1}
+                    </Label>
+                    <Input
+                      id={`star-example-${index}`}
+                      placeholder={`Brief description of STAR example ${index + 1}`}
+                      value={starExampleDescriptions[index] || ""}
+                      onChange={e =>
+                        handleDescriptionChange(index, e.target.value)
+                      }
+                      className="bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                )
+              )}
             </div>
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }

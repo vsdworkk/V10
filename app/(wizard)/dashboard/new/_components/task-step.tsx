@@ -1,8 +1,8 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useMemo } from "react"
 import { PitchWizardFormData } from "./pitch-wizard/schema"
-import { useState, useEffect } from "react"
 import {
   FormField,
   FormItem,
@@ -11,7 +11,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-import { isString, parseLegacyTask } from "@/types"
 
 interface TaskStepProps {
   /**
@@ -36,49 +35,19 @@ function countWords(text: string) {
 }
 
 export default function TaskStep({ exampleIndex }: TaskStepProps) {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
+  const { control, watch } = useFormContext<PitchWizardFormData>()
 
-  const storedTask = watch(`starExamples.${exampleIndex}.task`)
+  const responsibility =
+    watch(
+      `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`
+    ) || ""
+  const constraints =
+    watch(
+      `starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`
+    ) || ""
 
-  const [responsibility, setResponsibility] = useState("")
-  const [constraints, setConstraints] = useState("")
-
-  // Word counts
   const responsibilityWords = countWords(responsibility)
   const constraintsWords = countWords(constraints)
-
-  const handleBlur = () => {
-    setValue(
-      `starExamples.${exampleIndex}.task`,
-      {
-        "what-was-your-responsibility-in-addressing-this-issue": responsibility,
-        "what-constraints-or-requirements-did-you-need-to-consider": constraints
-      },
-      { shouldDirty: true }
-    )
-  }
-
-  useEffect(() => {
-    if (storedTask) {
-      if (typeof storedTask === "object") {
-        setResponsibility(
-          storedTask["what-was-your-responsibility-in-addressing-this-issue"] || ""
-        )
-        setConstraints(
-          storedTask["what-constraints-or-requirements-did-you-need-to-consider"] || ""
-        )
-      } else if (isString(storedTask)) {
-        // Legacy fallback
-        const parsedTask = parseLegacyTask(storedTask)
-        setResponsibility(
-          parsedTask["what-was-your-responsibility-in-addressing-this-issue"] || ""
-        )
-        setConstraints(
-          parsedTask["what-constraints-or-requirements-did-you-need-to-consider"] || ""
-        )
-      }
-    }
-  }, [storedTask])
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
@@ -88,8 +57,9 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
 
           <div className="mb-6">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
                     What was your responsibility in addressing this issue?
@@ -98,9 +68,7 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                     <FormControl>
                       <Textarea
                         className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
-                        value={responsibility}
-                        onChange={(e) => setResponsibility(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="I was responsible for diagnosing the software errors and implementing fixes before the product launch."
                       />
                     </FormControl>
@@ -116,8 +84,9 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
 
           <div className="mb-2">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
                     What constraints or requirements did you need to consider?
@@ -126,9 +95,7 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                     <FormControl>
                       <Textarea
                         className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
-                        value={constraints}
-                        onChange={(e) => setConstraints(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="We had limited resources and a deadline of three weeks before launch."
                       />
                     </FormControl>
