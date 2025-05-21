@@ -17,18 +17,26 @@ export const actionStepSchema = z.object({
 export const starSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": z.string().optional(),
-    "briefly-describe-the-situation-or-challenge-you-faced": z.string().optional()
+    "briefly-describe-the-situation-or-challenge-you-faced": z
+      .string()
+      .optional()
   }),
   task: z.object({
-    "what-was-your-responsibility-in-addressing-this-issue": z.string().optional(),
-    "what-constraints-or-requirements-did-you-need-to-consider": z.string().optional()
+    "what-was-your-responsibility-in-addressing-this-issue": z
+      .string()
+      .optional(),
+    "what-constraints-or-requirements-did-you-need-to-consider": z
+      .string()
+      .optional()
   }),
   action: z.object({
     steps: z.array(actionStepSchema).min(1).optional()
   }),
   result: z.object({
     "what-positive-outcome-did-you-achieve": z.string().optional(),
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().optional()
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z
+      .string()
+      .optional()
   })
 })
 
@@ -50,13 +58,13 @@ export const updatePitchSchema = z.object({
 
   albertGuidance: z.string().optional().nullable(),
   pitchContent: z.string().optional().nullable(),
-  
+
   // Add agentExecutionId for PromptLayer integration
   agentExecutionId: z.string().optional().nullable(),
 
   // starExamplesCount can be 1..10
   starExamplesCount: z.number().min(1).max(10).optional(),
-  
+
   // starExampleDescriptions for short descriptions of each STAR example
   starExampleDescriptions: z.array(z.string()).optional(),
 

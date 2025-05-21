@@ -69,7 +69,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
 
-      if (subStepIndex === 0) return <SituationStep exampleIndex={exampleIndex} />
+      if (subStepIndex === 0)
+        return <SituationStep exampleIndex={exampleIndex} />
       if (subStepIndex === 1) return <TaskStep exampleIndex={exampleIndex} />
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
@@ -91,17 +92,17 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       <div className="space-y-8">
         {/* Add global styles for form fields */}
         <style jsx global>{`
-          .space-y-8 input, 
-          .space-y-8 textarea, 
+          .space-y-8 input,
+          .space-y-8 textarea,
           .space-y-8 select {
             border-color: #f0f0f5 !important;
             border-width: 1px !important;
             border-radius: 0.5rem !important;
             transition: all 0.2s ease-in-out;
           }
-          
-          .space-y-8 input:focus, 
-          .space-y-8 textarea:focus, 
+
+          .space-y-8 input:focus,
+          .space-y-8 textarea:focus,
           .space-y-8 select:focus {
             border-color: #e0e0ef !important;
             box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.08) !important;
@@ -118,14 +119,18 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
 
         {/* Header section */}
         <div className="mb-6">
-          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
+          <WizardHeader
+            header={currentHeader}
+            isIntro={currentSection === "INTRO"}
+          />
         </div>
 
         {/* Card containing form fields */}
-        <div 
-          className="bg-white rounded-2xl overflow-hidden mb-8"
-          style={{ 
-            boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
+        <div
+          className="mb-8 overflow-hidden rounded-2xl bg-white"
+          style={{
+            boxShadow:
+              "0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)"
           }}
         >
           <motion.div
@@ -140,18 +145,20 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Navigation buttons */}
-        <div className="pt-10 flex justify-between items-center mt-10">
+        <div className="mt-10 flex items-center justify-between pt-10">
           {/* Back button - only show when not on the review step */}
           {currentStep > 1 && currentStep < totalSteps ? (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBack}
               disabled={isPitchGenerationConfirmed}
-              className={`px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal ${
-                isPitchGenerationConfirmed ? 'opacity-50 cursor-not-allowed' : ''
+              className={`group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
+                isPitchGenerationConfirmed
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
             >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" />
+              <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
               Back
             </Button>
           ) : (
@@ -161,30 +168,30 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           <div className="flex items-center space-x-4">
             {/* Save and Close - Only show when NOT on the final review step */}
             {currentStep < totalSteps && (
-              <Button 
-                variant="outline" 
-                onClick={handleSaveAndClose} 
-                className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+              <Button
+                variant="outline"
+                onClick={handleSaveAndClose}
+                className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
-                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save &amp; Close
               </Button>
             )}
 
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
-              <Button 
-                onClick={handleNext} 
-                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium flex items-center group transition-all duration-200 shadow-sm hover:shadow"
+              <Button
+                onClick={handleNext}
+                className="group flex items-center rounded-xl bg-blue-500 px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:bg-blue-600 hover:shadow"
               >
                 Next Step
-                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
               </Button>
             ) : (
               <Button
                 type="button"
                 onClick={handleSubmitFinal}
-                className="bg-green-600 hover:bg-green-700 font-medium px-6 py-3 ml-auto"
+                className="ml-auto bg-green-600 px-6 py-3 font-medium hover:bg-green-700"
               >
                 Submit Pitch
               </Button>

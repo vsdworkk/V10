@@ -49,10 +49,10 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
   const benefitToTeamWords = countWords(benefitToTeam)
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
+    <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
       <div className="w-full px-8">
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-5">Result</h2>
+        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-bold text-gray-800">Result</h2>
 
           <div className="mb-6">
             <FormField
@@ -60,13 +60,13 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
               name={`starExamples.${exampleIndex}.result.what-positive-outcome-did-you-achieve`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     What positive outcome did you achieve from your actions?
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                        className="min-h-24 w-full rounded-2xl border-l-4 border-gray-200 bg-gray-50 p-4 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
                         {...field}
                         placeholder="I completed the project two weeks early, increasing profits by 10%."
                       />
@@ -87,14 +87,14 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
               name={`starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     How did this outcome benefit your team, stakeholders, or
                     organisation?
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                        className="min-h-24 w-full rounded-2xl border-l-4 border-gray-200 bg-gray-50 p-4 text-gray-700 shadow-sm transition-all duration-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
                         {...field}
                         placeholder="Our early launch resulted in praise from clients and stakeholders."
                       />

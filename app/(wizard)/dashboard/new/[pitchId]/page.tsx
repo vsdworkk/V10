@@ -46,31 +46,35 @@ function PitchWizardSkeleton() {
 
 async function PitchWizardFetcher({ pitchId }: { pitchId: string }) {
   const { userId } = await auth()
-  
+
   if (!userId) {
     redirect("/login")
   }
-  
+
   // Fetch the pitch by ID
   const pitchResult = await getPitchByIdAction(pitchId, userId)
-  
+
   // If the pitch is not found or doesn't belong to the user, redirect to dashboard
   if (!pitchResult.isSuccess) {
     redirect("/dashboard")
   }
-  
+
   // Pass the pitch data to the PitchWizard component
   return <PitchWizard userId={userId} pitchData={pitchResult.data} />
 }
 
-export default async function ResumePitchPage({ params }: { params: Promise<{ pitchId: string }> }) {
+export default async function ResumePitchPage({
+  params
+}: {
+  params: Promise<{ pitchId: string }>
+}) {
   const { pitchId } = await params
-  
+
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <div className="container mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <Suspense fallback={<PitchWizardSkeleton />}>
         <PitchWizardFetcher pitchId={pitchId} />
       </Suspense>
     </div>
   )
-} 
+}

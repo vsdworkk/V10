@@ -28,7 +28,10 @@ interface PitchEditorProps {
   initialContent: string
 }
 
-export default function PitchEditor({ pitchId, initialContent }: PitchEditorProps) {
+export default function PitchEditor({
+  pitchId,
+  initialContent
+}: PitchEditorProps) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -91,27 +94,62 @@ export default function PitchEditor({ pitchId, initialContent }: PitchEditorProp
     router.push("/dashboard")
   }, [hasChanges, router])
 
-  const wordCount = useMemo(() => (editor ? editor.storage.characterCount.words() : 0), [editor, editor?.state])
+  const wordCount = useMemo(
+    () => (editor ? editor.storage.characterCount.words() : 0),
+    [editor, editor?.state]
+  )
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 space-y-4 pb-8">
-      <div className="flex items-center gap-2 border rounded-md p-2 bg-muted w-full overflow-x-auto">
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleBold().run()} active={editor?.isActive("bold")} icon={<BoldIcon className="w-4 h-4" />} />
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleItalic().run()} active={editor?.isActive("italic")} icon={<ItalicIcon className="w-4 h-4" />} />
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleUnderline().run()} active={editor?.isActive("underline")} icon={<UnderlineIcon className="w-4 h-4" />} />
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} active={editor?.isActive("heading", { level: 2 })} icon={<TypeIcon className="w-4 h-4" />} />
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleBulletList().run()} active={editor?.isActive("bulletList")} icon={<ListIcon className="w-4 h-4" />} />
-        <ToolbarButton onClick={() => editor?.chain().focus().toggleOrderedList().run()} active={editor?.isActive("orderedList")} icon={<OrderedListIcon className="w-4 h-4" />} />
-        <span className="ml-auto text-sm text-muted-foreground whitespace-nowrap">Words: {wordCount}</span>
+    <div className="flex min-h-0 flex-1 flex-col space-y-4 pb-8">
+      <div className="bg-muted flex w-full items-center gap-2 overflow-x-auto rounded-md border p-2">
+        <ToolbarButton
+          onClick={() => editor?.chain().focus().toggleBold().run()}
+          active={editor?.isActive("bold")}
+          icon={<BoldIcon className="size-4" />}
+        />
+        <ToolbarButton
+          onClick={() => editor?.chain().focus().toggleItalic().run()}
+          active={editor?.isActive("italic")}
+          icon={<ItalicIcon className="size-4" />}
+        />
+        <ToolbarButton
+          onClick={() => editor?.chain().focus().toggleUnderline().run()}
+          active={editor?.isActive("underline")}
+          icon={<UnderlineIcon className="size-4" />}
+        />
+        <ToolbarButton
+          onClick={() =>
+            editor?.chain().focus().toggleHeading({ level: 2 }).run()
+          }
+          active={editor?.isActive("heading", { level: 2 })}
+          icon={<TypeIcon className="size-4" />}
+        />
+        <ToolbarButton
+          onClick={() => editor?.chain().focus().toggleBulletList().run()}
+          active={editor?.isActive("bulletList")}
+          icon={<ListIcon className="size-4" />}
+        />
+        <ToolbarButton
+          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+          active={editor?.isActive("orderedList")}
+          icon={<OrderedListIcon className="size-4" />}
+        />
+        <span className="text-muted-foreground ml-auto whitespace-nowrap text-sm">
+          Words: {wordCount}
+        </span>
       </div>
 
-      <div className="flex-1 min-h-0 w-full">
+      <div className="min-h-0 w-full flex-1">
         <EditorContent editor={editor} className="h-full" />
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={handleExit}>Exit</Button>
-        <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving…" : "Save"}</Button>
+        <Button variant="outline" onClick={handleExit}>
+          Exit
+        </Button>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
       </div>
     </div>
   )
@@ -124,5 +162,13 @@ interface ToolbarButtonProps {
 }
 
 function ToolbarButton({ onClick, active, icon }: ToolbarButtonProps) {
-  return <button type="button" onClick={onClick} className={`p-1.5 rounded-md hover:bg-accent transition-colors ${active ? "bg-accent" : ""}`}>{icon}</button>
-} 
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`hover:bg-accent rounded-md p-1.5 transition-colors ${active ? "bg-accent" : ""}`}
+    >
+      {icon}
+    </button>
+  )
+}

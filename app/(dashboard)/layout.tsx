@@ -61,7 +61,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar userId={userId} />
 
-      <main className="flex-1 p-8 bg-white shadow-sm m-4 rounded-lg">
+      <main className="m-4 flex-1 rounded-lg bg-white p-8 shadow-sm">
         {children}
       </main>
     </div>

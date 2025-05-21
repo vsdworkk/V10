@@ -30,7 +30,7 @@ import {
   FormItem,
   FormControl,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
@@ -77,100 +77,143 @@ export default function RoleStep() {
 
   return (
     <motion.div
-  className="space-y-8 bg-white rounded-2xl border border-gray-100 overflow-hidden"
-  style={{ 
-    boxShadow: '0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)' 
-  }}
-  variants={containerVariants}
-  initial="hidden"
-  animate="visible"
->
-      <div className="p-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      className="space-y-8 overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      style={{
+        boxShadow:
+          "0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)"
+      }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <div className="space-y-8 p-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Role Name */}
-          <FormField control={control} name="roleName" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Role Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="e.g. Frontend Developer"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <FormField
+            control={control}
+            name="roleName"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Role Name
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. Frontend Developer"
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Organisation Name */}
-          <FormField control={control} name="organisationName" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Organisation Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="e.g. Engineering"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <FormField
+            control={control}
+            name="organisationName"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Organisation Name
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. Engineering"
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Role Level */}
-          <FormField control={control} name="roleLevel" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Role Level</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200">
-                    <SelectValue placeholder="Select APS level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["APS1","APS2","APS3","APS4","APS5","APS6","EL1"].map(l => (
-                      <SelectItem key={l} value={l}>{l}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <FormField
+            control={control}
+            name="roleLevel"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Role Level
+                </FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <SelectValue placeholder="Select APS level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        "APS1",
+                        "APS2",
+                        "APS3",
+                        "APS4",
+                        "APS5",
+                        "APS6",
+                        "EL1"
+                      ].map(l => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Pitch Word Limit */}
-          <FormField control={control} name="pitchWordLimit" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Pitch Word Limit</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  min={400}
-                  placeholder="Minimum 400 words"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                  onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
+          <FormField
+            control={control}
+            name="pitchWordLimit"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Pitch Word Limit
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    min={400}
+                    placeholder="Minimum 400 words"
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    onChange={e =>
+                      field.onChange(parseInt(e.target.value) || 0)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
         {/* Optional Role Description */}
         <div className="space-y-4">
-          <FormField control={control} name="roleDescription" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium text-gray-700">Role Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Describe the responsibilities and requirements for this role..."
-                  className="w-full h-48 p-6 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 resize-none"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
+          <FormField
+            control={control}
+            name="roleDescription"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Role Description
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Describe the responsibilities and requirements for this role..."
+                    className="h-48 w-full resize-none rounded-xl border border-gray-200 bg-white p-6 transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
       </div>
     </motion.div>

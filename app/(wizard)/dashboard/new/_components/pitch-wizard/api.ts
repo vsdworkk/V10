@@ -1,3 +1,6 @@
+// Helper functions used by the pitch wizard to persist data and generate the
+// final pitch content via API routes.
+
 import { UseFormReturn } from "react-hook-form"
 import { PitchWizardFormData } from "./schema"
 import { createPitchPayload } from "./helpers"
@@ -94,12 +97,16 @@ export async function triggerFinalPitch(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        userId: data.userId,
+        pitchId,
         roleName: data.roleName,
         roleLevel: data.roleLevel,
         pitchWordLimit: data.pitchWordLimit,
         roleDescription: data.roleDescription || "",
         relevantExperience: data.relevantExperience,
-        starExamples: data.starExamples
+        albertGuidance: data.albertGuidance || "",
+        starExamples: data.starExamples,
+        starExamplesCount: parseInt(data.starExamplesCount, 10)
       })
     })
 

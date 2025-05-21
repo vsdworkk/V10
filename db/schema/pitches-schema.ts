@@ -89,7 +89,10 @@ export const pitchesTable = pgTable("pitches", {
   starExamplesCount: integer("star_examples_count").default(1).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date())
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
 })
 
 /* inferred types */

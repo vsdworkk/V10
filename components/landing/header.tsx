@@ -38,7 +38,7 @@ export default function Header() {
 
   // Prefetch the dashboard route when component mounts
   useEffect(() => {
-    router.prefetch('/dashboard')
+    router.prefetch("/dashboard")
   }, [router])
 
   useEffect(() => {

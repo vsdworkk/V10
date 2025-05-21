@@ -35,7 +35,7 @@ export default async function CreateNewPitchPage() {
 
   // Render the client-side wizard, passing the userId
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <div className="container mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <CheckStoredPitch />
       <PitchWizard userId={userId} />
     </div>

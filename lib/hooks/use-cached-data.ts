@@ -35,11 +35,7 @@ export function useCachedData<T>(
     const cachedItem = cache[key]
     const now = Date.now()
 
-    if (
-      !force &&
-      cachedItem &&
-      now - cachedItem.timestamp < expiration
-    ) {
+    if (!force && cachedItem && now - cachedItem.timestamp < expiration) {
       setData(cachedItem.data)
       return
     }
@@ -50,7 +46,7 @@ export function useCachedData<T>(
     try {
       const result = await fetchFn()
       setData(result)
-      
+
       // Update cache
       cache[key] = {
         data: result,
@@ -75,4 +71,4 @@ export function useCachedData<T>(
     error,
     refetch: () => fetchData(true)
   }
-} 
+}

@@ -14,7 +14,10 @@ interface WizardHeaderProps {
  * Dynamic header shown at the top of the Pitch Wizard.
  * It fades / slides on change and stays sticky at the top of the wizard viewport.
  */
-export default function WizardHeader({ header, isIntro = false }: WizardHeaderProps) {
+export default function WizardHeader({
+  header,
+  isIntro = false
+}: WizardHeaderProps) {
   const sizeClass = "text-4xl"
   return (
     <motion.h2
@@ -28,4 +31,4 @@ export default function WizardHeader({ header, isIntro = false }: WizardHeaderPr
       {header}
     </motion.h2>
   )
-} 
+}
