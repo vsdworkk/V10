@@ -17,7 +17,7 @@ export async function partialUpdatePitch(
   userId: string,
   partialData: Record<string, unknown>
 ) {
-  const res = await fetch(`/api/pitchWizard/${pitchId}`, {
+  const res = await fetch(`/api/pitches/${pitchId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: pitchId, userId, ...partialData })

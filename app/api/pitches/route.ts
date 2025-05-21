@@ -1,7 +1,7 @@
 /**
  * @description
- * POST /api/pitchWizard  
- * Create **or** update a pitch record (when `id` is present in the body).
+ * POST /api/pitches
+ * Create or update a pitch record when `id` is present in the body.
  */
 
 import { NextResponse } from "next/server"
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       { status: 200 }
     )
   } catch (error: any) {
-    console.error("Error in POST /api/pitchWizard:", error)
+    console.error("Error in POST /api/pitches:", error)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
