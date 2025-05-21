@@ -21,7 +21,6 @@ import {
   AccordionContent
 } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
-import { isString } from "@/types"
 import type { ActionStep as ActionStepType } from "@/types/action-steps-types"
 
 // Add word count helper
@@ -43,7 +42,7 @@ interface ActionStepProps {
  */
 export default function ActionStep({ exampleIndex }: ActionStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
-  
+
   // Watch the action object for this example
   const storedAction = watch(`starExamples.${exampleIndex}.action`)
 
@@ -66,74 +65,32 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       Array.isArray(storedAction.steps)
     ) {
       // Convert stored steps to our local format
-      const parsedSteps = storedAction.steps.map((step: any, index: number) => ({
-        id: uuidv4(),
-        position: index + 1,
-        "what-did-you-specifically-do-in-this-step":
-          step["what-did-you-specifically-do-in-this-step"] || "",
-        "how-did-you-do-it-tools-methods-or-skills":
-          step["how-did-you-do-it-tools-methods-or-skills"] || "",
-        "what-was-the-outcome-of-this-step-optional":
-          step["what-was-the-outcome-of-this-step-optional"] || "",
-        isCompleted: Boolean(
-          step["what-did-you-specifically-do-in-this-step"] &&
-          step["how-did-you-do-it-tools-methods-or-skills"]
-        ),
-        // Set fixed title for display
-        title: `Step ${index + 1}`,
-        description: `How: ${
-          step["how-did-you-do-it-tools-methods-or-skills"] || ""
-        }\nOutcome: ${
-          step["what-was-the-outcome-of-this-step-optional"] || ""
-        }`
-      }))
+      const parsedSteps = storedAction.steps.map(
+        (step: any, index: number) => ({
+          id: uuidv4(),
+          position: index + 1,
+          "what-did-you-specifically-do-in-this-step":
+            step["what-did-you-specifically-do-in-this-step"] || "",
+          "how-did-you-do-it-tools-methods-or-skills":
+            step["how-did-you-do-it-tools-methods-or-skills"] || "",
+          "what-was-the-outcome-of-this-step-optional":
+            step["what-was-the-outcome-of-this-step-optional"] || "",
+          isCompleted: Boolean(
+            step["what-did-you-specifically-do-in-this-step"] &&
+              step["how-did-you-do-it-tools-methods-or-skills"]
+          ),
+          // Set fixed title for display
+          title: `Step ${index + 1}`,
+          description: `How: ${
+            step["how-did-you-do-it-tools-methods-or-skills"] || ""
+          }\nOutcome: ${
+            step["what-was-the-outcome-of-this-step-optional"] || ""
+          }`
+        })
+      )
       if (parsedSteps.length > 0) {
         setSteps(parsedSteps)
         return
-      }
-    } else if (isString(storedAction)) {
-      // Legacy string-based action data
-      try {
-        const sections = storedAction.split("--")
-        if (sections.length > 1) {
-          const parsedSteps = sections.map((section: string, index: number) => {
-            const lines = section.trim().split("\n")
-            let title = ""
-            let howText = ""
-            let outcomeText = ""
-
-            lines.forEach((line: string) => {
-              if (line.startsWith("Step ") && line.includes(":")) {
-                title = line.split(":")[1].trim()
-              } else if (line.startsWith("How:")) {
-                howText = line.replace("How:", "").trim()
-              } else if (line.startsWith("Outcome:")) {
-                outcomeText = line.replace("Outcome:", "").trim()
-              }
-            })
-
-            return {
-              id: uuidv4(),
-              position: index + 1,
-              "what-did-you-specifically-do-in-this-step": title,
-              "how-did-you-do-it-tools-methods-or-skills": howText,
-              "what-was-the-outcome-of-this-step-optional": outcomeText,
-              isCompleted: Boolean(title && howText),
-              // Set fixed title for display
-              title: `Step ${index + 1}`,
-              description: `How: ${howText}\n${
-                outcomeText ? `Outcome: ${outcomeText}` : ""
-              }`
-            }
-          })
-
-          if (parsedSteps.length > 0) {
-            setSteps(parsedSteps)
-            return
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing legacy action steps:", e)
       }
     }
 
@@ -178,11 +135,11 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   const updateActionValue = (updatedSteps: ActionStepType[]) => {
     const stepData = updatedSteps
       .filter(
-        (s) =>
+        s =>
           s["what-did-you-specifically-do-in-this-step"]?.trim() ||
           s["how-did-you-do-it-tools-methods-or-skills"]?.trim()
       )
-      .map((step) => ({
+      .map(step => ({
         stepNumber: step.position,
         "what-did-you-specifically-do-in-this-step":
           step["what-did-you-specifically-do-in-this-step"] || "",
@@ -207,7 +164,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
     how: string,
     outcome: string
   ) => {
-    const updatedSteps = steps.map((step) => {
+    const updatedSteps = steps.map(step => {
       if (step.id === stepId) {
         return {
           ...step,
@@ -260,22 +217,27 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   return (
     <div className="flex flex-col w-full max-w-4xl mx-auto space-y-6">
       {/* Tips Accordion */}
-      <Accordion 
-        type="single" 
-        collapsible 
-        value={tipsOpen} 
+      <Accordion
+        type="single"
+        collapsible
+        value={tipsOpen}
         onValueChange={setTipsOpen}
         className="w-full"
       >
-        <AccordionItem 
-          value="tips-panel" 
+        <AccordionItem
+          value="tips-panel"
           className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
         >
           <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center mr-3 shadow-md border border-amber-200">
                 <div className="relative">
-                  <Lightbulb className="h-5 w-5 text-amber-400 drop-shadow-sm" style={{ filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))' }} />
+                  <Lightbulb
+                    className="h-5 w-5 text-amber-400 drop-shadow-sm"
+                    style={{
+                      filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
+                    }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/30 to-amber-300/0 rounded-full" />
                 </div>
               </div>
@@ -285,27 +247,32 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
           <AccordionContent className="px-6 pb-6 pt-2">
             <div className="space-y-5 text-gray-700">
               <p className="text-base text-gray-900">
-                Think about the overarching steps you took to complete the assigned task, for example:
+                Think about the overarching steps you took to complete the
+                assigned task, for example:
               </p>
               <div className="space-y-4 ml-6">
                 <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 1:</span> Consulting stakeholders or researching the issue.
+                  <span className="font-bold">Step 1:</span> Consulting
+                  stakeholders or researching the issue.
                 </p>
                 <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 2:</span> Developing solutions or implementing actions.
+                  <span className="font-bold">Step 2:</span> Developing
+                  solutions or implementing actions.
                 </p>
                 <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 3:</span> Presenting results or gathering feedback.
+                  <span className="font-bold">Step 3:</span> Presenting results
+                  or gathering feedback.
                 </p>
               </div>
               <p className="text-base text-gray-900">
-                Don't worry about formal or perfect wording, instead focus on clearly explaining what you did and how you did it in each step.
+                Don't worry about formal or perfect wording, instead focus on
+                clearly explaining what you did and how you did it in each step.
               </p>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      
+
       {/* Action Section */}
       <div className="w-full">
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -313,14 +280,19 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center mr-3 shadow-md border border-blue-200">
                 <div className="relative">
-                  <Check className="h-5 w-5 text-blue-500 drop-shadow-sm" style={{ filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))' }} />
+                  <Check
+                    className="h-5 w-5 text-blue-500 drop-shadow-sm"
+                    style={{
+                      filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
+                    }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/30 to-blue-300/0 rounded-full" />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Action</span>
             </div>
           </div>
-          
+
           <div className="px-6 pb-6">
             <div className="space-y-4">
               <Accordion
@@ -330,7 +302,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 onValueChange={handleValueChange}
                 className="space-y-3"
               >
-                {steps.map((step) => (
+                {steps.map(step => (
                   <StepItem key={step.id} step={step} onSave={handleSaveStep} />
                 ))}
               </Accordion>
@@ -361,22 +333,23 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
 interface StepItemProps {
   step: ActionStepType
-  onSave: (
-    stepId: string,
-    what: string,
-    how: string,
-    outcome: string
-  ) => void
+  onSave: (stepId: string, what: string, how: string, outcome: string) => void
 }
 
 /**
  * Renders a single collapsible step item.
  */
 function StepItem({ step, onSave }: StepItemProps) {
-  const [what, setWhat] = useState(step["what-did-you-specifically-do-in-this-step"])
-  const [how, setHow] = useState(step["how-did-you-do-it-tools-methods-or-skills"])
-  const [outcome, setOutcome] = useState(step["what-was-the-outcome-of-this-step-optional"])
-  
+  const [what, setWhat] = useState(
+    step["what-did-you-specifically-do-in-this-step"]
+  )
+  const [how, setHow] = useState(
+    step["how-did-you-do-it-tools-methods-or-skills"]
+  )
+  const [outcome, setOutcome] = useState(
+    step["what-was-the-outcome-of-this-step-optional"]
+  )
+
   // Word counts
   const whatWords = countWords(what || "")
   const howWords = countWords(how || "")
@@ -397,8 +370,8 @@ function StepItem({ step, onSave }: StepItemProps) {
       value={step.id}
       className={cn(
         "border rounded-xl overflow-hidden transition-colors duration-200",
-        step.isCompleted 
-          ? "border-blue-100 bg-blue-50" 
+        step.isCompleted
+          ? "border-blue-100 bg-blue-50"
           : "border-gray-200 hover:border-gray-300"
       )}
     >
@@ -421,8 +394,8 @@ function StepItem({ step, onSave }: StepItemProps) {
                 step.isCompleted ? "text-gray-900" : "text-gray-700"
               )}
             >
-              {step.isCompleted 
-                ? `Step ${step.position}` 
+              {step.isCompleted
+                ? `Step ${step.position}`
                 : `Step ${step.position}: Not yet completed`}
             </span>
           </div>
@@ -433,14 +406,17 @@ function StepItem({ step, onSave }: StepItemProps) {
         <div className="space-y-4">
           {/* WHAT */}
           <div className="space-y-2">
-            <FormLabel htmlFor={`step-${step.id}-what`} className="block text-gray-700 font-medium">
+            <FormLabel
+              htmlFor={`step-${step.id}-what`}
+              className="block text-gray-700 font-medium"
+            >
               What did you specifically do in this step?
             </FormLabel>
             <div className="relative">
               <Textarea
                 id={`step-${step.id}-what`}
                 value={what}
-                onChange={(e) => setWhat(e.target.value)}
+                onChange={e => setWhat(e.target.value)}
                 placeholder="I analyzed the log files to identify error patterns."
                 className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
               />
@@ -452,14 +428,17 @@ function StepItem({ step, onSave }: StepItemProps) {
 
           {/* HOW */}
           <div className="space-y-2">
-            <FormLabel htmlFor={`step-${step.id}-how`} className="block text-gray-700 font-medium">
+            <FormLabel
+              htmlFor={`step-${step.id}-how`}
+              className="block text-gray-700 font-medium"
+            >
               How did you do it? (tools, methods, or skills)
             </FormLabel>
             <div className="relative">
               <Textarea
                 id={`step-${step.id}-how`}
                 value={how}
-                onChange={(e) => setHow(e.target.value)}
+                onChange={e => setHow(e.target.value)}
                 placeholder="I used log analysis tools and debugging techniques."
                 className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
               />
@@ -471,14 +450,17 @@ function StepItem({ step, onSave }: StepItemProps) {
 
           {/* OUTCOME (optional) */}
           <div className="space-y-2">
-            <FormLabel htmlFor={`step-${step.id}-outcome`} className="block text-gray-700 font-medium">
+            <FormLabel
+              htmlFor={`step-${step.id}-outcome`}
+              className="block text-gray-700 font-medium"
+            >
               What was the outcome of this step? (optional)
             </FormLabel>
             <div className="relative">
               <Textarea
                 id={`step-${step.id}-outcome`}
                 value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
+                onChange={e => setOutcome(e.target.value)}
                 placeholder="I pinpointed a memory leak in a specific module."
                 className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
               />
@@ -488,9 +470,9 @@ function StepItem({ step, onSave }: StepItemProps) {
             </div>
           </div>
 
-          <Button 
-            type="button" 
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow mt-2" 
+          <Button
+            type="button"
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow mt-2"
             onClick={handleSave}
           >
             Save Step {step.position}

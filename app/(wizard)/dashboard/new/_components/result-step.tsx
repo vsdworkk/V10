@@ -1,8 +1,8 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useMemo } from "react"
 import { PitchWizardFormData } from "./pitch-wizard/schema"
-import { useState, useEffect } from "react"
 import {
   FormField,
   FormItem,
@@ -11,7 +11,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-import { isString, parseLegacyResult } from "@/types"
 
 // Add word count helper
 function countWords(text: string) {
@@ -35,54 +34,19 @@ interface ResultStepProps {
  * Data is stored in starExamples[exampleIndex].result
  */
 export default function ResultStep({ exampleIndex }: ResultStepProps) {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
+  const { control, watch } = useFormContext<PitchWizardFormData>()
 
-  const storedResult = watch(`starExamples.${exampleIndex}.result`)
+  const positiveOutcome =
+    watch(
+      `starExamples.${exampleIndex}.result.what-positive-outcome-did-you-achieve`
+    ) || ""
+  const benefitToTeam =
+    watch(
+      `starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`
+    ) || ""
 
-  const [positiveOutcome, setPositiveOutcome] = useState("")
-  const [benefitToTeam, setBenefitToTeam] = useState("")
-
-  // Word counts
   const positiveOutcomeWords = countWords(positiveOutcome)
   const benefitToTeamWords = countWords(benefitToTeam)
-
-  const handleBlur = () => {
-    setValue(
-      `starExamples.${exampleIndex}.result`,
-      {
-        "what-positive-outcome-did-you-achieve": positiveOutcome,
-        "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
-          benefitToTeam
-      },
-      { shouldDirty: true }
-    )
-  }
-
-  useEffect(() => {
-    if (storedResult) {
-      if (typeof storedResult === "object") {
-        setPositiveOutcome(
-          storedResult["what-positive-outcome-did-you-achieve"] || ""
-        )
-        setBenefitToTeam(
-          storedResult[
-            "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-          ] || ""
-        )
-      } else if (isString(storedResult)) {
-        // Legacy fallback
-        const parsedResult = parseLegacyResult(storedResult)
-        setPositiveOutcome(
-          parsedResult["what-positive-outcome-did-you-achieve"] || ""
-        )
-        setBenefitToTeam(
-          parsedResult[
-            "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-          ] || ""
-        )
-      }
-    }
-  }, [storedResult])
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
@@ -92,8 +56,9 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
 
           <div className="mb-6">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.result.what-positive-outcome-did-you-achieve`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
                     What positive outcome did you achieve from your actions?
@@ -102,9 +67,7 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                     <FormControl>
                       <Textarea
                         className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
-                        value={positiveOutcome}
-                        onChange={(e) => setPositiveOutcome(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="I completed the project two weeks early, increasing profits by 10%."
                       />
                     </FormControl>
@@ -120,19 +83,19 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
 
           <div className="mb-2">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
-                    How did this outcome benefit your team, stakeholders, or organisation?
+                    How did this outcome benefit your team, stakeholders, or
+                    organisation?
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
                         className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
-                        value={benefitToTeam}
-                        onChange={(e) => setBenefitToTeam(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="Our early launch resulted in praise from clients and stakeholders."
                       />
                     </FormControl>

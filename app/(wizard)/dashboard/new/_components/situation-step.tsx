@@ -1,8 +1,8 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useMemo } from "react"
 import { PitchWizardFormData } from "./pitch-wizard/schema"
-import { useEffect, useState } from "react"
 import {
   FormField,
   FormItem,
@@ -11,7 +11,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-import { isString, parseLegacySituation } from "@/types"
 
 // Evaluate answer quality (0-3 scale)
 function evaluateQuality(text: string) {
@@ -38,58 +37,34 @@ interface SituationStepProps {
 }
 
 export default function SituationStep({ exampleIndex }: SituationStepProps) {
-  const { watch, setValue } = useFormContext<PitchWizardFormData>()
-  const storedSituation = watch(`starExamples.${exampleIndex}.situation`)
+  const { control, watch } = useFormContext<PitchWizardFormData>()
 
-  // Local states for each field
-  const [whereAndWhen, setWhereAndWhen] = useState("")
-  const [situationOrChallenge, setSituationOrChallenge] = useState("")
-  const [whereAndWhenQuality, setWhereAndWhenQuality] = useState(0)
-  const [situationOrChallengeQuality, setSituationOrChallengeQuality] = useState(0)
+  const whereAndWhen =
+    watch(
+      `starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`
+    ) || ""
+  const situationOrChallenge =
+    watch(
+      `starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`
+    ) || ""
 
-  // Sync local states with stored data
-  useEffect(() => {
-    if (storedSituation) {
-      if (typeof storedSituation === "object") {
-        setWhereAndWhen(
-          storedSituation["where-and-when-did-this-experience-occur"] || ""
-        )
-        setSituationOrChallenge(
-          storedSituation["briefly-describe-the-situation-or-challenge-you-faced"] || ""
-        )
-      } else if (isString(storedSituation)) {
-        // Legacy fallback
-        const parsed = parseLegacySituation(storedSituation)
-        setWhereAndWhen(parsed["where-and-when-did-this-experience-occur"] || "")
-        setSituationOrChallenge(parsed["briefly-describe-the-situation-or-challenge-you-faced"] || "")
-      }
-    }
-  }, [storedSituation])
+  const whereAndWhenQuality = useMemo(
+    () => evaluateQuality(whereAndWhen),
+    [whereAndWhen]
+  )
+  const situationOrChallengeQuality = useMemo(
+    () => evaluateQuality(situationOrChallenge),
+    [situationOrChallenge]
+  )
 
-  // Update quality whenever text changes
-  useEffect(() => {
-    setWhereAndWhenQuality(evaluateQuality(whereAndWhen))
-  }, [whereAndWhen])
-
-  useEffect(() => {
-    setSituationOrChallengeQuality(evaluateQuality(situationOrChallenge))
-  }, [situationOrChallenge])
-
-  // On blur, store to form
-  const handleBlur = () => {
-    setValue(
-      `starExamples.${exampleIndex}.situation`,
-      {
-        "where-and-when-did-this-experience-occur": whereAndWhen,
-        "briefly-describe-the-situation-or-challenge-you-faced": situationOrChallenge
-      },
-      { shouldDirty: true }
-    )
-  }
-
-  // Word counts
-  const whereAndWhenWords = whereAndWhen.trim().split(/\s+/).filter(Boolean).length
-  const situationOrChallengeWords = situationOrChallenge.trim().split(/\s+/).filter(Boolean).length
+  const whereAndWhenWords = whereAndWhen
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
+  const situationOrChallengeWords = situationOrChallenge
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
@@ -103,8 +78,9 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
           {/* Field 1: Where and when */}
           <div className="mb-6">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
                     Where and when did this experience occur?
@@ -113,9 +89,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                     <FormControl>
                       <Textarea
                         className={`w-full p-4 border-l-4 ${getBorderColor(whereAndWhenQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
-                        value={whereAndWhen}
-                        onChange={(e) => setWhereAndWhen(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="In my role at ABC Corp in 2024."
                       />
                     </FormControl>
@@ -133,8 +107,9 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
           {/* Field 2: Situation/Challenge */}
           <div className="mb-2">
             <FormField
+              control={control}
               name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel className="block text-gray-700 font-medium mb-2">
                     Briefly describe the situation or challenge you faced.
@@ -143,9 +118,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                     <FormControl>
                       <Textarea
                         className={`w-full p-4 border-l-4 ${getBorderColor(situationOrChallengeQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
-                        value={situationOrChallenge}
-                        onChange={(e) => setSituationOrChallenge(e.target.value)}
-                        onBlur={handleBlur}
+                        {...field}
                         placeholder="Our team faced a software problem just weeks before launching an important product."
                       />
                     </FormControl>
