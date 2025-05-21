@@ -14,7 +14,7 @@
  *
  * @notes
  * - The wizard is a multi-step process collecting role/experience/STAR data
- * - Actual DB insertion is done by calling "/api/pitchWizard" in the final step
+ * - Actual DB insertion is done by calling "/api/pitches" in the final step
  */
 
 "use server"

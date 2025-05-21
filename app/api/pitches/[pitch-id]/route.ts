@@ -2,8 +2,8 @@
 
 /**
  * @description
- * PATCH /api/pitchWizard/[pitchId]  
- * Update an existing pitch.  Checks ownership via Clerk.
+ * PATCH /api/pitches/[pitchId]
+ * Update an existing pitch. Checks ownership via Clerk.
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -36,7 +36,10 @@ export async function PATCH(
       updatePitchSchema.parse(body) // zod validation (includes agentExecutionId)
     } catch (err) {
       console.error("Pitch validation error:", err)
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      )
     }
 
     /* ------------------------------------------------------------------ */
@@ -55,7 +58,7 @@ export async function PATCH(
       { status: 200 }
     )
   } catch (error: any) {
-    console.error("Error in PATCH /api/pitchWizard/[pitchId]:", error)
+    console.error("Error in PATCH /api/pitches/[pitchId]:", error)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
