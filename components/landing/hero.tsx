@@ -5,9 +5,106 @@ This client component provides the hero section for the landing page.
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { motion, useAnimate, useInView } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+
+const AnimatedCounter = () => {
+  const [count, setCount] = useState(1)
+  const [scope, animate] = useAnimate()
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
+  
+  useEffect(() => {
+    if (isInView) {
+      // Sequence of animations with enhanced visual effects
+      const startAnimation = async () => {
+        // Start with 1X and a longer initial delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Animate to 2X with enhanced effects
+        setCount(2)
+        await animate(scope.current, 
+          { 
+            y: [0, -30, 0], 
+            opacity: [1, 0.7, 1],
+            rotateX: [0, 60, 0],
+            color: ["#000000", "#3B82F6", "#000000"]
+          }, 
+          { duration: 0.6 }
+        )
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        // Animate to 3X
+        setCount(3)
+        await animate(scope.current, 
+          { 
+            y: [0, -30, 0], 
+            opacity: [1, 0.7, 1],
+            rotateX: [0, 60, 0],
+            color: ["#000000", "#8B5CF6", "#000000"]
+          }, 
+          { duration: 0.6 }
+        )
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        // Animate to 4X
+        setCount(4)
+        await animate(scope.current, 
+          { 
+            y: [0, -30, 0], 
+            opacity: [1, 0.7, 1],
+            rotateX: [0, 60, 0],
+            color: ["#000000", "#EC4899", "#000000"]
+          }, 
+          { duration: 0.6 }
+        )
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        // Finally, animate to 5X with even more emphasis
+        setCount(5)
+        await animate(scope.current, 
+          { 
+            y: [0, -30, 0], 
+            opacity: [1, 0.7, 1],
+            rotateX: [0, 60, 0],
+            scale: [1, 1.3, 1],
+            color: ["#000000", "#ef4444", "#000000"]
+          }, 
+          { duration: 0.8 }
+        )
+        
+        // Add a final highlight animation to emphasize the final value
+        await new Promise(resolve => setTimeout(resolve, 300))
+        await animate(scope.current,
+          {
+            textShadow: ["0px 0px 0px rgba(0,0,0,0)", "0px 0px 10px rgba(239,68,68,0.7)", "0px 0px 0px rgba(0,0,0,0)"],
+            scale: [1, 1.1, 1]
+          },
+          { duration: 1, ease: "easeOut" }
+        )
+      }
+      
+      startAnimation()
+    }
+  }, [isInView, animate])
+
+  return (
+    <span 
+      ref={ref} 
+      className="inline-block"
+    >
+      <motion.span
+        ref={scope}
+        className="text-5xl md:text-6xl lg:text-7xl font-bold inline-block"
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {count}x
+      </motion.span>
+    </span>
+  )
+}
 
 export const HeroSection = () => {
   return (
@@ -20,7 +117,7 @@ export const HeroSection = () => {
         className="w-full md:w-1/2 mb-10 md:mb-0 pr-0 md:pr-8"
       >
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight">
-          3x your chances of landing an interview
+          <AnimatedCounter /> your chances of landing an interview
         </h1>
         
         <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-lg">
