@@ -1,6 +1,7 @@
 // API route to start pitch generation using PromptLayer
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import { spendCreditsAction } from "@/actions/db/profiles-actions"
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +25,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
+      )
+    }
+
+    const creditResult = await spendCreditsAction(userId, 1)
+    if (!creditResult.isSuccess) {
+      return NextResponse.json(
+        { error: creditResult.message },
+        { status: 402 }
       )
     }
 

@@ -39,28 +39,42 @@ export default async function PricingPage() {
         </p>
       </div>
 
-      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
         <PricingCard
-          title="Monthly Plan"
-          price="$10"
-          description="Perfect for individuals and small teams"
-          buttonText="Subscribe Monthly"
+          title="Single Pitch"
+          price="1 Credit"
+          description="Purchase a single pitch credit"
+          buttonText="Buy Now"
           buttonLink={
-            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_MONTHLY || "#"
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_SINGLEPITCH || "#"
           }
           features={features}
           userId={userId}
           popular={false}
         />
         <PricingCard
-          title="Yearly Plan"
-          price="$100"
-          description="Save 17% with annual billing"
-          buttonText="Subscribe Yearly"
-          buttonLink={process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_YEARLY || "#"}
+          title="Pitch Pack"
+          price="5 Credits"
+          description="Bundle of five pitch credits"
+          buttonText="Buy Pack"
+          buttonLink={
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PITCHPACK || "#"
+          }
           features={features}
           userId={userId}
           popular={true}
+        />
+        <PricingCard
+          title="Pro Bundle"
+          price="15 Credits"
+          description="Best value for power users"
+          buttonText="Buy Bundle"
+          buttonLink={
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PROBUNDLE || "#"
+          }
+          features={features}
+          userId={userId}
+          popular={false}
         />
       </div>
 

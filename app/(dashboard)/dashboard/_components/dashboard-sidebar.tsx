@@ -44,12 +44,15 @@ interface DashboardSidebarProps {
 export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
   // Get the user's profile to check if they have a Stripe customer ID
   const profileResult = await getProfileByUserIdAction(userId)
-  const hasStripeCustomerId = profileResult.isSuccess && profileResult.data?.stripeCustomerId
+  const hasStripeCustomerId =
+    profileResult.isSuccess && profileResult.data?.stripeCustomerId
+  const credits = profileResult.isSuccess ? profileResult.data?.credits ?? 0 : 0
 
   return (
     <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
       <div className="p-5 border-b">
         <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
+        <p className="text-xs text-gray-500 mt-1">Credits: {credits}</p>
       </div>
 
       <nav className="p-3 space-y-1">
