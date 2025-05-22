@@ -417,7 +417,7 @@ This is a web app template.
 - Frontend: Next.js, Tailwind, Shadcn, Framer Motion
 - Backend: Postgres, Supabase, Drizzle ORM, Server Actions
 - Auth: Clerk
-- Payments: Stripe
+- Payments: It uses Stripe or clerk billing for payments.
 - Deployment: Vercel
 
 ## Project Structure
@@ -639,3 +639,9 @@ And exporting it:
 ```ts
 export * from "./actions-types"
 ```
+
+# Payments Rules
+
+Follow these rules when working on payments.
+
+It uses Stripe or clerk billing for payments.

@@ -1,9 +1,10 @@
 ---
 description: Follow these rules when working on payments.
 globs: 
+alwaysApply: false
 ---
 # Payments Rules
 
 Follow these rules when working on payments.
 
-It uses Stripe for payments.
+It uses Stripe or clerk billing for payments.
