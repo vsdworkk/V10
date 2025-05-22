@@ -42,7 +42,9 @@ const PricingCard = ({
 }: PricingCardProps) => {
   const finalButtonLink = userId
     ? `${buttonLink}?client_reference_id=${userId}`
-    : buttonLink
+    : `/signup?redirect_url=${encodeURIComponent(
+        `/checkout?payment_link=${encodeURIComponent(buttonLink)}`
+      )}`
 
   return (
     <motion.div
