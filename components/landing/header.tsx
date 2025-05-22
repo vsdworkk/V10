@@ -19,10 +19,8 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const navLinks = [
-  { href: "/about", label: "About" },
-  { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/contact", label: "Contact" }
+  { href: "#pricing", label: "Pricing" },
+  { href: "#contact", label: "Contact" }
 ]
 
 const signedInLinks = [{ href: "/dashboard", label: "Dashboard" }]
@@ -50,6 +48,28 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Function to handle smooth scrolling
+  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // Only process if we're on the home page and it's a hash link
+    if (window.location.pathname === '/' && href.startsWith('#')) {
+      e.preventDefault()
+      const targetId = href.substring(1)
+      const element = document.getElementById(targetId)
+      
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        })
+        
+        // Close mobile menu if open
+        if (isMenuOpen) {
+          setIsMenuOpen(false)
+        }
+      }
+    }
+  }
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -67,8 +87,20 @@ export default function Header() {
           whileTap={{ scale: 0.95 }}
         >
           <Receipt className="size-6" />
-          <Link href="/" className="text-xl font-bold">
-            Receipt AI
+          <Link 
+            href="/" 
+            className="text-xl font-bold"
+            onClick={(e) => {
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth'
+                });
+              }
+            }}
+          >
+            APSPitchPro
           </Link>
         </motion.div>
 
@@ -82,6 +114,7 @@ export default function Header() {
               <Link
                 href={link.href}
                 className="text-muted-foreground hover:text-foreground rounded-full px-3 py-1 transition"
+                onClick={(e) => handleScrollToSection(e, link.href)}
               >
                 {link.label}
               </Link>
@@ -175,7 +208,10 @@ export default function Header() {
                 <Link
                   href={link.href}
                   className="block hover:underline"
-                  onClick={toggleMenu}
+                  onClick={(e) => {
+                    handleScrollToSection(e, link.href)
+                    toggleMenu()
+                  }}
                 >
                   {link.label}
                 </Link>

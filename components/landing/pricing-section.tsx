@@ -126,7 +126,7 @@ export const PricingSection = ({ userId }: { userId: string | null }) => {
   ]
 
   return (
-    <section className="py-24 relative overflow-hidden bg-gradient-to-b from-gray-50 to-white">
+    <section id="pricing" className="py-24 relative overflow-hidden bg-gradient-to-b from-gray-50 to-white">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute top-40 right-20 w-72 h-72 rounded-full bg-purple-100 opacity-30 blur-3xl"></div>
