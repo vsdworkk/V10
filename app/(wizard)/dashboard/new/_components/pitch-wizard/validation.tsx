@@ -22,13 +22,14 @@ export async function validateStep(
       'roleName', 
       'organisationName', 
       'roleLevel', 
-      'pitchWordLimit'
+      'pitchWordLimit',
+      'roleDescription'
     ]);
   }
   
   else if (step === 3) {
-    // Experience step
-    result = await methods.trigger(['roleDescription', 'relevantExperience']);
+    // Experience step - only validate relevantExperience
+    result = await methods.trigger(['relevantExperience']);
   }
   
   else if (step === 4) {

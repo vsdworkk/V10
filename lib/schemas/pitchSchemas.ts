@@ -36,31 +36,33 @@ export const starSchema = z.object({
  * Zod schema for the pitch record update.
  * Removed yearsExperience and resumePath.
  */
-export const updatePitchSchema = z.object({
-  id: z.string().uuid().optional(),
-  userId: z.string().optional(),
-  roleName: z.string().min(2),
-  roleLevel: z.string().nonempty(),
-  pitchWordLimit: z.number().min(400).max(2000),
-  roleDescription: z.string().optional().nullable(),
-  relevantExperience: z.string().min(10),
+export const updatePitchSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+    userId: z.string().optional(),
+    roleName: z.string().min(2).optional(),
+    roleLevel: z.string().nonempty().optional(),
+    pitchWordLimit: z.number().min(400).max(2000).optional(),
+    roleDescription: z.string().optional().nullable(),
+    relevantExperience: z.string().min(10).optional(),
 
-  // The array of star examples, each must match starSchema
-  starExamples: z.array(starSchema).optional(),
+    // The array of star examples, each must match starSchema
+    starExamples: z.array(starSchema).optional(),
 
-  albertGuidance: z.string().optional().nullable(),
-  pitchContent: z.string().optional().nullable(),
-  
-  // Add agentExecutionId for PromptLayer integration
-  agentExecutionId: z.string().optional().nullable(),
+    albertGuidance: z.string().optional().nullable(),
+    pitchContent: z.string().optional().nullable(),
 
-  // starExamplesCount can be 1..10
-  starExamplesCount: z.number().min(1).max(10).optional(),
-  
-  // starExampleDescriptions for short descriptions of each STAR example
-  starExampleDescriptions: z.array(z.string()).optional(),
+    // Add agentExecutionId for PromptLayer integration
+    agentExecutionId: z.string().optional().nullable(),
 
-  // Add fields like currentStep or status if needed
-  currentStep: z.number().optional(),
-  status: z.enum(["draft", "final", "submitted"]).optional()
-})
+    // starExamplesCount can be 1..10
+    starExamplesCount: z.number().min(1).max(10).optional(),
+
+    // starExampleDescriptions for short descriptions of each STAR example
+    starExampleDescriptions: z.array(z.string()).optional(),
+
+    // Add fields like currentStep or status if needed
+    currentStep: z.number().optional(),
+    status: z.enum(["draft", "final", "submitted"]).optional()
+  })
+  .partial()

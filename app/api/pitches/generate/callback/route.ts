@@ -28,9 +28,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Extract the pitch content
-    let pitchContent = ""
-    if (data.output?.data?.["Final Pitch"]) {
+    // Extract the pitch content. The agent may return "Integration Prompt"
+    // containing JSON or the legacy "Final Pitch" field.
+    let pitchContent: any = ""
+    if (data.output?.data?.["Integration Prompt"]) {
+      pitchContent = data.output.data["Integration Prompt"]
+    } else if (data.data?.["Integration Prompt"]) {
+      pitchContent = data.data["Integration Prompt"]
+    } else if (data.output?.data?.["Final Pitch"]) {
       pitchContent = data.output.data["Final Pitch"]
     } else if (data.data?.["Final Pitch"]) {
       pitchContent = data.data["Final Pitch"]
@@ -77,34 +82,61 @@ export async function POST(req: NextRequest) {
 /**
  * Format plain text pitch as HTML for the rich text editor
  */
-function formatPitchAsHtml(text: string): string {
+function formatPitchAsHtml(text: any): string {
   if (!text) return ""
 
-  // Basic conversion of plain text to HTML
-  // Replace line breaks with paragraph tags
-  let html = ""
-  const paragraphs = text.split(/\n\s*\n/)
+  const escape = (str: string) =>
+    str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
-  for (const para of paragraphs) {
-    if (!para.trim()) continue
-
-    // Check if paragraph is a heading (e.g. "# Heading" or "## Subheading")
-    if (para.startsWith("# ")) {
-      const headingText = para.substring(2).trim()
-      html += `<h1>${headingText}</h1>`
-    } else if (para.startsWith("## ")) {
-      const headingText = para.substring(3).trim()
-      html += `<h2>${headingText}</h2>`
-    } else if (para.startsWith("### ")) {
-      const headingText = para.substring(4).trim()
-      html += `<h3>${headingText}</h3>`
-    } else {
-      // Regular paragraph
-      const lines = para.split("\n")
-      const processedPara = lines.join("<br>")
-      html += `<p>${processedPara}</p>`
+  // Attempt to parse JSON structure
+  let json: any = null
+  if (typeof text === "string") {
+    try {
+      json = JSON.parse(text)
+    } catch {
+      // not JSON
     }
+  } else if (typeof text === "object") {
+    json = text
   }
 
+  if (json && (json.introduction || json.starExamples || json.conclusion)) {
+    let html = ""
+    if (json.introduction) {
+      html += `<p>${escape(json.introduction)}</p>`
+    }
+    if (Array.isArray(json.starExamples)) {
+      for (const ex of json.starExamples) {
+        if (ex?.content) {
+          html += `<p>${escape(ex.content)}</p>`
+        }
+      }
+    }
+    if (json.conclusion) {
+      html += `<p>${escape(json.conclusion)}</p>`
+    }
+    return html
+  }
+
+  const plain = typeof text === "string" ? text : JSON.stringify(text)
+  let html = ""
+  const paragraphs = plain.split(/\n\s*\n/)
+  for (const para of paragraphs) {
+    if (!para.trim()) continue
+    if (para.startsWith("# ")) {
+      const headingText = para.substring(2).trim()
+      html += `<h1>${escape(headingText)}</h1>`
+    } else if (para.startsWith("## ")) {
+      const headingText = para.substring(3).trim()
+      html += `<h2>${escape(headingText)}</h2>`
+    } else if (para.startsWith("### ")) {
+      const headingText = para.substring(4).trim()
+      html += `<h3>${escape(headingText)}</h3>`
+    } else {
+      const lines = para.split("\n")
+      const processed = lines.map(l => escape(l)).join("<br>")
+      html += `<p>${processed}</p>`
+    }
+  }
   return html
 }

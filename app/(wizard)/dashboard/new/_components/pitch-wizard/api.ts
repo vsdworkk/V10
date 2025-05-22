@@ -94,12 +94,17 @@ export async function triggerFinalPitch(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        userId: data.userId,
+        pitchId,
         roleName: data.roleName,
+        organisationName: data.organisationName,
         roleLevel: data.roleLevel,
         pitchWordLimit: data.pitchWordLimit,
         roleDescription: data.roleDescription || "",
         relevantExperience: data.relevantExperience,
-        starExamples: data.starExamples
+        albertGuidance: data.albertGuidance || "",
+        starExamples: data.starExamples,
+        starExamplesCount: parseInt(data.starExamplesCount, 10)
       })
     })
 
