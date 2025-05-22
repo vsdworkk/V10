@@ -1,20 +1,14 @@
 /*
-This API route handles Stripe webhook events to manage subscription status changes and updates user profiles accordingly.
+Handles Stripe webhook events to add credits to user profiles when a
+payment link checkout session completes.
 */
 
-import {
-  manageSubscriptionStatusChange,
-  updateStripeCustomer
-} from "@/actions/stripe-actions"
+import { addCreditsAction } from "@/actions/db/profiles-actions"
 import { stripe } from "@/lib/stripe"
 import { headers } from "next/headers"
 import Stripe from "stripe"
 
-const relevantEvents = new Set([
-  "checkout.session.completed",
-  "customer.subscription.updated",
-  "customer.subscription.deleted"
-])
+const relevantEvents = new Set(["checkout.session.completed"])
 
 export async function POST(req: Request) {
   const body = await req.text()
@@ -36,15 +30,9 @@ export async function POST(req: Request) {
   if (relevantEvents.has(event.type)) {
     try {
       switch (event.type) {
-        case "customer.subscription.updated":
-        case "customer.subscription.deleted":
-          await handleSubscriptionChange(event)
-          break
-
         case "checkout.session.completed":
           await handleCheckoutSession(event)
           break
-
         default:
           throw new Error("Unhandled relevant event!")
       }
@@ -60,35 +48,26 @@ export async function POST(req: Request) {
   return new Response(JSON.stringify({ received: true }))
 }
 
-async function handleSubscriptionChange(event: Stripe.Event) {
-  const subscription = event.data.object as Stripe.Subscription
-  const productId = subscription.items.data[0].price.product as string
-  await manageSubscriptionStatusChange(
-    subscription.id,
-    subscription.customer as string,
-    productId
-  )
-}
-
 async function handleCheckoutSession(event: Stripe.Event) {
   const checkoutSession = event.data.object as Stripe.Checkout.Session
-  if (checkoutSession.mode === "subscription") {
-    const subscriptionId = checkoutSession.subscription as string
-    await updateStripeCustomer(
-      checkoutSession.client_reference_id as string,
-      subscriptionId,
-      checkoutSession.customer as string
-    )
-
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-      expand: ["default_payment_method"]
+  if (checkoutSession.mode === "payment") {
+    const session = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
+      expand: ["line_items.data.price.product"]
     })
+    const lineItem = session.line_items?.data[0]
+    const product = lineItem?.price?.product as Stripe.Product | undefined
+    const productId = typeof product === "string" ? product : product?.id
+    const clientRef = checkoutSession.client_reference_id as string
 
-    const productId = subscription.items.data[0].price.product as string
-    await manageSubscriptionStatusChange(
-      subscription.id,
-      subscription.customer as string,
-      productId
-    )
+    if (!productId || !clientRef) return
+
+    const fullProduct =
+      typeof product === "string"
+        ? await stripe.products.retrieve(productId)
+        : (product as Stripe.Product)
+    const credits = parseInt(fullProduct.metadata.credits || "0", 10)
+    if (credits > 0) {
+      await addCreditsAction(clientRef, credits)
+    }
   }
 }

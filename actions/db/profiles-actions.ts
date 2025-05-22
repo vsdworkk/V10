@@ -11,7 +11,7 @@ import {
   SelectProfile
 } from "@/db/schema/profiles-schema"
 import { ActionState } from "@/types"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 export async function createProfileAction(
   data: InsertProfile
@@ -122,5 +122,66 @@ export async function deleteProfileAction(
   } catch (error) {
     console.error("Error deleting profile:", error)
     return { isSuccess: false, message: "Failed to delete profile" }
+  }
+}
+
+export async function addCreditsAction(
+  userId: string,
+  amount: number
+): Promise<ActionState<SelectProfile>> {
+  try {
+    const [updatedProfile] = await db
+      .update(profilesTable)
+      .set({ credits: sql`${profilesTable.credits} + ${amount}` })
+      .where(eq(profilesTable.userId, userId))
+      .returning()
+
+    if (!updatedProfile) {
+      return { isSuccess: false, message: "Profile not found" }
+    }
+
+    return {
+      isSuccess: true,
+      message: "Credits added successfully",
+      data: updatedProfile
+    }
+  } catch (error) {
+    console.error("Error adding credits:", error)
+    return { isSuccess: false, message: "Failed to add credits" }
+  }
+}
+
+export async function spendCreditsAction(
+  userId: string,
+  amount: number
+): Promise<ActionState<SelectProfile>> {
+  try {
+    const profileResult = await getProfileByUserIdAction(userId)
+    if (!profileResult.isSuccess || !profileResult.data) {
+      return { isSuccess: false, message: "Profile not found" }
+    }
+
+    const currentCredits = profileResult.data.credits
+    if (currentCredits < amount) {
+      return { isSuccess: false, message: "Insufficient credits" }
+    }
+
+    const [updatedProfile] = await db
+      .update(profilesTable)
+      .set({
+        credits: sql`${profilesTable.credits} - ${amount}`,
+        creditsUsed: sql`${profilesTable.creditsUsed} + ${amount}`
+      })
+      .where(eq(profilesTable.userId, userId))
+      .returning()
+
+    return {
+      isSuccess: true,
+      message: "Credits used successfully",
+      data: updatedProfile
+    }
+  } catch (error) {
+    console.error("Error using credits:", error)
+    return { isSuccess: false, message: "Failed to use credits" }
   }
 }
