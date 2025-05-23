@@ -89,3 +89,11 @@ Global styles for the app.
     @apply bg-background text-foreground;
   }
 }
+@layer base {
+  h1 { @apply font-header text-4xl font-bold md:text-5xl lg:text-6xl; }
+  h2 { @apply font-header text-3xl font-semibold md:text-4xl lg:text-5xl; }
+  h3 { @apply font-header text-2xl font-semibold md:text-3xl lg:text-4xl; }
+  h4 { @apply font-header text-xl font-medium md:text-2xl lg:text-3xl; }
+  h5 { @apply font-header text-lg font-medium; }
+  h6 { @apply font-header text-base font-medium; }
+}
