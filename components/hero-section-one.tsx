@@ -183,7 +183,7 @@ export default function HeroSection() {
                                     <div className="before:border-foreground/5 before:bg-foreground/5 relative h-full before:absolute before:-inset-x-4 before:bottom-7 before:top-0 before:skew-x-6 before:rounded-[calc(var(--radius)+1rem)] before:border">
                                         <div className="bg-background rounded-lg shadow-foreground/10 ring-foreground/5 relative h-full -translate-y-6 skew-x-6 overflow-hidden border border-transparent shadow-xl ring-1">
                                             <Image
-                                                src="/image.png"
+                                                src="/Resized Screenshot.jpg"
                                                 alt="Dashboard preview showing APS application interface"
                                                 width="600"
                                                 height="400"

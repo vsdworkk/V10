@@ -9,8 +9,8 @@ import HeroSection from "@/components/hero-section-one"
 import Features from "@/components/features-3"
 import { StepsSection } from "@/components/landing/steps-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
-import { PricingSection } from "@/components/landing/pricing-section"
-import { FAQSection } from "@/components/landing/faq-section"
+import Pricing from "@/components/pricing"
+import FAQsTwo from "@/components/faqs-2"
 
 export default async function HomePage() {
   const { userId } = await auth()
@@ -21,8 +21,8 @@ export default async function HomePage() {
       <Features />
       <StepsSection />
       <SocialProofSection />
-      <PricingSection userId={userId} />
-      <FAQSection />
+      <Pricing />
+      <FAQsTwo />
     </div>
   )
 }
