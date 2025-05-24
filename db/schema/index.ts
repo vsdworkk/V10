@@ -10,3 +10,4 @@
 
 export * from "./profiles-schema"
 export * from "./pitches-schema"
+export * from "./contact-messages-schema"
