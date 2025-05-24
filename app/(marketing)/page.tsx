@@ -5,7 +5,7 @@ This server page is the marketing homepage.
 "use server"
 
 import { auth } from "@clerk/nextjs/server"
-import HeroSection from "@/components/hero-section-one"
+import Hero from "@/components/Hero"
 import Features from "@/components/features-3"
 import { StepsSection } from "@/components/landing/steps-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
@@ -17,7 +17,7 @@ export default async function HomePage() {
   
   return (
     <div className="pb-20">
-      <HeroSection />
+      <Hero />
       <Features />
       <StepsSection />
       <SocialProofSection />
