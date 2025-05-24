@@ -1,3 +1,6 @@
+/*
+This client component renders the hero section for the landing page with an animated counter and CTA buttons.
+*/
 "use client"
 
 import React from 'react'
