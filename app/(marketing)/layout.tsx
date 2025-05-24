@@ -4,7 +4,7 @@ This server layout provides a shared header and basic structure for (marketing) 
 
 "use server"
 
-import Header from "@/components/landing/header"
+import { HeroHeader } from "@/components/landing/header"
 
 export default async function MarketingLayout({
   children
@@ -13,7 +13,7 @@ export default async function MarketingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <HeroHeader />
       <div className="flex-1">{children}</div>
     </div>
   )
