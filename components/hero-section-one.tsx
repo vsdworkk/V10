@@ -186,12 +186,20 @@ export default function HeroSection() {
                                     <div className="before:border-foreground/5 before:bg-foreground/5 relative h-full before:absolute before:-inset-x-4 before:bottom-7 before:top-0 before:skew-x-6 before:rounded-[calc(var(--radius)+1rem)] before:border">
                                         <div className="bg-background rounded-lg shadow-foreground/10 ring-foreground/5 relative h-full -translate-y-6 skew-x-6 overflow-hidden border border-transparent shadow-xl ring-1">
                                             <Image
-                                                src="/Resized Screenshot.jpg"
+                                                src="/hd-image-for-hero.png"
                                                 alt="Dashboard preview showing APS application interface"
-                                                width="600"
-                                                height="400"
-                                                className="w-full h-auto object-cover"
+                                                width={1200}
+                                                height={800}
+                                                quality={100}
+                                                priority
+                                                className="w-full h-auto object-cover transform transition-transform duration-300 hover:scale-105"
+                                                style={{
+                                                    imageRendering: 'crisp-edges',
+                                                    WebkitImageRendering: 'crisp-edges',
+                                                } as React.CSSProperties}
                                             />
+                                            {/* Subtle gradient overlay for depth */}
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-white/5 pointer-events-none" />
                                         </div>
                                     </div>
                                 </div>
