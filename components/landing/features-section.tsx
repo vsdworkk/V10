@@ -1,98 +1,72 @@
-/*
-This client component provides the features section for the landing page.
-*/
-
-"use client"
-
-import { motion } from "framer-motion"
-import { Check } from "lucide-react"
-
-// Feature item component for each point
-const FeatureItem = ({ 
-  title, 
-  description, 
-  index 
-}: { 
-  title: string; 
-  description: string; 
-  index: number;
-}) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 + (index * 0.1), ease: "easeOut" }}
-      className="mb-10"
-    >
-      <div className="flex gap-4">
-        <div className="mt-1 flex-shrink-0">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
-            <Check className="h-3.5 w-3.5" />
-          </div>
-        </div>
-        <div>
-          <h3 className="font-semibold text-lg md:text-xl mb-2">{title}</h3>
-          <p className="text-gray-600 text-base leading-relaxed">{description}</p>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { ClipboardList, Layers, ShieldCheck, Sparkles } from "lucide-react"
+import { ReactNode } from "react"
 
 export const FeaturesSection = () => {
-  // Features data
   const features = [
     {
-      title: "Optimises APS Framework Alignment",
-      description: "Systematically considers every possible scenario to perfectly align your experience with APS frameworks—including ILS, WLS, and selection criteria—ensuring maximum fit and impact."
+      title: "APS Framework Alignment",
+      description:
+        "Systematically considers every possible scenario to perfectly align your experience with APS frameworks—including ILS, WLS, and selection criteria—ensuring maximum fit and impact.",
+      icon: <Layers className="size-6" aria-hidden />
     },
     {
-      title: "Optimises Selection Criteria Alignment",
-      description: "Intelligently adapts your experience to address the selection criteria, explicitly highlighting your suitability and significantly reducing risk of automatic rejection."
+      title: "Selection Criteria Precision",
+      description:
+        "Intelligently adapts your experience to address the selection criteria, explicitly highlighting your suitability and significantly reducing risk of automatic rejection.",
+      icon: <ClipboardList className="size-6" aria-hidden />
     },
     {
-      title: "Structured STAR Responses",
-      description: "Automatically organises your experience into persuasive STAR method narratives (Situation, Task, Action, Result) APS recruiters expect."
+      title: "Structured STAR Narratives",
+      description:
+        "Automatically organises your experience into persuasive STAR method narratives (Situation, Task, Action, Result) APS recruiters expect.",
+      icon: <Sparkles className="size-6" aria-hidden />
     },
     {
-      title: "Professional APS Tone",
-      description: "Uses human sounding, formal, targeted language designed specifically to resonate with APS recruiters, enhancing readability, credibility, and impact."
-    },
-    {
-      title: "Secure and Confidential",
-      description: "Employs rigorous encryption and stringent privacy measures, ensuring your personal data remains confidential and secure at all times."
+      title: "Professional Tone & Security",
+      description:
+        "Uses professional language designed to resonate with APS recruiters while rigorous encryption keeps your data secure and confidential.",
+      icon: <ShieldCheck className="size-6" aria-hidden />
     }
   ]
 
   return (
-    <section className="bg-gray-50 py-20 md:py-24">
-      <div className="container mx-auto px-4 md:px-8">
-        <div className="flex flex-col md:flex-row gap-12 md:gap-20 lg:gap-24">
-          {/* Left Column - Header */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full md:w-5/12 lg:w-2/5 md:sticky md:top-24 md:self-start"
-          >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
-              5X Your Chances of Landing an Interview
-            </h2>
-          </motion.div>
-          
-          {/* Right Column - Feature List */}
-          <div className="w-full md:w-7/12 lg:w-3/5">
-            {features.map((feature, index) => (
-              <FeatureItem
-                key={index}
-                title={feature.title}
-                description={feature.description}
-                index={index}
-              />
-            ))}
-          </div>
+    <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent">
+      <div className="@container mx-auto max-w-5xl px-6">
+        <div className="text-center">
+          <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
+            5X Your Chances of Landing an Interview
+          </h2>
+        </div>
+        <div className="@min-4xl:max-w-full @min-4xl:grid-cols-2 mx-auto mt-8 grid max-w-sm gap-6 *:text-center md:mt-16 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => (
+            <Card key={index} className="group shadow-zinc-950/5">
+              <CardHeader className="pb-3">
+                <CardDecorator>{feature.icon}</CardDecorator>
+                <h3 className="mt-6 font-medium">{feature.title}</h3>
+              </CardHeader>
+              <CardContent>
+                <p className="mt-3 text-sm">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </section>
   )
-} 
+}
+
+const CardDecorator = ({ children }: { children: ReactNode }) => (
+  <div className="relative mx-auto size-36 duration-200 [--color-border:color-mix(in_oklab,var(--color-zinc-950)10%,transparent)] group-hover:[--color-border:color-mix(in_oklab,var(--color-zinc-950)20%,transparent)] dark:[--color-border:color-mix(in_oklab,var(--color-white)15%,transparent)] dark:group-hover:bg-white/5 dark:group-hover:[--color-border:color-mix(in_oklab,var(--color-white)20%,transparent)]">
+    <div
+      aria-hidden
+      className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-[size:24px_24px]"
+    />
+    <div aria-hidden className="bg-radial to-background absolute inset-0 from-transparent to-75%" />
+    <div className="bg-background absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t">
+      {children}
+    </div>
+  </div>
+)
+
+export default FeaturesSection
