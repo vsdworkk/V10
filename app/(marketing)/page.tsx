@@ -5,26 +5,24 @@ This server page is the marketing homepage.
 "use server"
 
 import { auth } from "@clerk/nextjs/server"
-import { HeroSection } from "@/components/landing/hero"
-import { LogoBeltSection } from "@/components/landing/logo-belt"
-import { FeaturesSection } from "@/components/landing/features-section"
-import { StepsSection } from "@/components/landing/steps-section"
+import HeroSection from "@/components/hero-section-one"
+import Features from "@/components/Features"
+import HowItWorks from "@/components/HowItWorks"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
-import { PricingSection } from "@/components/landing/pricing-section"
-import { FAQSection } from "@/components/landing/faq-section"
+import Pricing from "@/components/pricing"
+import FAQsTwo from "@/components/faqs-2"
 
 export default async function HomePage() {
   const { userId } = await auth()
-  
+
   return (
     <div className="pb-20">
       <HeroSection />
-      <LogoBeltSection />
-      <FeaturesSection />
-      <StepsSection />
+      <Features />
+      <HowItWorks />
       <SocialProofSection />
-      <PricingSection userId={userId} />
-      <FAQSection />
+      <Pricing />
+      <FAQsTwo />
     </div>
   )
 }
