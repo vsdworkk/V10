@@ -10,7 +10,7 @@ import Features from "@/components/features-3"
 import { StepsSection } from "@/components/landing/steps-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
 import Pricing from "@/components/pricing"
-import FAQsTwo from "@/components/faqs-2"
+import FAQ from "@/components/faq"
 
 export default async function HomePage() {
   const { userId } = await auth()
@@ -22,7 +22,7 @@ export default async function HomePage() {
       <StepsSection />
       <SocialProofSection />
       <Pricing />
-      <FAQsTwo />
+      <FAQ />
     </div>
   )
 }
