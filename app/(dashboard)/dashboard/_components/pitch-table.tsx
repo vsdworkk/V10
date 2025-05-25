@@ -14,22 +14,52 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import { SelectPitch } from "@/db/schema/pitches-schema"
 import { Download, Filter } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useState } from "react"
+import html2pdf from "html2pdf.js"
+import { saveAs } from "file-saver"
+import { Document, Packer, Paragraph } from "docx"
 
 interface PitchTableProps {
   pitches: SelectPitch[]
+  credits: number
 }
 
-export default function PitchTable({ pitches }: PitchTableProps) {
+export default function PitchTable({ pitches, credits }: PitchTableProps) {
   const { user } = useUser()
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [orgFilter, setOrgFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+
+  function handleExport(pitch: SelectPitch, format: "pdf" | "doc") {
+    const content = pitch.pitchContent || ""
+    if (format === "pdf") {
+      const el = document.createElement("div")
+      el.innerText = content
+      html2pdf()
+        .from(el)
+        .set({ filename: `${pitch.roleName}.pdf` })
+        .save()
+    } else {
+      const doc = new Document({
+        sections: [{ children: [new Paragraph(content)] }]
+      })
+      Packer.toBlob(doc).then(blob => {
+        saveAs(blob, `${pitch.roleName}.docx`)
+      })
+    }
+  }
 
   // Filter pitches based on search query and selected filters
   const filteredPitches = pitches.filter(pitch => {
@@ -50,7 +80,11 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           .includes(orgFilter.toLowerCase())
       : true
     const statusMatch =
-      statusFilter === "all" ? true : pitch.status === statusFilter
+      statusFilter === "all"
+        ? true
+        : statusFilter === "completed"
+          ? pitch.status !== "draft"
+          : pitch.status === statusFilter
 
     return searchMatch && roleMatch && orgMatch && statusMatch
   })
@@ -62,11 +96,16 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           {`Welcome ${user?.firstName ?? ""}`}
         </h2>
 
-        <Link href="/dashboard/new?new=true">
-          <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
-            <span className="mr-2">+</span> Create New Pitch
-          </Button>
-        </Link>
+        <div className="flex flex-col items-end">
+          <Link href="/dashboard/new?new=true">
+            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
+              <span className="mr-2">+</span> Create New Pitch
+            </Button>
+          </Link>
+          <Badge variant="secondary" className="mt-2 text-xs">
+            {credits} credits remaining
+          </Badge>
+        </div>
       </div>
 
       <p className="text-gray-600 text-sm">
@@ -182,14 +221,29 @@ export default function PitchTable({ pitches }: PitchTableProps) {
 
                 {/* Export */}
                 <div className="flex gap-2">
-                  {/* Download button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-1 h-auto hover:bg-gray-100 rounded-full"
-                  >
-                    <Download className="h-4 w-4 text-gray-500" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-auto hover:bg-gray-100 rounded-full"
+                      >
+                        <Download className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onSelect={() => handleExport(pitch, "pdf")}
+                      >
+                        Export PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => handleExport(pitch, "doc")}
+                      >
+                        Export Word
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}

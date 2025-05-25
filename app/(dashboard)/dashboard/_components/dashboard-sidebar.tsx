@@ -24,7 +24,6 @@
 
 import Link from "next/link"
 import { Settings } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 
 /**
@@ -49,17 +48,11 @@ export default async function DashboardSidebar({
   const profileResult = await getProfileByUserIdAction(userId)
   const hasStripeCustomerId =
     profileResult.isSuccess && profileResult.data?.stripeCustomerId
-  const credits = profileResult.isSuccess
-    ? (profileResult.data?.credits ?? 0)
-    : 0
 
   return (
     <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
       <div className="p-5 border-b space-y-2">
         <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
-        <Badge variant="secondary" className="text-xs">
-          {credits} credits remaining
-        </Badge>
       </div>
 
       <nav className="p-3 space-y-1">
