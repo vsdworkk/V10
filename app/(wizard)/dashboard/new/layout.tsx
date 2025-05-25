@@ -58,8 +58,8 @@ export default function PitchWizardLayout({
    return () => window.removeEventListener("sectionChange", handleSectionChange)
  }, [maxCompletedSection])
 
- return (
-   <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+  return (
+    <div className="relative w-full min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
      {/* Subtle grid-pattern overlay */}
      <div
        className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
@@ -69,8 +69,8 @@ export default function PitchWizardLayout({
      />
 
      {/* Header - Updated to position logo far left and image far right */}
-     <header id="header" className="bg-white p-6 shadow-sm">
-       <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between">
+    <header id="header" className="bg-white p-6 shadow-sm w-full">
+      <div className="max-w-full w-full px-4 md:px-12 mx-auto flex items-center justify-between">
          {/* Logo positioned with padding from the left edge */}
          <div className="flex items-center pl-3">
            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -84,15 +84,15 @@ export default function PitchWizardLayout({
      </header>
      
      {/* Main "application card" container */}
-     <div id="main-container" className="flex items-stretch justify-center p-12">
+    <div id="main-container" className="flex-1 flex items-center justify-center p-6 md:p-12 w-full">
        <div
          id="application-card"
-         className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl flex"
+        className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-full max-w-4xl mx-auto flex flex-col md:flex-row"
        >
          {/* Sidebar with vertical progress */}
          <div
            id="sidebar"
-           className="w-72 border-r border-gray-100 bg-white p-8 flex items-center shadow-lg"
+        className="w-full md:w-1/3 flex-shrink-0 mb-6 md:mb-0 md:mr-8 border-b md:border-b-0 md:border-r border-gray-100 bg-white p-8 flex items-center shadow-lg"
          >
            <SectionProgressSidebar 
              current={currentSection}
@@ -102,7 +102,7 @@ export default function PitchWizardLayout({
          </div>
 
          {/* Your wizard content */}
-         <section id="main-content" className="flex-1 p-5 h-[800px] overflow-y-auto">
+        <section id="main-content" className="flex-1 p-5 sm:p-8 overflow-y-auto">
            {children}
          </section>
        </div>
