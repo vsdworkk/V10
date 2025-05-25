@@ -21,8 +21,9 @@ import {
   DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { SelectPitch } from "@/db/schema/pitches-schema"
-import { Download, Filter } from "lucide-react"
+import { Download, Filter, CreditCard } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useState } from "react"
@@ -44,19 +45,65 @@ export default function PitchTable({ pitches, credits }: PitchTableProps) {
 
   function handleExport(pitch: SelectPitch, format: "pdf" | "doc") {
     const content = pitch.pitchContent || ""
+    
+    // If content is empty, show a warning
+    if (!content.trim()) {
+      alert("No content available to export. Please ensure the pitch has content.")
+      return
+    }
+    
     if (format === "pdf") {
+      // Create a temporary div with proper HTML content
       const el = document.createElement("div")
-      el.innerText = content
+      el.innerHTML = content
+      
+      // Apply some basic styling for better PDF output
+      el.style.fontFamily = "Arial, sans-serif"
+      el.style.lineHeight = "1.6"
+      el.style.padding = "20px"
+      el.style.maxWidth = "800px"
+      
       html2pdf()
         .from(el)
-        .set({ filename: `${pitch.roleName}.pdf` })
+        .set({ 
+          filename: `${pitch.roleName}.pdf`,
+          margin: 1,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        })
         .save()
     } else {
+      // For Word export, we need to convert HTML to docx format
+      // Create a temporary div to parse HTML content
+      const tempDiv = document.createElement("div")
+      tempDiv.innerHTML = content
+      
+      // Extract text content and try to preserve basic formatting
+      const textContent = tempDiv.textContent || tempDiv.innerText || ""
+      
+      if (!textContent.trim()) {
+        alert("No text content found to export.")
+        return
+      }
+      
+      // Split content into paragraphs based on line breaks and HTML structure
+      const paragraphs = textContent.split(/\n\s*\n/).filter(p => p.trim())
+      
+      const docParagraphs = paragraphs.map(text => new Paragraph(text.trim()))
+      
       const doc = new Document({
-        sections: [{ children: [new Paragraph(content)] }]
+        sections: [{
+          properties: {},
+          children: docParagraphs.length > 0 ? docParagraphs : [new Paragraph(textContent)]
+        }]
       })
+      
       Packer.toBlob(doc).then(blob => {
         saveAs(blob, `${pitch.roleName}.docx`)
+      }).catch(error => {
+        console.error("Error creating Word document:", error)
+        alert("Error creating Word document. Please try again.")
       })
     }
   }
@@ -102,9 +149,17 @@ export default function PitchTable({ pitches, credits }: PitchTableProps) {
               <span className="mr-2">+</span> Create New Pitch
             </Button>
           </Link>
-          <Badge variant="secondary" className="mt-2 text-xs">
-            {credits} credits remaining
-          </Badge>
+          <Card className="mt-2">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Credits</span>
+                <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                  {credits}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -221,29 +276,31 @@ export default function PitchTable({ pitches, credits }: PitchTableProps) {
 
                 {/* Export */}
                 <div className="flex gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-1 h-auto hover:bg-gray-100 rounded-full"
-                      >
-                        <Download className="h-4 w-4 text-gray-500" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onSelect={() => handleExport(pitch, "pdf")}
-                      >
-                        Export PDF
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => handleExport(pitch, "doc")}
-                      >
-                        Export Word
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {pitch.status !== "draft" ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-auto hover:bg-gray-100 rounded-full"
+                        >
+                          <Download className="h-4 w-4 text-gray-500" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={() => handleExport(pitch, "pdf")}
+                        >
+                          Export PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => handleExport(pitch, "doc")}
+                        >
+                          Export Word
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </div>
               </div>
             ))}
