@@ -1,3 +1,4 @@
+// Handles the multi-step pitch creation wizard and navigation controls
 "use client"
 
 import { FormProvider } from "react-hook-form"
@@ -88,7 +89,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // Return the entire form + wizard controls
   return (
     <FormProvider {...methods}>
-      <div className="space-y-8">
+      <div className="space-y-6 max-w-full">
         {/* Add global styles for form fields */}
         <style jsx global>{`
           .space-y-8 input, 
@@ -122,10 +123,10 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Card containing form fields */}
-        <div 
-          className="bg-white rounded-2xl overflow-hidden mb-8"
-          style={{ 
-            boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
+        <div
+          className="bg-white rounded-2xl overflow-hidden"
+          style={{
+            boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)'
           }}
         >
           <motion.div
@@ -140,7 +141,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Navigation buttons */}
-        <div className="pt-10 flex justify-between items-center mt-10">
+        <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           {/* Back button - only show when not on the review step */}
           {currentStep > 1 && currentStep < totalSteps ? (
             <Button 

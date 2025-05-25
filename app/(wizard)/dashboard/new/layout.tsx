@@ -83,16 +83,19 @@ export default function PitchWizardLayout({
        </div>
      </header>
      
-     {/* Main "application card" container */}
-    <div id="main-container" className="flex-1 flex items-center justify-center p-6 md:p-12 w-full">
+    {/* Main "application card" container */}
+    <div
+      id="main-container"
+      className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 w-full min-h-screen"
+    >
        <div
          id="application-card"
-        className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-full max-w-4xl mx-auto flex flex-col md:flex-row"
+        className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-full max-w-7xl mx-auto flex flex-col lg:flex-row h-[90vh] max-h-[900px]"
        >
          {/* Sidebar with vertical progress */}
          <div
            id="sidebar"
-        className="w-full md:w-1/3 flex-shrink-0 mb-6 md:mb-0 md:mr-8 border-b md:border-b-0 md:border-r border-gray-100 bg-white p-8 flex items-center shadow-lg"
+        className="w-full lg:w-64 xl:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-100 bg-white p-4 sm:p-6 lg:p-8 overflow-y-auto"
          >
            <SectionProgressSidebar 
              current={currentSection}
@@ -102,7 +105,7 @@ export default function PitchWizardLayout({
          </div>
 
          {/* Your wizard content */}
-        <section id="main-content" className="flex-1 p-5 sm:p-8 overflow-y-auto">
+        <section id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden">
            {children}
          </section>
        </div>

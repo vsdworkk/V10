@@ -3,6 +3,7 @@
 
 import { Section } from "@/types"
 import clsx from "clsx"
+import { useState } from "react"
 
 interface SectionProgressSidebarProps {
   current?: Section
@@ -35,8 +36,18 @@ export default function SectionProgressSidebar({
   onNavigate,
   className,
 }: SectionProgressSidebarProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <div className="w-full space-y-6">
+    <div className={clsx("w-full", className)}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((o) => !o)}
+        className="lg:hidden mb-4 px-3 py-2 border rounded-md text-sm"
+      >
+        {isOpen ? "Hide Steps" : "Show Steps"}
+      </button>
+      <div className={clsx(isOpen ? "block" : "hidden", "space-y-6 lg:block")}>
       {STEP_ORDER.map((step, idx) => {
         // Check if step is completed based on maxCompleted, not current
         const isCompleted = STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(maxCompleted) || step === maxCompleted;
@@ -87,6 +98,7 @@ export default function SectionProgressSidebar({
           </button>
         )
       })}
+      </div>
     </div>
   )
 }

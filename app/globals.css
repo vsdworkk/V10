@@ -89,3 +89,13 @@ Global styles for the app.
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 768px) {
+  #sidebar {
+    max-height: 200px;
+  }
+
+  #main-content {
+    min-height: calc(100vh - 300px);
+  }
+}
