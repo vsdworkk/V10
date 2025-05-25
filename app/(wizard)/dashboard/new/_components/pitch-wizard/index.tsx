@@ -1,3 +1,4 @@
+// app/(wizard)/dashboard/new/_components/pitch-wizard/index.tsx
 "use client"
 
 import { FormProvider } from "react-hook-form"
@@ -88,7 +89,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // Return the entire form + wizard controls
   return (
     <FormProvider {...methods}>
-      <div className="space-y-8">
+      <div className="h-full flex flex-col">
         {/* Add global styles for form fields */}
         <style jsx global>{`
           .space-y-8 input, 
@@ -116,31 +117,35 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           onCancel={handleCancelPitchGeneration}
         />
 
-        {/* Header section */}
-        <div className="mb-6">
+        {/* Header section - Fixed */}
+        <div className="flex-shrink-0 mb-6">
           <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
         </div>
 
-        {/* Card containing form fields */}
-        <div 
-          className="bg-white rounded-2xl overflow-hidden mb-8"
-          style={{ 
-            boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
-          }}
-        >
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
+        {/* Main content area - Scrollable */}
+        <div className="flex-1 min-h-0 mb-6">
+          <div 
+            className="h-full bg-white rounded-2xl overflow-hidden"
+            style={{ 
+              boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
+            }}
           >
-            {renderStep()}
-          </motion.div>
+            <div className="h-full overflow-y-auto">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderStep()}
+              </motion.div>
+            </div>
+          </div>
         </div>
 
-        {/* Navigation buttons */}
-        <div className="pt-10 flex justify-between items-center mt-10">
+        {/* Navigation buttons - Always visible at bottom */}
+        <div className="flex-shrink-0 flex justify-between items-center pt-4 border-t border-gray-100 bg-white">
           {/* Back button - only show when not on the review step */}
           {currentStep > 1 && currentStep < totalSteps ? (
             <Button 

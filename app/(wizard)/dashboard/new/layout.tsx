@@ -1,7 +1,7 @@
 // app/(wizard)/dashboard/new/layout.tsx
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import SectionProgressSidebar from "./_components/section-progress-bar"
 import { Section } from "@/types"
 import { useRouter } from "next/navigation"
@@ -26,11 +26,19 @@ export default function PitchWizardLayout({
  const [currentSection, setCurrentSection] = useState<Section>("INTRO")
  const [maxCompletedSection, setMaxCompletedSection] = useState<Section>("INTRO")
  const router = useRouter()
+ 
+ // Ref to track the scrollable container
+ const scrollContainerRef = useRef<HTMLDivElement>(null)
 
  // Function to handle navigation from sidebar
  const handleSectionNavigate = (section: Section) => {
    // Update current section but don't change max completed
    setCurrentSection(section)
+   
+   // Reset scroll position when navigating
+   if (scrollContainerRef.current) {
+     scrollContainerRef.current.scrollTop = 0
+   }
    
    // Notify wizard of navigation request
    const event = new CustomEvent("sectionNavigate", { detail: { section } })
@@ -42,7 +50,14 @@ export default function PitchWizardLayout({
    const handleSectionChange = (e: any) => {
      if (e.detail && e.detail.section) {
        const newSection = e.detail.section;
+       const isForwardNavigation = e.detail.isForwardNavigation;
+       
        setCurrentSection(newSection)
+       
+       // Reset scroll position when moving forward in the wizard
+       if (isForwardNavigation && scrollContainerRef.current) {
+         scrollContainerRef.current.scrollTop = 0
+       }
        
        // Update max completed section if advancing forward
        const currentIndex = SECTION_ORDER.indexOf(newSection)
@@ -59,7 +74,7 @@ export default function PitchWizardLayout({
  }, [maxCompletedSection])
 
  return (
-   <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+   <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-hidden">
      {/* Subtle grid-pattern overlay */}
      <div
        className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
@@ -68,9 +83,9 @@ export default function PitchWizardLayout({
        }}
      />
 
-     {/* Header - Updated to position logo far left and image far right */}
-     <header id="header" className="bg-white p-6 shadow-sm">
-       <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between">
+     {/* Header - Fixed height */}
+     <header id="header" className="bg-white shadow-sm flex-shrink-0 z-10">
+       <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between py-6">
          {/* Logo positioned with padding from the left edge */}
          <div className="flex items-center pl-3">
            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -83,28 +98,34 @@ export default function PitchWizardLayout({
        </div>
      </header>
      
-     {/* Main "application card" container */}
-     <div id="main-container" className="flex items-stretch justify-center p-12">
+     {/* Main container - Takes remaining height */}
+     <div id="main-container" className="flex-1 flex items-center justify-center p-6 min-h-0">
        <div
          id="application-card"
-         className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl flex"
+         className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl h-[calc(100vh-140px)] flex"
        >
-         {/* Sidebar with vertical progress */}
+         {/* Sidebar with vertical progress - Fixed width */}
          <div
            id="sidebar"
-           className="w-72 border-r border-gray-100 bg-white p-8 flex items-center shadow-lg"
+           className="w-72 border-r border-gray-100 bg-white flex-shrink-0 shadow-lg"
          >
-           <SectionProgressSidebar 
-             current={currentSection}
-             maxCompleted={maxCompletedSection}
-             onNavigate={handleSectionNavigate}
-           />
+           <div className="h-full overflow-y-auto p-8">
+             <SectionProgressSidebar 
+               current={currentSection}
+               maxCompleted={maxCompletedSection}
+               onNavigate={handleSectionNavigate}
+             />
+           </div>
          </div>
 
-         {/* Your wizard content */}
-         <section id="main-content" className="flex-1 p-5 h-[800px] overflow-y-auto">
-           {children}
-         </section>
+         {/* Main content area - Takes remaining space with internal scrolling */}
+         <div id="main-content" className="flex-1 flex flex-col min-w-0">
+           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+             <div className="p-8">
+               {children}
+             </div>
+           </div>
+         </div>
        </div>
      </div>
    </div>

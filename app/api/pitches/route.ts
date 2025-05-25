@@ -17,7 +17,9 @@ export async function POST(request: Request) {
     /* ------------------------------------------------------------------ */
     /* 1.  Basic guard‑rails                                              */
     /* ------------------------------------------------------------------ */
-    if (!body.userId || !body.roleName || !body.roleLevel) {
+    // When saving draft steps we may only have the userId available.
+    // Other fields are optional until later in the wizard.
+    if (!body.userId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

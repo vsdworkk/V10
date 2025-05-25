@@ -23,8 +23,11 @@
 "use server"
 
 import Link from "next/link"
-import { Settings } from "lucide-react"
+import { Settings, Plus, CreditCard } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
 /**
  * @interface DashboardSidebarProps
@@ -48,14 +51,38 @@ export default async function DashboardSidebar({
   const profileResult = await getProfileByUserIdAction(userId)
   const hasStripeCustomerId =
     profileResult.isSuccess && profileResult.data?.stripeCustomerId
+  const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
 
   return (
     <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
-      <div className="p-5 border-b space-y-2">
+      <div className="p-5 border-b">
         <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
+        
+        {/* Credits Display */}
+        <div className="mt-4">
+          <Card className="bg-gray-50">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Credits</span>
+                <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                  {credits}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <nav className="p-3 space-y-1">
+      <nav className="px-5 py-3 space-y-1">
+        {/* Create New Pitch Button */}
+        <Link href="/dashboard/new?new=true">
+          <Button className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm justify-start h-8 px-2 text-xs">
+            <Plus className="h-3 w-3 mr-2" />
+            Create New Pitch
+          </Button>
+        </Link>
+
         {hasStripeCustomerId && (
           <div className="pt-2 mt-2 border-t">
             <Link

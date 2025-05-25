@@ -25,7 +25,6 @@
 
 import { auth } from "@clerk/nextjs/server"
 import { getAllPitchesForUserAction } from "@/actions/db/pitches-actions"
-import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 import { Suspense } from "react"
 import PitchTable from "@/app/(dashboard)/dashboard/_components/pitch-table"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -82,9 +81,8 @@ async function PitchTableFetcher() {
     )
   }
 
-  // Fetch all pitches and profile for this user
+  // Fetch all pitches for this user
   const pitchesRes = await getAllPitchesForUserAction(userId)
-  const profileRes = await getProfileByUserIdAction(userId)
 
   // If the DB action fails, display an error
   if (!pitchesRes.isSuccess) {
@@ -96,8 +94,7 @@ async function PitchTableFetcher() {
     )
   }
 
-  const credits = profileRes.isSuccess ? (profileRes.data?.credits ?? 0) : 0
-  return <PitchTable pitches={pitchesRes.data} credits={credits} />
+  return <PitchTable pitches={pitchesRes.data} />
 }
 
 /**
