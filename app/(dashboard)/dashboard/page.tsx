@@ -25,6 +25,7 @@
 
 import { auth } from "@clerk/nextjs/server"
 import { getAllPitchesForUserAction } from "@/actions/db/pitches-actions"
+import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 import { Suspense } from "react"
 import PitchTable from "@/app/(dashboard)/dashboard/_components/pitch-table"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -51,7 +52,7 @@ function PitchTableSkeleton() {
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
         </div>
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3, 4].map(i => (
           <div key={i} className="grid grid-cols-4 gap-4 p-4 border-b">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-full" />
@@ -69,7 +70,7 @@ function PitchTableSkeleton() {
  */
 async function PitchTableFetcher() {
   const { userId } = await auth()
-  
+
   // This should never happen since the layout already checks for auth,
   // but we handle it for type safety
   if (!userId) {
@@ -80,9 +81,10 @@ async function PitchTableFetcher() {
       </div>
     )
   }
-  
-  // Fetch all pitches for this user
+
+  // Fetch all pitches and profile for this user
   const pitchesRes = await getAllPitchesForUserAction(userId)
+  const profileRes = await getProfileByUserIdAction(userId)
 
   // If the DB action fails, display an error
   if (!pitchesRes.isSuccess) {
@@ -94,7 +96,8 @@ async function PitchTableFetcher() {
     )
   }
 
-  return <PitchTable pitches={pitchesRes.data} />
+  const credits = profileRes.isSuccess ? (profileRes.data?.credits ?? 0) : 0
+  return <PitchTable pitches={pitchesRes.data} credits={credits} />
 }
 
 /**
