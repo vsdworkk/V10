@@ -5,6 +5,7 @@ This server layout provides a shared header and basic structure for (marketing) 
 "use server"
 
 import Header from "@/components/landing/header"
+import Footer from "@/components/footer"
 
 export default async function MarketingLayout({
   children
@@ -15,6 +16,7 @@ export default async function MarketingLayout({
     <div className="flex min-h-screen flex-col">
       <Header />
       <div className="flex-1">{children}</div>
+      <Footer />
     </div>
   )
 }
