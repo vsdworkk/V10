@@ -2,38 +2,115 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent
+} from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 import { SelectPitch } from "@/db/schema/pitches-schema"
-import { Download, Filter, PlayCircle } from "lucide-react"
+import { Download, Filter } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem
+} from "@/components/ui/dropdown-menu"
+import html2pdf from "html2pdf.js"
+import { Document, Packer, Paragraph } from "docx"
+import { saveAs } from "file-saver"
+import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useState } from "react"
 
 interface PitchTableProps {
   pitches: SelectPitch[]
+  credits: number
 }
 
-export default function PitchTable({ pitches }: PitchTableProps) {
+export default function PitchTable({ pitches, credits }: PitchTableProps) {
+  const { user } = useUser()
   const [searchQuery, setSearchQuery] = useState("")
+  const [roleFilter, setRoleFilter] = useState("")
+  const [orgFilter, setOrgFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
 
-  // Filter pitches based on search query
-  const filteredPitches = pitches.filter(pitch =>
-    pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (pitch.organisationName && pitch.organisationName.toLowerCase().includes(searchQuery.toLowerCase()))
-  )
+  function handleExport(
+    content: string,
+    type: "pdf" | "docx",
+    roleName: string
+  ) {
+    if (type === "pdf") {
+      const element = document.createElement("div")
+      element.innerHTML = content
+      html2pdf()
+        .from(element)
+        .set({ filename: `${roleName}.pdf` })
+        .save()
+    } else {
+      const doc = new Document({
+        sections: [{ children: [new Paragraph(content)] }]
+      })
+      Packer.toBlob(doc).then(blob => saveAs(blob, `${roleName}.docx`))
+    }
+  }
+
+  // Filter pitches based on search query and selected filters
+  const filteredPitches = pitches.filter(pitch => {
+    const searchMatch =
+      pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pitch.roleLevel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (pitch.organisationName &&
+        pitch.organisationName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()))
+
+    const roleMatch = roleFilter
+      ? pitch.roleName.toLowerCase().includes(roleFilter.toLowerCase())
+      : true
+    const orgMatch = orgFilter
+      ? (pitch.organisationName || "")
+          .toLowerCase()
+          .includes(orgFilter.toLowerCase())
+      : true
+    const statusMatch =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "completed"
+        ? pitch.status !== "draft"
+        : pitch.status === "draft"
+
+    return searchMatch && roleMatch && orgMatch && statusMatch
+  })
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Your Pitches</h2>
+        <h2 className="text-2xl font-semibold">
+          {`Welcome ${user?.firstName ?? ""}`}
+        </h2>
 
-        <Link href="/dashboard/new?new=true">
-          <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
-            <span className="mr-2">+</span> Create New Pitch
-          </Button>
-        </Link>
+        <div className="flex flex-col items-end">
+          <Link href="/dashboard/new?new=true">
+            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
+              <span className="mr-2">+</span> Create New Pitch
+            </Button>
+          </Link>
+          <span className="text-xs text-gray-600 mt-1">
+            {credits} credits remaining
+          </span>
+        </div>
       </div>
 
-      <p className="text-gray-600 text-sm">View and manage your pitches below</p>
+      <p className="text-gray-600 text-sm">
+        View and manage your pitches below
+      </p>
 
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="relative w-full max-w-md">
@@ -41,15 +118,53 @@ export default function PitchTable({ pitches }: PitchTableProps) {
             type="text"
             placeholder="Search pitches..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-3 pr-4 py-1.5 w-full shadow-sm"
           />
         </div>
         <div className="flex items-center">
-          <Button variant="outline" className="flex items-center gap-2 shadow-sm">
-            <Filter className="h-4 w-4" />
-            <span>Filter</span>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 shadow-sm"
+              >
+                <Filter className="h-4 w-4" />
+                <span>Filter</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="space-y-3 w-64" align="end">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Role</label>
+                <Input
+                  value={roleFilter}
+                  onChange={e => setRoleFilter(e.target.value)}
+                  placeholder="Role name"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Organisation</label>
+                <Input
+                  value={orgFilter}
+                  onChange={e => setOrgFilter(e.target.value)}
+                  placeholder="Organisation"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -58,7 +173,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           <div>ROLE</div>
           <div>ORGANISATION</div>
           <div>STATUS</div>
-          <div>ACTIONS</div>
+          <div>EXPORT</div>
         </div>
 
         {filteredPitches.length === 0 ? (
@@ -67,7 +182,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           </div>
         ) : (
           <div className="divide-y">
-            {filteredPitches.map((pitch) => (
+            {filteredPitches.map(pitch => (
               <div
                 key={pitch.id}
                 className="grid grid-cols-4 gap-4 p-2.5 items-center hover:bg-gray-50 transition-colors"
@@ -104,23 +219,9 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                   </span>
                 </div>
 
-                {/* Actions */}
+                {/* Export */}
                 <div className="flex gap-2">
-                  {/* Resume button only for drafts */}
-                  {pitch.status === "draft" && (
-                    <Link href={`/dashboard/new/${pitch.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      >
-                        <PlayCircle className="h-4 w-4" />
-                        <span className="text-xs">Resume</span>
-                      </Button>
-                    </Link>
-                  )}
-
-                  {/* Download button always available */}
+                  {/* Download button */}
                   <Button
                     variant="ghost"
                     size="sm"
