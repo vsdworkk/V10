@@ -88,7 +88,7 @@ export default function PitchWizardLayout({
        <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between py-6">
          {/* Logo positioned with padding from the left edge */}
          <div className="flex items-center pl-3">
-           <span className="text-2xl font-bold text-blue-600">
+           <span className="text-2xl font-bold text-black">
              APSPitchPro
            </span>
          </div>

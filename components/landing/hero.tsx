@@ -15,8 +15,8 @@ export async function HeroSection() {
                 <div className="relative py-24">
                     <div className="mx-auto max-w-5xl px-6">
                         <div>
-                            <h1 className="mt-8 max-w-2xl text-balance text-5xl font-bold lg:text-6xl">AI-Assisted APS Pitches</h1>
-                            <p className="text-foreground my-6 max-w-2xl text-balance text-2xl">AI transforms your experience into interview-winning pitches. Zero stress, zero cost.</p>
+                            <h1 className="mt-8 max-w-2xl text-balance text-5xl font-bold lg:text-6xl">3X Your Interview Chances With an AI-Powered Pitch</h1>
+                            <p className="text-foreground my-6 max-w-2xl text-balance text-2xl">AI transforms your experience into interview-winning pitches. Zero stress, low cost.</p>
 
                             <div className="flex flex-col items-center gap-3 *:w-full sm:flex-row sm:*:w-fit">
                                 <Button
@@ -30,42 +30,14 @@ export async function HeroSection() {
                         </div>
 
                         <div className="mt-8">
-                            <p className="text-muted-foreground font-medium">Trusted by Employees at:</p>
+                            <p className="text-muted-foreground font-medium">Trusted by employees at:</p>
                             <div className="mt-4 flex items-center gap-12">
                                 <div className="flex">
                                     <img
-                                        className="mx-auto h-5 w-fit"
-                                        src="https://html.tailus.io/blocks/customers/nvidia.svg"
-                                        alt="Nvidia Logo"
-                                        height="20"
-                                        width="auto"
-                                    />
-                                </div>
-
-                                <div className="flex">
-                                    <img
-                                        className="mx-auto h-4 w-fit"
-                                        src="https://html.tailus.io/blocks/customers/column.svg"
-                                        alt="Column Logo"
-                                        height="16"
-                                        width="auto"
-                                    />
-                                </div>
-                                <div className="flex">
-                                    <img
-                                        className="mx-auto h-4 w-fit"
-                                        src="https://html.tailus.io/blocks/customers/github.svg"
-                                        alt="GitHub Logo"
-                                        height="16"
-                                        width="auto"
-                                    />
-                                </div>
-                                <div className="flex">
-                                    <img
-                                        className="mx-auto h-5 w-fit"
-                                        src="https://html.tailus.io/blocks/customers/nike.svg"
-                                        alt="Nike Logo"
-                                        height="20"
+                                        className="mx-auto h-14 w-fit"
+                                        src="/Gov Logo.png"
+                                        alt="Government Logo"
+                                        height="56"
                                         width="auto"
                                     />
                                 </div>
