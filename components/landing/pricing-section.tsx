@@ -16,7 +16,7 @@ interface PricingSectionProps {
 
 export async function PricingSection({ userId }: PricingSectionProps) {
     return (
-        <div className="bg-muted relative py-16 md:py-32">
+        <div className="relative py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-balance text-3xl font-semibold md:text-4xl lg:text-5xl">Pricing that scale with your business</h2>

@@ -8,7 +8,7 @@ import { Rocket, Target, Users } from 'lucide-react'
 
 export async function FeaturesSection() {
     return (
-        <section className="py-16 md:py-32 bg-background">
+        <section className="py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     {/* Left Column - Content */}

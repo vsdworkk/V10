@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 
 export async function HeroSection() {
     return (
-        <main className="bg-muted/50 overflow-hidden">
+        <main className="overflow-hidden">
             <section>
                 <div className="relative py-24">
                     <div className="mx-auto max-w-5xl px-6">

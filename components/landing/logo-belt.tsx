@@ -6,7 +6,7 @@ Logo belt section component showing trusted company logos.
 
 export async function LogoBeltSection() {
     return (
-        <section className="py-12 bg-muted/30">
+        <section className="py-12">
             <div className="mx-auto max-w-5xl px-6">
                 <p className="text-center text-muted-foreground font-medium mb-8">
                     Trusted by professionals at leading organizations

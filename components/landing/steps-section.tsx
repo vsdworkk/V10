@@ -11,7 +11,7 @@ import Link from 'next/link'
 
 export async function StepsSection() {
     return (
-        <section className="py-16 md:py-32 bg-muted/50">
+        <section className="py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
                 {/* Header */}
                 <div className="text-center mb-16">
