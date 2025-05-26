@@ -1,135 +1,77 @@
 /*
-This client component provides the FAQ section for the landing page.
+FAQ section component with expandable accordion questions and answers.
 */
 
 "use client"
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from "@/components/ui/accordion"
-import { motion } from "framer-motion"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import Link from 'next/link'
 
-interface FAQItem {
-  question: string
-  answer: string
-}
+export function FAQSection() {
+    const faqItems = [
+        {
+            id: 'item-1',
+            question: 'How long does shipping take?',
+            answer: 'Standard shipping takes 3-5 business days, depending on your location. Express shipping options are available at checkout for 1-2 business day delivery.',
+        },
+        {
+            id: 'item-2',
+            question: 'What payment methods do you accept?',
+            answer: 'We accept all major credit cards (Visa, Mastercard, American Express), PayPal, Apple Pay, and Google Pay. For enterprise customers, we also offer invoicing options.',
+        },
+        {
+            id: 'item-3',
+            question: 'Can I change or cancel my order?',
+            answer: 'You can modify or cancel your order within 1 hour of placing it. After this window, please contact our customer support team who will assist you with any changes.',
+        },
+        {
+            id: 'item-4',
+            question: 'Do you ship internationally?',
+            answer: "Yes, we ship to over 50 countries worldwide. International shipping typically takes 7-14 business days. Additional customs fees may apply depending on your country's import regulations.",
+        },
+        {
+            id: 'item-5',
+            question: 'What is your return policy?',
+            answer: 'We offer a 30-day return policy for most items. Products must be in original condition with tags attached. Some specialty items may have different return terms, which will be noted on the product page.',
+        },
+    ]
 
-export const FAQSection = () => {
-  const faqs: FAQItem[] = [
-    {
-      question: "Will my pitch look like everyone else's?",
-      answer: "No, each pitch is uniquely generated based on your specific experiences and the role you're applying for. Our AI personalizes content to highlight your unique strengths and experiences while using APS-appropriate language and structure."
-    },
-    {
-      question: "How does the AI know what APS panels are looking for?",
-      answer: "Our AI has been trained on thousands of successful APS applications and incorporates APS recruitment guidelines, Workplace Level Standards (WLS), and Integrated Leadership System (ILS) frameworks. We've worked with former APS recruiters to ensure our system understands what makes an application successful."
-    },
-    {
-      question: "Can I edit the pitch afterwards?",
-      answer: "Absolutely. While most users find the pitches ready to submit as-is, you receive your pitch in an editable format so you can make any personal touches or adjustments you'd like before submission."
-    },
-    {
-      question: "Will my data be private and secure?",
-      answer: "Yes, we take data privacy seriously. Your information is encrypted and never shared with third parties. We do not reuse your examples for other users' applications, and all personal data is deleted after 30 days unless you choose to create an account and save your information."
-    },
-    {
-      question: "Do I need to know APS terminology before using this?",
-      answer: "No, that's exactly what our tool helps with! Our guided questions are designed to extract the information we need from you in plain language. The AI then translates your experiences into the appropriate APS terminology and framework."
-    },
-    {
-      question: "How many pitches can I create?",
-      answer: "You can create as many pitches as you need at $1 each. Many users create separate pitches for different roles or departments to maximize their chances of success. There are no subscription fees or limits."
-    }
-  ]
+    return (
+        <section className="py-16 md:py-24">
+            <div className="mx-auto max-w-5xl px-4 md:px-6">
+                <div className="mx-auto max-w-xl text-center">
+                    <h2 className="text-balance text-3xl font-semibold md:text-4xl lg:text-5xl">Frequently Asked Questions</h2>
+                    <p className="text-muted-foreground mt-4 text-balance">Discover quick and comprehensive answers to common questions about our platform, services, and features.</p>
+                </div>
 
-  return (
-    <section id="contact" className="py-24 relative overflow-hidden bg-white">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute top-40 left-20 w-72 h-72 rounded-full bg-purple-100 opacity-30 blur-3xl"></div>
-        <div className="absolute bottom-40 right-10 w-64 h-64 rounded-full bg-[#7FE7E7]/20 blur-3xl"></div>
-        
-        {/* Decorative shapes */}
-        <div className="absolute top-32 left-10 w-6 h-6 rounded border-2 border-gray-200 rotate-45"></div>
-        <div className="absolute bottom-40 right-20 w-4 h-16 bg-[#7FE7E7]/20 rounded-full"></div>
-        <div className="absolute top-1/3 right-10 w-3 h-3 bg-black/10 rounded-full"></div>
-      </div>
-      
-      <div className="container mx-auto px-4 relative z-10 max-w-4xl">
-        {/* Section heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center mb-16"
-        >
-          <div className="flex justify-center mb-6">
-            <div className="px-4 py-2 bg-black text-white text-sm rounded-full font-medium">
-              Frequently Asked Questions
+                <div className="mx-auto mt-12 max-w-xl">
+                    <Accordion
+                        type="single"
+                        collapsible
+                        className="bg-card ring-muted w-full rounded-2xl border px-8 py-3 shadow-sm ring-4 dark:ring-0">
+                        {faqItems.map((item) => (
+                            <AccordionItem
+                                key={item.id}
+                                value={item.id}
+                                className="border-dashed">
+                                <AccordionTrigger className="cursor-pointer text-base hover:no-underline">{item.question}</AccordionTrigger>
+                                <AccordionContent>
+                                    <p className="text-base">{item.answer}</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+
+                    <p className="text-muted-foreground mt-6 px-8">
+                        Can't find what you're looking for? Contact our{' '}
+                        <Link
+                            href="/contact"
+                            className="text-primary font-medium hover:underline">
+                            customer support team
+                        </Link>
+                    </p>
+                </div>
             </div>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Got Questions? We Have Answers
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Everything you need to know about our service and how it can help you succeed.
-          </p>
-        </motion.div>
-
-        {/* FAQ Accordion */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="rounded-xl bg-white p-2 shadow-lg border border-gray-100"
-        >
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: 0.3 + (index * 0.1), 
-                  ease: "easeOut" 
-                }}
-              >
-                <AccordionItem value={`item-${index}`} className="border-b border-gray-200 last:border-0">
-                  <AccordionTrigger className="text-left font-medium py-4 text-lg hover:text-primary transition-colors">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-gray-600 pb-4 pt-0 text-base">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              </motion.div>
-            ))}
-          </Accordion>
-        </motion.div>
-        
-        {/* Additional help text */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.8, ease: "easeOut" }}
-          className="text-center mt-10"
-        >
-          <p className="text-muted-foreground text-sm">
-            Still have questions?{" "}
-            <a href="/contact" className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors">
-              Contact our support team
-            </a>
-          </p>
-        </motion.div>
-      </div>
-    </section>
-  )
-} 
+        </section>
+    )
+}

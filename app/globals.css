@@ -89,3 +89,56 @@ Global styles for the app.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Custom utilities for landing page animations and interactions */
+  .in-data-\[state\=active\]\:rotate-180 {
+    &[data-state="active"] {
+      transform: rotate(180deg);
+    }
+  }
+  
+  .in-data-\[state\=active\]\:scale-0 {
+    &[data-state="active"] {
+      transform: scale(0);
+    }
+  }
+  
+  .in-data-\[state\=active\]\:opacity-0 {
+    &[data-state="active"] {
+      opacity: 0;
+    }
+  }
+  
+  .in-data-\[state\=active\]\:rotate-0 {
+    &[data-state="active"] {
+      transform: rotate(0deg);
+    }
+  }
+  
+  .in-data-\[state\=active\]\:scale-100 {
+    &[data-state="active"] {
+      transform: scale(1);
+    }
+  }
+  
+  .in-data-\[state\=active\]\:opacity-100 {
+    &[data-state="active"] {
+      opacity: 1;
+    }
+  }
+  
+  .in-data-\[state\=active\]\:block {
+    &[data-state="active"] {
+      display: block;
+    }
+  }
+  
+  @screen lg {
+    .lg\:in-data-\[state\=active\]\:flex {
+      &[data-state="active"] {
+        display: flex;
+      }
+    }
+  }
+}
