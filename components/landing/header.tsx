@@ -1,282 +1,107 @@
 /*
-This client component provides the header for the app.
+Modern header component with advanced navigation and authentication integration.
 */
 
 "use client"
 
-import { Button } from "@/components/ui/button"
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton
-} from "@clerk/nextjs"
-import { motion } from "framer-motion"
-import { Menu, Receipt, X } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import MobileDrawer from "@/components/drawer"
+import { Icons } from "@/components/icons"
+import Menu from "@/components/menu"
+import { buttonVariants } from "@/components/ui/button"
+import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
-
-const navLinks = [
-  { name: "Pricing", href: "#pricing" },
-  { name: "Contact", href: "#contact" }
-]
-
-const signedInLinks = [{ name: "Dashboard", href: "/dashboard" }]
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function Header() {
-  const [menuState, setMenuState] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const router = useRouter()
-
-  // Prefetch the dashboard route when component mounts
-  useEffect(() => {
-    router.prefetch('/dashboard')
-  }, [router])
+  const [addBorder, setAddBorder] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // Function to handle smooth scrolling
-  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // Only process if we're on the home page and it's a hash link
-    if (window.location.pathname === '/' && href.startsWith('#')) {
-      e.preventDefault()
-      const targetId = href.substring(1)
-      const element = document.getElementById(targetId)
-      
-      if (element) {
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        })
-        
-        // Close mobile menu if open
-        if (menuState) {
-          setMenuState(false)
-        }
+      if (window.scrollY > 20) {
+        setAddBorder(true)
+      } else {
+        setAddBorder(false)
       }
     }
-  }
+
+    window.addEventListener("scroll", handleScroll)
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   return (
-    <motion.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+    <header
+      className={
+        "relative sticky top-0 z-50 py-2 bg-background/60 backdrop-blur"
+      }
     >
-      <nav
-        data-state={menuState && 'active'}
-        className={cn(
-          'fixed z-50 w-full transition-all duration-300',
-          isScrolled && 'bg-background/75 border-b border-black/5 backdrop-blur-lg'
-        )}
-      >
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="relative flex flex-wrap items-center justify-between gap-6 py-4 lg:gap-0 lg:py-3">
-            <div className="flex w-full justify-between gap-6 lg:w-auto">
-              <motion.div
-                className="flex items-center space-x-2 hover:cursor-pointer hover:opacity-80"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+      <div className="flex justify-between items-center container">
+        <Link
+          href="/"
+          title="brand-logo"
+          className="relative mr-6 flex items-center space-x-2"
+        >
+          <Icons.logo className="w-auto h-[40px]" />
+          <span className="font-bold text-xl">{siteConfig.name}</span>
+        </Link>
+
+        <div className="hidden lg:block">
+          <div className="flex items-center ">
+            <nav className="mr-10">
+              <Menu />
+            </nav>
+
+            <div className="gap-2 flex items-center">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className={buttonVariants({ variant: "outline" })}>
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    className={cn(
+                      buttonVariants({ variant: "default" }),
+                      "w-full sm:w-auto text-background flex gap-2"
+                    )}
+                  >
+                    <Icons.logo className="h-6 w-6" />
+                    Get Started For Free
+                  </button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
                 <Link
-                  href="/"
-                  aria-label="home"
-                  className="flex items-center space-x-2"
-                  onClick={(e) => {
-                    if (window.location.pathname === '/') {
-                      e.preventDefault();
-                      window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                      });
+                  href="/dashboard"
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Dashboard
+                </Link>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8"
                     }
                   }}
-                >
-                  <Receipt className="size-6" />
-                  <span className="text-xl font-bold">APSPitchPro</span>
-                </Link>
-              </motion.div>
-
-              <button
-                onClick={() => setMenuState(!menuState)}
-                aria-label={menuState ? 'Close Menu' : 'Open Menu'}
-                className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden"
-              >
-                <Menu className="in-data-[state=active]:rotate-180 in-data-[state=active]:scale-0 in-data-[state=active]:opacity-0 m-auto size-6 duration-200" />
-                <X className="in-data-[state=active]:rotate-0 in-data-[state=active]:scale-100 in-data-[state=active]:opacity-100 absolute inset-0 m-auto size-6 -rotate-180 scale-0 opacity-0 duration-200" />
-              </button>
-
-              <div className="m-auto hidden size-fit lg:block">
-                <ul className="flex gap-1">
-                  {navLinks.map((item, index) => (
-                    <li key={index}>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          asChild
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Link
-                            href={item.href}
-                            className="text-base"
-                            onClick={(e) => handleScrollToSection(e, item.href)}
-                          >
-                            <span>{item.name}</span>
-                          </Link>
-                        </Button>
-                      </motion.div>
-                    </li>
-                  ))}
-                  
-                  <SignedIn>
-                    {signedInLinks.map((item, index) => (
-                      <li key={index}>
-                        <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onMouseEnter={() => router.prefetch(item.href)}
-                        >
-                          <Button
-                            asChild
-                            variant="ghost"
-                            size="sm"
-                          >
-                            <Link
-                              href={item.href}
-                              className="text-base"
-                            >
-                              <span>{item.name}</span>
-                            </Link>
-                          </Button>
-                        </motion.div>
-                      </li>
-                    ))}
-                  </SignedIn>
-                </ul>
-              </div>
-            </div>
-
-            <div className="bg-background in-data-[state=active]:block lg:in-data-[state=active]:flex mb-6 hidden w-full flex-wrap items-center justify-end space-y-8 rounded-3xl border p-6 shadow-2xl shadow-zinc-300/20 md:flex-nowrap lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:space-y-0 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none dark:shadow-none dark:lg:bg-transparent">
-              <div className="lg:hidden">
-                <ul className="space-y-6 text-base">
-                  <li>
-                    <Link
-                      href="/"
-                      className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                      onClick={(e) => {
-                        if (window.location.pathname === '/') {
-                          e.preventDefault();
-                          window.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                          });
-                        }
-                        setMenuState(false);
-                      }}
-                    >
-                      <span>Home</span>
-                    </Link>
-                  </li>
-                  {navLinks.map((item, index) => (
-                    <li key={index}>
-                      <Link
-                        href={item.href}
-                        className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                        onClick={(e) => {
-                          handleScrollToSection(e, item.href);
-                          setMenuState(false);
-                        }}
-                      >
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                  
-                  <SignedIn>
-                    {signedInLinks.map((item, index) => (
-                      <li key={index}>
-                        <Link
-                          href={item.href}
-                          className="text-muted-foreground hover:text-accent-foreground block duration-150"
-                          onClick={() => setMenuState(false)}
-                          onMouseEnter={() => router.prefetch(item.href)}
-                        >
-                          <span>{item.name}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </SignedIn>
-                </ul>
-              </div>
-
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <SignedOut>
-                  <SignInButton>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(isScrolled && 'lg:hidden')}
-                      >
-                        <span>Sign In</span>
-                      </Button>
-                    </motion.div>
-                  </SignInButton>
-
-                  <SignUpButton>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        size="sm"
-                        className={cn(isScrolled && 'lg:hidden')}
-                      >
-                        <span>Get Started</span>
-                      </Button>
-                    </motion.div>
-                  </SignUpButton>
-
-                  <SignUpButton>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        size="sm"
-                        className={cn(isScrolled ? 'lg:inline-flex' : 'hidden')}
-                      >
-                        <span>Get Started</span>
-                      </Button>
-                    </motion.div>
-                  </SignUpButton>
-                </SignedOut>
-
-                <SignedIn>
-                  <div className="flex items-center">
-                    <UserButton />
-                  </div>
-                </SignedIn>
-              </div>
+                />
+              </SignedIn>
             </div>
           </div>
         </div>
-      </nav>
-    </motion.header>
+        <div className="mt-2 cursor-pointer block lg:hidden">
+          <MobileDrawer />
+        </div>
+      </div>
+      <hr
+        className={cn(
+          "absolute w-full bottom-0 transition-opacity duration-300 ease-in-out",
+          addBorder ? "opacity-100" : "opacity-0"
+        )}
+      />
+    </header>
   )
 }

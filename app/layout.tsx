@@ -13,10 +13,7 @@ import { cn } from "@/lib/utils"
 import { ClerkProvider } from "@clerk/nextjs"
 import { auth } from "@clerk/nextjs/server"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Receipt AI",
@@ -40,10 +37,13 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <link rel="preconnect" href="https://rsms.me/" />
+          <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+        </head>
         <body
           className={cn(
-            "bg-background mx-auto min-h-screen w-full scroll-smooth antialiased",
-            inter.className
+            "bg-background mx-auto min-h-screen w-full scroll-smooth antialiased"
           )}
         >
           <Providers

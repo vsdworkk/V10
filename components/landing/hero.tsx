@@ -1,66 +1,157 @@
 /*
-Hero section component for the landing page with video and call-to-action.
+Hero section component for the landing page with animations and call-to-action.
 */
 
-"use server"
+"use client"
 
-import React from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { motion } from "framer-motion"
+import Link from "next/link"
 
-export async function HeroSection() {
-    return (
-        <main className="overflow-hidden">
-            <section>
-                <div className="relative py-24">
-                    <div className="mx-auto max-w-5xl px-6">
-                        <div>
-                            <h1 className="mt-8 max-w-2xl text-balance text-5xl font-bold lg:text-6xl">3X Your Interview Chances With an AI-Powered Pitch</h1>
-                            <p className="text-foreground my-6 max-w-2xl text-balance text-2xl">AI transforms your experience into interview-winning pitches. Zero stress, low cost.</p>
+import { Icons } from "@/components/icons"
+import HeroVideoDialog from "@/components/magicui/hero-video-dialog"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-                            <div className="flex flex-col items-center gap-3 *:w-full sm:flex-row sm:*:w-fit">
-                                <Button
-                                    asChild
-                                    size="lg">
-                                    <Link href="/sign-up">
-                                        <span className="text-nowrap">Get Started For Free</span>
-                                    </Link>
-                                </Button>
-                            </div>
-                        </div>
+const ease = [0.16, 1, 0.3, 1]
 
-                        <div className="mt-8">
-                            <p className="text-muted-foreground font-medium">Trusted by employees at:</p>
-                            <div className="mt-4 flex items-center gap-12">
-                                <div className="flex">
-                                    <img
-                                        className="mx-auto h-14 w-fit"
-                                        src="/Gov Logo.png"
-                                        alt="Government Logo"
-                                        height="56"
-                                        width="auto"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+function HeroPill() {
+  return (
+    <motion.a
+      href="/features"
+      className="flex w-auto items-center space-x-2 rounded-full bg-primary/20 px-2 py-1 ring-1 ring-accent whitespace-pre"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease }}
+    >
+      <div className="w-fit rounded-full bg-accent px-2 py-0.5 text-center text-xs font-medium text-primary sm:text-sm">
+        🚀 New Feature
+      </div>
+      <p className="text-xs font-medium text-primary sm:text-sm">
+        AI-Powered Pitch Generation
+      </p>
+      <svg
+        width="12"
+        height="12"
+        className="ml-1"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M8.78141 5.33312L5.20541 1.75712L6.14808 0.814453L11.3334 5.99979L6.14808 11.1851L5.20541 10.2425L8.78141 6.66645H0.666748V5.33312H8.78141Z"
+          fill="hsl(var(--primary))"
+        />
+      </svg>
+    </motion.a>
+  )
+}
 
-                        <div className="relative -mr-56 mt-16 sm:mr-0">
-                            <div className="bg-background rounded-lg relative mx-auto overflow-hidden border border-transparent shadow-lg shadow-black/10 ring-1 ring-black/10">
-                                <video
-                                    className="w-full h-auto"
-                                    autoPlay
-                                    muted
-                                    loop
-                                    playsInline
-                                >
-                                    <source src="/landingpagev.mp4" type="video/mp4" />
-                                    Your browser does not support the video tag.
-                                </video>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    )
+function HeroTitles() {
+  return (
+    <div className="flex w-full max-w-2xl flex-col space-y-4 overflow-hidden pt-8">
+      <motion.h1
+        className="text-center text-4xl font-medium leading-tight text-foreground sm:text-5xl md:text-6xl"
+        initial={{ filter: "blur(10px)", opacity: 0, y: 50 }}
+        animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+        transition={{
+          duration: 1,
+          ease,
+          staggerChildren: 0.2,
+        }}
+      >
+        {["3X", "Your", "Interview", "Chances"].map((text, index) => (
+          <motion.span
+            key={index}
+            className="inline-block px-1 md:px-2 text-balance font-semibold"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.8,
+              delay: index * 0.2,
+              ease,
+            }}
+          >
+            {text}
+          </motion.span>
+        ))}
+      </motion.h1>
+      <motion.p
+        className="mx-auto max-w-xl text-center text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-9 text-balance"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: 0.6,
+          duration: 0.8,
+          ease,
+        }}
+      >
+        AI transforms your experience into interview-winning pitches. Zero stress, low cost.
+      </motion.p>
+    </div>
+  )
+}
+
+function HeroCTA() {
+  return (
+    <>
+      <motion.div
+        className="mx-auto mt-6 flex w-full max-w-2xl flex-col items-center justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.8, ease }}
+      >
+        <Link
+          href="/sign-up"
+          className={cn(
+            buttonVariants({ variant: "default" }),
+            "w-full sm:w-auto text-background flex gap-2"
+          )}
+        >
+          <Icons.logo className="h-6 w-6" />
+          Get Started For Free
+        </Link>
+      </motion.div>
+      <motion.p
+        className="mt-5 text-sm text-muted-foreground"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.0, duration: 0.8 }}
+      >
+        7 day free trial. No credit card required.
+      </motion.p>
+    </>
+  )
+}
+
+function HeroImage() {
+  return (
+    <motion.div
+      className="relative mx-auto flex w-full items-center justify-center"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.2, duration: 1, ease }}
+    >
+      <HeroVideoDialog
+        animationStyle="from-center"
+        videoSrc="/landingpagev.mp4"
+        thumbnailSrc="/hero.png"
+        thumbnailAlt="Hero Video"
+        className="border rounded-lg shadow-lg max-w-screen-lg mt-16"
+      />
+    </motion.div>
+  )
+}
+
+export function HeroSection() {
+  return (
+    <section id="hero">
+      <div className="relative flex w-full flex-col items-center justify-start px-4 pt-32 sm:px-6 sm:pt-24 md:pt-32 lg:px-8">
+        <HeroPill />
+        <HeroTitles />
+        <HeroCTA />
+        <HeroImage />
+        <div className="pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t from-background via-background to-transparent lg:h-1/4"></div>
+      </div>
+    </section>
+  )
 }

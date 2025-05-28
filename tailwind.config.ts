@@ -83,6 +83,12 @@ const config = {
         gradient: "gradient 8s linear infinite"
       },
       fontFamily: {
+        sans: [
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif'
+        ],
         header: [
           'Poppins',
           'Playfair Display',

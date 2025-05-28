@@ -43,6 +43,8 @@ Global styles for the app.
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    font-family: Inter, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "salt";
   }
 
   .dark {
@@ -78,6 +80,13 @@ Global styles for the app.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  @supports (font-variation-settings: normal) {
+    :root {
+      font-family: InterVariable, sans-serif;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11", "salt";
+    }
   }
 }
 
