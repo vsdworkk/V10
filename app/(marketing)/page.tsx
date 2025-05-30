@@ -11,7 +11,7 @@ import { SolutionSection } from "@/components/landing/solution-section"
 import { StepsSection } from "@/components/landing/steps-section"
 import { QuestionsSection } from "@/components/landing/questions-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
-import { PricingSection } from "@/components/landing/pricing-section"
+import NewPricingSection from "@/components/landing/new-pricing-section"
 import { FAQSection } from "@/components/landing/faq-section"
 
 export default async function HomePage() {
@@ -25,7 +25,7 @@ export default async function HomePage() {
       <StepsSection />
       <QuestionsSection />
       <SocialProofSection />
-      <PricingSection userId={userId} />
+      <NewPricingSection userId={userId} />
       <FAQSection />
     </div>
   )
