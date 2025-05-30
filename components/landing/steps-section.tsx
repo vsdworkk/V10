@@ -11,26 +11,26 @@ import { MessageSquare, Zap, Download } from "lucide-react";
 const data = [
   {
     id: 1,
-    title: "1. Answer Smart Prompts",
+    title: "1. Complete Guided Questions",
     content:
-      "Open your dashboard and hit Create Pitch. The wizard asks laser-focused questions about the role, your experience, and key achievements. Copy-and-paste your résumé—done.",
-    image: "/step2.png",
+      "Sign up, open your dashboard, and hit create pitch. The wizard asks super simple questions to gather information about your experience ~ 10 minutes.",
+    image: "/First-step-image.png",
     icon: <MessageSquare className="w-6 h-6 text-primary" />,
   },
   {
     id: 2,
-    title: "2. AI Alignment Engine Works",
+    title: "2. AI Crafts Your Personalised Pitch",
     content:
-      "Behind the scenes, APSPitchPro cross-references your answers with ILS, WLS, APS Values and STAR structure—then writes a pitch that speaks your hiring manager's language.",
-    image: "/dashboard.png",
+      "Our specialised APS-focused AI takes your unique information, aligns it precisely with relevant APS frameworks, addresses key selection criteria using the STAR structure, and crafts a personalised pitch that resonates with APS recruiters.",
+    image: "/Second-step-image.png",
     icon: <Zap className="w-6 h-6 text-primary" />,
   },
   {
     id: 3,
-    title: "3. Download & Submit with Confidence",
+    title: "3. Download & Submit",
     content:
-      "Click Generate and receive a formatted Word or PDF pitch, criterion-checked and ready to attach to your application. Submit with confidence knowing it's professionally crafted.",
-    image: "/dashboard.png",
+      "Export your ready to submit pitch in pdf/doc and submit. Done.",
+    image: "/Third-step-image.png",
     icon: <Download className="w-6 h-6 text-primary" />,
   },
 ];
@@ -39,7 +39,7 @@ export function StepsSection() {
   return (
     <Section 
       title="How it works" 
-      subtitle="Just 3 steps to get started"
+      subtitle="Three steps to get ahead"
       description="From experience to interview-winning pitch in minutes, not hours."
     >
       <Features data={data} />

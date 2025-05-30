@@ -253,7 +253,7 @@ export default function Features({
                       </div>
 
                       <div>
-                        <AccordionTrigger className="text-xl font-bold pl-0">
+                        <AccordionTrigger className="text-xl font-bold pl-0 mb-2">
                           {item.title}
                         </AccordionTrigger>
 
@@ -323,7 +323,7 @@ export default function Features({
                       }}
                     ></div>
                   </div>
-                  <h2 className="text-xl font-bold">{item.title}</h2>
+                  <h2 className="text-xl font-bold mb-2">{item.title}</h2>
                   <p className="mx-0 max-w-sm text-balance text-sm">
                     {item.content}
                   </p>

@@ -13,17 +13,17 @@ import { ProblemItem } from "@/types"
 const problems: ProblemItem[] = [
   {
     title: "Complex APS Requirements",
-    description: "Navigating ILS, WLS, STAR frameworks and selection criteria feels overwhelming, especially when you're unclear on what evaluators actually want to see.",
+    description: "Navigating required APS frameworks like ILS, WLS, STAR feels overwhelming, and often requires weeks/months of practice.",
     icon: Target
   },
   {
-    title: "Time-Consuming Process",
-    description: "Crafting compelling responses for each criterion takes hours or days, often leading to rushed submissions and missed opportunities.",
+    title: "Time-Intensive Writing Process",
+    description: "Crafting responses for multiple selection criteria often takes hours, if not days, leading to rushed, last-minute submissions and overlooked opportunities.",
     icon: Clock
   },
   {
-    title: "Missing Key Elements",
-    description: "Without APS experience, it's easy to miss critical components or fail to adequately address selection criteria, reducing your chances of being shortlisted.",
+    title: "Critical Components Often Missed",
+    description: "Without specialist knowledge, it's easy to overlook key details and selection criteria, reducing your chances of making the shortlist.",
     icon: FileX
   }
 ]
@@ -33,7 +33,7 @@ export async function ProblemSection() {
     <Section
       title="The Challenge"
       subtitle="APS Applications Shouldn't Feel This Hard"
-      description="Every year, thousands of qualified candidates struggle with the APS application process. You're not alone in feeling overwhelmed."
+      description="Thousands of capable applicants feel overwhelmed each year by the complexities of APS applications. You're not alone."
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
         {problems.map((problem, index) => (
