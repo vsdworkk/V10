@@ -150,6 +150,48 @@ export const siteConfig = {
       isPopular: false,
     },
   ],
+  faqs: [
+    {
+      question: "Will my pitch sound human?",
+      answer: (
+        <span>
+          Yes, definitely. Our AI has been designed with feedback from human recruiters, so it picks up on natural language patterns and authentic tone. The pitches don't come across as robotic or templated - they sound like something you'd actually write yourself. Get started for free and see what you think - most people are surprised by how natural it feels.
+        </span>
+      ),
+    },
+    {
+      question: "What makes this better than ChatGPT?",
+      answer: (
+        <span>
+          AI tools like ChatGPT, Gemini, and Claude weren't built for APS pitch writing. They tend to miss important stuff like staying within word limits, sounding natural, properly using APS frameworks, and addressing the selection criteria. We built our platform specifically for APS applications - it knows the frameworks inside out, writes in a way that sounds human, sticks to those strict word counts and frameworks, and makes sure your pitch directly addresses all the selection criteria.
+        </span>
+      ),
+    },
+    {
+      question: "Can I edit the final written pitch?",
+      answer: (
+        <span>
+          Yes, before saving the final written pitch, you have the opportunity to edit it inside our platform.
+        </span>
+      ),
+    },
+    {
+      question: "How many pitches can I get written?",
+      answer: (
+        <span>
+          You can get started for free with one pitch. After that, we have different pricing options depending on what you need, and you can buy additional credits whenever you want more pitches.
+        </span>
+      ),
+    },
+    {
+      question: "Does this work for all APS roles and levels?",
+      answer: (
+        <span>
+          Yes, absolutely. It works for any APS role, whether you're applying for marketing, data, policy, or anything else. We currently support levels from APS1 to EL1, with EL2 coming soon.
+        </span>
+      ),
+    },
+  ],
 }
 
 export type SiteConfig = typeof siteConfig 
