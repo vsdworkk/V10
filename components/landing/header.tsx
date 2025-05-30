@@ -8,6 +8,7 @@ import MobileDrawer from "@/components/drawer"
 import { Icons } from "@/components/icons"
 import Menu from "@/components/menu"
 import { buttonVariants } from "@/components/ui/button"
+import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
 import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
@@ -51,7 +52,7 @@ export default function Header() {
 
         <div className="hidden lg:block">
           <div className="flex items-center ">
-            <nav className="mr-10">
+            <nav className="mr-1">
               <Menu />
             </nav>
 
@@ -77,7 +78,7 @@ export default function Header() {
               <SignedIn>
                 <Link
                   href="/dashboard"
-                  className={buttonVariants({ variant: "outline" })}
+                  className={cn(navigationMenuTriggerStyle(), "mr-3")}
                 >
                   Dashboard
                 </Link>

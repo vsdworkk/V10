@@ -3,8 +3,14 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 
-export default async function CheckoutRedirect({ searchParams }: { searchParams: { payment_link?: string } }) {
-  const paymentLink = searchParams.payment_link
+export default async function CheckoutRedirect({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ payment_link?: string }> 
+}) {
+  const resolvedSearchParams = await searchParams
+  const paymentLink = resolvedSearchParams.payment_link
+  
   if (!paymentLink) {
     redirect("/")
   }

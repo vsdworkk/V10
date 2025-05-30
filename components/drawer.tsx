@@ -19,6 +19,15 @@ import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@cl
 import Link from "next/link"
 import { IoMenuSharp } from "react-icons/io5"
 
+// Type guard functions
+function isDropdownItem(item: any): item is { trigger: string; content: any } {
+  return 'trigger' in item && 'content' in item;
+}
+
+function isLinkItem(item: any): item is { href: string; label: string } {
+  return 'href' in item && 'label' in item;
+}
+
 export default function MobileDrawer() {
   return (
     <Drawer>
@@ -41,13 +50,13 @@ export default function MobileDrawer() {
             <ul className="mt-7 text-left">
               {siteConfig.header.map((item, index) => (
                 <li key={index} className="my-3">
-                  {item.trigger ? (
+                  {isDropdownItem(item) ? (
                     <span className="font-semibold">{item.trigger}</span>
-                  ) : (
-                    <Link href={item.href || ""} className="font-semibold">
+                  ) : isLinkItem(item) ? (
+                    <Link href={item.href} className="font-semibold">
                       {item.label}
                     </Link>
-                  )}
+                  ) : null}
                 </li>
               ))}
               <SignedIn>
