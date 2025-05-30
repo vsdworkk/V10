@@ -66,9 +66,21 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
                         {...field}
-                        placeholder="I completed the project two weeks early, increasing profits by 10%."
+                        placeholder="Describe the specific outcomes and results of your actions..."
+                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                        style={{
+                          '--focus-ring-color': '#444ec1',
+                          '--focus-border-color': '#444ec1'
+                        } as React.CSSProperties}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#444ec1'
+                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb'
+                          e.target.style.boxShadow = 'none'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -94,9 +106,21 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
                         {...field}
-                        placeholder="Our early launch resulted in praise from clients and stakeholders."
+                        placeholder="Describe how these results impacted your organization or project..."
+                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                        style={{
+                          '--focus-ring-color': '#444ec1',
+                          '--focus-border-color': '#444ec1'
+                        } as React.CSSProperties}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#444ec1'
+                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb'
+                          e.target.style.boxShadow = 'none'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

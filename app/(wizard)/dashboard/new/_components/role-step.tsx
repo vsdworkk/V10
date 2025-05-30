@@ -75,85 +75,145 @@ export default function RoleStep() {
   const { control, watch, formState } = useFormContext<PitchWizardFormData>()
   const pitchLimitChoice = watch("pitchWordLimit")
 
+  const { errors } = formState
+
   return (
-    <motion.div
-  className="space-y-8 bg-white rounded-2xl border border-gray-100 overflow-hidden"
-  style={{ 
-    boxShadow: '0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)' 
-  }}
-  variants={containerVariants}
-  initial="hidden"
-  animate="visible"
->
-      <div className="p-8 space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="max-w-3xl mx-auto p-8 space-y-8">
+      <div className="space-y-6">
+        <div className="space-y-4">
           {/* Role Name */}
-          <FormField control={control} name="roleName" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Role Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="e.g. Frontend Developer"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <div className="space-y-2">
+            <FormLabel className="text-sm font-medium text-gray-700">Role Name</FormLabel>
+            <FormField
+              control={control}
+              name="roleName"
+              render={({ field }) => (
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., Senior Policy Analyst"
+                    className="w-full h-12 bg-white border border-gray-200 rounded-lg px-4 transition-all duration-200"
+                    style={{
+                      '--focus-ring-color': '#444ec1',
+                      '--focus-border-color': '#444ec1'
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#444ec1'
+                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e5e7eb'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </FormControl>
+              )}
+            />
+            {errors.roleName && (
+              <p className="text-red-500 text-sm mt-1">{errors.roleName.message}</p>
+            )}
+          </div>
+
           {/* Organisation Name */}
-          <FormField control={control} name="organisationName" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Organisation Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="e.g. Engineering"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <div className="space-y-2">
+            <FormLabel className="text-sm font-medium text-gray-700">Organisation Name</FormLabel>
+            <FormField
+              control={control}
+              name="organisationName"
+              render={({ field }) => (
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., Department of Public Works"
+                    className="w-full h-12 bg-white border border-gray-200 rounded-lg px-4 transition-all duration-200"
+                    style={{
+                      '--focus-ring-color': '#444ec1',
+                      '--focus-border-color': '#444ec1'
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#444ec1'
+                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e5e7eb'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </FormControl>
+              )}
+            />
+            {errors.organisationName && (
+              <p className="text-red-500 text-sm mt-1">{errors.organisationName.message}</p>
+            )}
+          </div>
+
           {/* Role Level */}
-          <FormField control={control} name="roleLevel" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Role Level</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200">
-                    <SelectValue placeholder="Select APS level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["APS1","APS2","APS3","APS4","APS5","APS6","EL1"].map(l => (
-                      <SelectItem key={l} value={l}>{l}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
-          
+          <div className="space-y-2">
+            <FormLabel className="text-sm font-medium text-gray-700">Role Level</FormLabel>
+            <FormField
+              control={control}
+              name="roleLevel"
+              render={({ field }) => (
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="w-full h-12 bg-white border border-gray-200 rounded-lg px-4 transition-all duration-200"
+                      style={{
+                        '--focus-ring-color': '#444ec1',
+                        '--focus-border-color': '#444ec1'
+                      } as React.CSSProperties}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = '#444ec1'
+                        e.currentTarget.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = '#e5e7eb'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}>
+                      <SelectValue placeholder="Select APS level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["APS1","APS2","APS3","APS4","APS5","APS6","EL1"].map(l => (
+                        <SelectItem key={l} value={l}>{l}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              )}
+            />
+          </div>
+
           {/* Pitch Word Limit */}
-          <FormField control={control} name="pitchWordLimit" render={({ field }) => (
-            <FormItem className="space-y-4">
-              <FormLabel className="text-sm font-medium text-gray-700">Pitch Word Limit</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  min={400}
-                  placeholder="Minimum 400 words"
-                  className="w-full h-12 bg-white shadow-sm border border-gray-200 rounded-xl px-4 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
-                  onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}/>
+          <div className="space-y-2">
+            <FormLabel className="text-sm font-medium text-gray-700">Pitch Word Limit</FormLabel>
+            <FormField
+              control={control}
+              name="pitchWordLimit"
+              render={({ field }) => (
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    min={400}
+                    placeholder="Minimum 400 words"
+                    className="w-full h-12 bg-white border border-gray-200 rounded-lg px-4 transition-all duration-200"
+                    style={{
+                      '--focus-ring-color': '#444ec1',
+                      '--focus-border-color': '#444ec1'
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#444ec1'
+                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e5e7eb'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                    onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                  />
+                </FormControl>
+              )}
+            />
+          </div>
         </div>
 
         {/* Optional Role Description */}
@@ -165,7 +225,19 @@ export default function RoleStep() {
                 <Textarea
                   {...field}
                   placeholder="Describe the responsibilities and requirements for this role..."
-                  className="w-full h-48 p-6 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 resize-none"
+                  className="w-full h-48 p-4 bg-white border border-gray-200 rounded-lg transition-all duration-200 resize-none"
+                  style={{
+                    '--focus-ring-color': '#444ec1',
+                    '--focus-border-color': '#444ec1'
+                  } as React.CSSProperties}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#444ec1'
+                    e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e5e7eb'
+                    e.target.style.boxShadow = 'none'
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -173,6 +245,6 @@ export default function RoleStep() {
           )}/>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

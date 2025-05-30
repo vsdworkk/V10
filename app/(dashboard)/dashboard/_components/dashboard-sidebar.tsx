@@ -77,7 +77,10 @@ export default async function DashboardSidebar({
       <nav className="px-5 py-3 space-y-1">
         {/* Create New Pitch Button */}
         <Link href="/dashboard/new?new=true">
-          <Button className="w-full bg-blue-600 hover:bg-blue-700 shadow-sm justify-start h-8 px-2 text-xs">
+          <Button 
+            className="w-full shadow-sm justify-start h-8 px-2 text-xs text-white transition-all hover:brightness-110" 
+            style={{backgroundColor: '#444ec1'}}
+          >
             <Plus className="h-3 w-3 mr-2" />
             Create New Pitch
           </Button>
@@ -87,7 +90,7 @@ export default async function DashboardSidebar({
           <div className="pt-2 mt-2 border-t">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
             >
               <Settings className="h-4 w-4" />
               Settings

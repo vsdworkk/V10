@@ -122,7 +122,10 @@ export default function AIThinkingLoader({
                     animate={{ opacity: 1, y: "-5%" }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.35, ease: "easeOut" }}
-                    className="-mt-1 min-h-[1.25rem] text-center text-[1.125rem] sm:text-[1.25rem] font-medium tracking-tight bg-gradient-to-r from-indigo-500 via-sky-500 to-fuchsia-500 bg-clip-text text-transparent drop-shadow-sm"
+                    className="-mt-1 min-h-[1.25rem] text-center text-[1.125rem] sm:text-[1.25rem] font-medium tracking-tight bg-clip-text text-transparent drop-shadow-sm"
+                    style={{
+                      backgroundImage: 'linear-gradient(to right, #444ec1, #7c3aed, #db2777)'
+                    }}
                   >
                     {phrase}...
                   </motion.p>
@@ -141,9 +144,9 @@ function GooeyBlob() {
     <svg width="100%" height="100%" viewBox="0 0 100 100" className="overflow-visible">
       <defs>
         <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="50%" stopColor="#3b82f6" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#444ec1" />
+          <stop offset="50%" stopColor="#7c3aed" />
+          <stop offset="100%" stopColor="#db2777" />
         </linearGradient>
         <filter id="goo">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />

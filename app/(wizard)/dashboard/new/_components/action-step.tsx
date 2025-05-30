@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Plus, Check, ChevronDown, ChevronUp, Lightbulb } from "lucide-react"
+import { Plus, Check, ChevronDown, ChevronUp, Lightbulb, Target } from "lucide-react"
 import {
   Accordion,
   AccordionItem,
@@ -233,10 +233,8 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center mr-3 shadow-md border border-amber-200">
                 <div className="relative">
                   <Lightbulb
-                    className="h-5 w-5 text-amber-400 drop-shadow-sm"
-                    style={{
-                      filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
-                    }}
+                    className="h-5 w-5 text-amber-500 drop-shadow-sm"
+                    strokeWidth={2.5}
                   />
                   <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/30 to-amber-300/0 rounded-full" />
                 </div>
@@ -278,15 +276,16 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <div className="px-6 py-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center mr-3 shadow-md border border-blue-200">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3 shadow-md" style={{background: 'linear-gradient(to bottom right, #eef2ff, #ddd6fe)', borderColor: '#c7d2fe', borderWidth: '1px'}}>
                 <div className="relative">
                   <Check
-                    className="h-5 w-5 text-blue-500 drop-shadow-sm"
+                    className="h-5 w-5 drop-shadow-sm"
                     style={{
+                      color: '#444ec1',
                       filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/30 to-blue-300/0 rounded-full" />
+                  <div className="absolute inset-0 rounded-full" style={{background: 'linear-gradient(to top right, rgba(68, 78, 193, 0.3), rgba(68, 78, 193, 0))'}} />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Action</span>
@@ -371,9 +370,13 @@ function StepItem({ step, onSave }: StepItemProps) {
       className={cn(
         "border rounded-xl overflow-hidden transition-colors duration-200",
         step.isCompleted
-          ? "border-blue-100 bg-blue-50"
+          ? "bg-gray-50"
           : "border-gray-200 hover:border-gray-300"
       )}
+      style={step.isCompleted ? {
+        borderColor: '#c7d2fe',
+        backgroundColor: '#eef2ff'
+      } : {}}
     >
       <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
         <div className="flex items-center justify-between w-full">
@@ -382,9 +385,10 @@ function StepItem({ step, onSave }: StepItemProps) {
               className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-sm",
                 step.isCompleted
-                  ? "bg-blue-500 text-white"
+                  ? "text-white"
                   : "bg-gray-100 text-gray-600"
               )}
+              style={step.isCompleted ? {backgroundColor: '#444ec1'} : {}}
             >
               {step.position}
             </div>
@@ -417,8 +421,20 @@ function StepItem({ step, onSave }: StepItemProps) {
                 id={`step-${step.id}-what`}
                 value={what}
                 onChange={e => setWhat(e.target.value)}
-                placeholder="I analyzed the log files to identify error patterns."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                placeholder="Describe the steps you took to address the situation..."
+                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                style={{
+                  '--focus-ring-color': '#444ec1',
+                  '--focus-border-color': '#444ec1'
+                } as React.CSSProperties}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#444ec1'
+                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {whatWords}
@@ -439,8 +455,20 @@ function StepItem({ step, onSave }: StepItemProps) {
                 id={`step-${step.id}-how`}
                 value={how}
                 onChange={e => setHow(e.target.value)}
-                placeholder="I used log analysis tools and debugging techniques."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                placeholder="Explain your thought process and decision-making approach..."
+                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                style={{
+                  '--focus-ring-color': '#444ec1',
+                  '--focus-border-color': '#444ec1'
+                } as React.CSSProperties}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#444ec1'
+                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {howWords}
@@ -461,8 +489,20 @@ function StepItem({ step, onSave }: StepItemProps) {
                 id={`step-${step.id}-outcome`}
                 value={outcome}
                 onChange={e => setOutcome(e.target.value)}
-                placeholder="I pinpointed a memory leak in a specific module."
-                className="w-full p-4 border-l-4 border-gray-200 rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700"
+                placeholder="Highlight the key skills, tools, or resources you utilized..."
+                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                style={{
+                  '--focus-ring-color': '#444ec1',
+                  '--focus-border-color': '#444ec1'
+                } as React.CSSProperties}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#444ec1'
+                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {outcomeWords}
@@ -472,7 +512,8 @@ function StepItem({ step, onSave }: StepItemProps) {
 
           <Button
             type="button"
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow mt-2"
+            className="px-6 py-3 text-white rounded-xl font-medium transition-all duration-200 shadow-sm mt-2 hover:brightness-110"
+            style={{backgroundColor: '#444ec1'}}
             onClick={handleSave}
           >
             Save Step {step.position}

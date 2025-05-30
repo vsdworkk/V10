@@ -58,7 +58,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50 relative" style={{background: 'linear-gradient(to bottom right, #f8fafc, #ffffff, #faf5ff)'}}>
       {/* Subtle grid-pattern overlay */}
       <div
         className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"

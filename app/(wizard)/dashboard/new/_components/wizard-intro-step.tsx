@@ -7,7 +7,7 @@ export default function WizardIntroStep() {
     <div className="max-w-3xl mx-auto p-8 bg-white rounded-xl shadow-sm">
       {/* Main Content */}
       <div className="text-center mb-10">
-        <div className="w-20 h-1 bg-blue-500 mx-auto mb-6"></div>
+        <div className="w-20 h-1 mx-auto mb-6" style={{backgroundColor: '#444ec1'}}></div>
         <p className="text-gray-700 max-w-2xl mx-auto leading-relaxed text-justify">
           Crafting a public service pitch or statement of claims no longer needs to be a headache. Simply answer a few easy questions, and our AI assistant, trained on thousands of professional-grade pitches, will transform your responses into a professional grade pitch that's perfectly aligned with job competencies, the Integrated Leadership System (ILS), and Work Level Standards (WLS).
         </p>
@@ -35,7 +35,7 @@ export default function WizardIntroStep() {
 
         {/* What we'll do */}
         <div className="flex items-start p-4">
-          <span className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-3 mt-0.5 flex-shrink-0">
+          <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0" style={{backgroundColor: '#eef2ff', color: '#444ec1'}}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
@@ -52,10 +52,10 @@ export default function WizardIntroStep() {
       </div>
 
       {/* Tips & Guidance Card */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-8">
+      <div className="border rounded-lg p-5 mb-8" style={{backgroundColor: '#eef2ff', borderColor: '#c7d2fe'}}>
         <div className="flex items-start">
           <div className="mr-4">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{backgroundColor: '#ddd6fe', color: '#444ec1'}}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -64,7 +64,7 @@ export default function WizardIntroStep() {
             </div>
           </div>
           <div>
-            <p className="text-blue-800 text-sm">
+            <p className="text-sm" style={{color: '#444ec1'}}>
               Be specific and detailed in your answers. The quality of information matters more than perfect wording. Our AI will handle the polish!
             </p>
           </div>

@@ -56,31 +56,35 @@ export default function SectionProgressSidebar({
             className={clsx(
               "flex items-center whitespace-nowrap transition-all duration-200 rounded-xl p-4 w-full text-left",
               {
-                "bg-blue-50": isActive,
                 "hover:bg-gray-50 group": clickable || isUpcoming,
               }
             )}
+            style={isActive ? {backgroundColor: '#f8fafc'} : {}}
           >
             {/* Step number */}
             <div
               className={clsx(
                 "flex items-center justify-center w-10 h-10 rounded-full font-medium border-2",
                 {
-                  "bg-blue-500 border-blue-500 text-white shadow-md": isActive,
-                  "bg-blue-500 border-blue-500 text-white shadow-sm": isCompleted && !isActive,
+                  "text-white shadow-md": isActive,
+                  "text-white shadow-sm": isCompleted && !isActive,
                   "bg-white border-gray-300 text-gray-500 shadow-sm": isUpcoming,
                 }
               )}
+              style={isActive || (isCompleted && !isActive) ? {
+                backgroundColor: '#444ec1',
+                borderColor: '#444ec1'
+              } : {}}
             >
               {idx + 1}
             </div>
 
             {/* Label */}
             <span
-              className={clsx("ml-4 text-sm", {
-                "text-blue-900": isActive,
+              className={clsx("ml-4 text-sm font-medium", {
                 "text-gray-500": isUpcoming || (isCompleted && !isActive),
               })}
+              style={isActive ? {color: '#444ec1'} : {}}
             >
               {STEP_LABELS[step]}
             </span>

@@ -29,6 +29,13 @@ function getBorderColor(quality: number) {
   return "border-green-400"
 }
 
+function getQualityBorderClass(quality: number): string {
+  if (quality === 0) return "border-gray-300"
+  if (quality === 1) return "border-yellow-400"
+  if (quality === 2) return "border-purple-400"
+  return "border-gray-300"
+}
+
 interface SituationStepProps {
   /**
    * exampleIndex indicates which starExamples[index] to use
@@ -88,9 +95,21 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className={`w-full p-4 border-l-4 ${getBorderColor(whereAndWhenQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
                         {...field}
-                        placeholder="In my role at ABC Corp in 2024."
+                        placeholder="Describe the situation, context, and any challenges you faced..."
+                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                        style={{
+                          '--focus-ring-color': '#444ec1',
+                          '--focus-border-color': '#444ec1'
+                        } as React.CSSProperties}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#444ec1'
+                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb'
+                          e.target.style.boxShadow = 'none'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -117,9 +136,21 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                   <div className="relative">
                     <FormControl>
                       <Textarea
-                        className={`w-full p-4 border-l-4 ${getBorderColor(situationOrChallengeQuality)} rounded-2xl bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white shadow-sm min-h-24 transition-all duration-300 text-gray-700`}
                         {...field}
-                        placeholder="Our team faced a software problem just weeks before launching an important product."
+                        placeholder="Provide additional context or background information..."
+                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
+                        style={{
+                          '--focus-ring-color': '#444ec1',
+                          '--focus-border-color': '#444ec1'
+                        } as React.CSSProperties}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#444ec1'
+                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb'
+                          e.target.style.boxShadow = 'none'
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

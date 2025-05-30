@@ -191,7 +191,19 @@ export default function GuidanceStep({
           onValueChange={setTipsOpen}
         >
           <AccordionItem value="guidance-tips" className="border-none">
-            <AccordionTrigger className="py-4 px-4 text-sm font-normal bg-blue-50 hover:bg-blue-100 hover:no-underline text-blue-700 rounded-xl flex gap-2 items-center">
+            <AccordionTrigger 
+              className="py-4 px-4 text-sm font-normal hover:no-underline rounded-xl flex gap-2 items-center transition-colors"
+              style={{
+                backgroundColor: '#eef2ff',
+                color: '#444ec1'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#ddd6fe'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#eef2ff'
+              }}
+            >
               <Lightbulb className="h-4 w-4" />
               <span>Tips for this step</span>
             </AccordionTrigger>
@@ -217,7 +229,7 @@ export default function GuidanceStep({
         {/* If loading */}
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+            <RefreshCw className="h-8 w-8 animate-spin" style={{color: '#444ec1'}} />
             <p>Generating AI Guidance...</p>
           </div>
         )}
@@ -252,9 +264,13 @@ export default function GuidanceStep({
                 onClick={() => handleStarExamplesCountChange(val)}
                 className={`h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${
                   starCount === val
-                    ? "bg-blue-100 text-blue-700 font-medium"
+                    ? "font-medium"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                 }`}
+                style={starCount === val ? {
+                  backgroundColor: '#eef2ff',
+                  color: '#444ec1'
+                } : {}}
               >
                 {val}
               </button>

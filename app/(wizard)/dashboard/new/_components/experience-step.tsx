@@ -70,9 +70,21 @@ export default function ExperienceStep() {
                 <FormLabel className="text-sm font-medium text-gray-700 mb-4 block">Relevant Experience (Copy and Paste Your Resume Here)</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Describe achievements, responsibilities, and skills relevant to this role..."
-                    className="w-full min-h-[300px] p-6 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 resize-none"
                     {...field}
+                    placeholder="Paste your resume, CV, or describe your relevant work experience here..."
+                    className="w-full min-h-[300px] p-4 bg-white border border-gray-200 rounded-lg transition-all duration-200 resize-none"
+                    style={{
+                      '--focus-ring-color': '#444ec1',
+                      '--focus-border-color': '#444ec1'
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#444ec1'
+                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#e5e7eb'
+                      e.target.style.boxShadow = 'none'
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

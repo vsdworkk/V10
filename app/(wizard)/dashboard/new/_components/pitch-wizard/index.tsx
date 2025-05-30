@@ -180,7 +180,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
             {currentStep < totalSteps ? (
               <Button 
                 onClick={handleNext} 
-                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium flex items-center group transition-all duration-200 shadow-sm hover:shadow"
+                className="px-6 py-3 text-white rounded-xl font-medium flex items-center group transition-all duration-200 shadow-sm hover:shadow hover:brightness-110"
+                style={{backgroundColor: '#444ec1'}}
               >
                 Next Step
                 <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1" />
@@ -188,10 +189,12 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
             ) : (
               <Button
                 type="button"
+                variant="outline"
                 onClick={handleSubmitFinal}
-                className="bg-green-600 hover:bg-green-700 font-medium px-6 py-3 ml-auto"
+                className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
               >
-                Submit Pitch
+                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                Save and Close
               </Button>
             )}
           </div>

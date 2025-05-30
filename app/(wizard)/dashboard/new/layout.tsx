@@ -74,7 +74,7 @@ export default function PitchWizardLayout({
  }, [maxCompletedSection])
 
  return (
-   <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-hidden">
+   <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50 overflow-hidden">
      {/* Subtle grid-pattern overlay */}
      <div
        className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"

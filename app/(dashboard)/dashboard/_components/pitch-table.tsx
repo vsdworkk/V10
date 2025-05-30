@@ -237,7 +237,8 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                         ? `/dashboard/new/${pitch.id}`
                         : `/dashboard/${pitch.id}`
                     }
-                    className="font-medium hover:underline text-blue-600"
+                    className="font-medium hover:underline"
+                    style={{color: '#444ec1'}}
                   >
                     {pitch.roleName}
                   </Link>
