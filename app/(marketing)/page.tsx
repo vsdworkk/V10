@@ -7,7 +7,7 @@ This server page is the marketing homepage.
 import { auth } from "@clerk/nextjs/server"
 import { HeroSection } from "@/components/landing/hero"
 import { ProblemSection } from "@/components/landing/problem-section"
-import { FeaturesSection } from "@/components/landing/features-section"
+import { SolutionSection } from "@/components/landing/solution-section"
 import { StepsSection } from "@/components/landing/steps-section"
 import { QuestionsSection } from "@/components/landing/questions-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
@@ -21,7 +21,7 @@ export default async function HomePage() {
     <div className="pb-20">
       <HeroSection />
       <ProblemSection />
-      <FeaturesSection />
+      <SolutionSection />
       <StepsSection />
       <QuestionsSection />
       <SocialProofSection />

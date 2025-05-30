@@ -75,12 +75,31 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" }
         },
-        gradient: { to: { backgroundPosition: "var(--bg-size) 0" } }
+        gradient: { to: { backgroundPosition: "var(--bg-size) 0" } },
+        ripple: {
+          "0%, 100%": {
+            transform: "translate(-50%, -50%) scale(1)",
+          },
+          "50%": {
+            transform: "translate(-50%, -50%) scale(0.9)",
+          },
+        },
+        "slide-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "slide-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        gradient: "gradient 8s linear infinite"
+        gradient: "gradient 8s linear infinite",
+        ripple: "ripple var(--duration,2s) ease-out infinite",
+        "slide-down": "slide-down 0.2s ease-out",
+        "slide-up": "slide-up 0.2s ease-out",
       },
       fontFamily: {
         sans: [
