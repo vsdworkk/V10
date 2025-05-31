@@ -71,12 +71,12 @@ export default function MobileDrawer() {
         </DrawerHeader>
         <DrawerFooter>
           <SignedOut>
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" forceRedirectUrl="/dashboard">
               <button className={buttonVariants({ variant: "outline" })}>
                 Sign In
               </button>
             </SignInButton>
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
               <button
                 className={cn(
                   buttonVariants({ variant: "default" }),

@@ -32,8 +32,8 @@ export async function ProblemSection() {
   return (
     <Section
       title="The Challenge"
-      subtitle="APS Applications Shouldn't Feel This Hard"
-      description="Thousands of capable applicants feel overwhelmed each year by the complexities of APS applications. You're not alone."
+      subtitle="Writing APS Pitches Shouldn't Be This Hard"
+      description="Each year, thousands of qualified candidates struggle with the complexities of writing an APS Pitch, also known as the statement of claims."
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
         {problems.map((problem, index) => (

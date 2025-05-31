@@ -153,3 +153,77 @@ export default function HeroVideoDialog({
     </div>
   )
 }
+
+// New inline video component
+interface HeroVideoInlineProps {
+  videoSrc: string
+  thumbnailSrc: string
+  thumbnailAlt?: string
+  className?: string
+}
+
+export function HeroVideoInline({
+  videoSrc,
+  thumbnailSrc,
+  thumbnailAlt = "Video thumbnail",
+  className
+}: HeroVideoInlineProps) {
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  return (
+    <div className={cn("relative w-full", className)}>
+      {!isPlaying ? (
+        <div
+          className="relative cursor-pointer group rounded-lg overflow-hidden"
+          onClick={() => setIsPlaying(true)}
+        >
+          <Image
+            src={thumbnailSrc}
+            alt={thumbnailAlt}
+            width={1920}
+            height={1080}
+            className="w-full h-auto transition-all duration-200 group-hover:brightness-[0.8] ease-out"
+          />
+          <div className="absolute inset-0 flex items-center justify-center group-hover:scale-100 scale-[0.9] transition-all duration-200 ease-out">
+            <div className="z-30 bg-primary/10 flex items-center justify-center rounded-full backdrop-blur-md size-28">
+              <div className="flex items-center justify-center bg-gradient-to-b from-primary/30 to-primary shadow-md rounded-full size-20 transition-all ease-out duration-200 relative group-hover:scale-[1.2] scale-100">
+                <Play
+                  className="size-8 text-white fill-white group-hover:scale-105 scale-100 transition-transform duration-200 ease-out"
+                  style={{
+                    filter:
+                      "drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))"
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="w-full aspect-video rounded-lg overflow-hidden"
+        >
+          {videoSrc.includes('youtube.com') || videoSrc.includes('youtu.be') || videoSrc.includes('embed') ? (
+            <iframe
+              src={videoSrc}
+              className="w-full h-full"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            ></iframe>
+          ) : (
+            <video
+              src={videoSrc}
+              className="w-full h-full object-cover"
+              controls
+              autoPlay
+              muted
+              playsInline
+            />
+          )}
+        </motion.div>
+      )}
+    </div>
+  )
+}

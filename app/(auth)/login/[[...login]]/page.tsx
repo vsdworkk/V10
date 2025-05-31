@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation"
 export default function LoginPage() {
   const { theme } = useTheme()
   const searchParams = useSearchParams()
-  const redirectUrl = searchParams.get("redirect_url") || "/"
+  const redirectUrl = searchParams.get("redirect_url") || "/dashboard"
 
   return (
     <SignIn

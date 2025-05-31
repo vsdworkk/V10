@@ -104,12 +104,12 @@ export function SolutionSection() {
       description="Stop struggling with complex selection criteria. Our AI-powered platform turns your experience into interview-winning pitches that evaluators love to read."
       className="bg-neutral-100 dark:bg-neutral-900"
     >
-      <div className="mx-auto mt-16 grid max-w-sm grid-cols-1 gap-6 text-gray-500 md:max-w-3xl md:grid-cols-2 xl:grid-rows-2 md:grid-rows-3 xl:max-w-6xl xl:auto-rows-fr xl:grid-cols-3">
+      <div className="mx-auto mt-16 grid max-w-sm grid-cols-1 gap-6 text-gray-500 md:max-w-3xl md:grid-cols-2 xl:grid-rows-2 md:grid-rows-3 xl:max-w-6xl xl:auto-rows-fr xl:grid-cols-3 items-stretch">
         {features.map((feature, index) => (
           <motion.div
             key={index}
             className={cn(
-              "group relative items-start overflow-hidden bg-neutral-50 dark:bg-neutral-800 p-6 rounded-2xl",
+              "group relative items-start overflow-hidden bg-neutral-50 dark:bg-neutral-800 p-6 rounded-2xl flex flex-col h-full",
               feature.className
             )}
             initial={{ opacity: 0, y: 50 }}
