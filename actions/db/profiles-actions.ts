@@ -12,6 +12,7 @@ import {
 } from "@/db/schema/profiles-schema"
 import { ActionState } from "@/types"
 import { eq, sql } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
 
 export async function createProfileAction(
   data: InsertProfile
@@ -139,6 +140,9 @@ export async function addCreditsAction(
     if (!updatedProfile) {
       return { isSuccess: false, message: "Profile not found" }
     }
+
+    // Refresh dashboard cache so the UI shows updated credits immediately
+    revalidatePath("/dashboard")
 
     return {
       isSuccess: true,
