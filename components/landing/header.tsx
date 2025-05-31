@@ -11,7 +11,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
 import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs"
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -63,17 +63,16 @@ export default function Header() {
                     Sign In
                   </button>
                 </SignInButton>
-                <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-                  <button
-                    className={cn(
-                      buttonVariants({ variant: "default" }),
-                      "w-full sm:w-auto text-background flex gap-2"
-                    )}
-                  >
-                    <Icons.logo className="h-6 w-6" />
-                    Get Started For Free
-                  </button>
-                </SignUpButton>
+                <Link
+                  href="/signup"
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "w-full sm:w-auto text-background flex gap-2"
+                  )}
+                >
+                  <Icons.logo className="h-6 w-6" />
+                  Get Started For Free
+                </Link>
               </SignedOut>
               <SignedIn>
                 <Link

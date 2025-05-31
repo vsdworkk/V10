@@ -100,7 +100,7 @@ export function SolutionSection() {
   return (
     <Section
       title="The Solution"
-      subtitle="Transform Your APS Application Success"
+      subtitle="APSPitchPro Transforms Your Experience Into a Winning APS Pitch"
       description="Stop struggling with complex selection criteria. Our AI-powered platform turns your experience into interview-winning pitches that evaluators love to read."
       className="bg-neutral-100 dark:bg-neutral-900"
     >
