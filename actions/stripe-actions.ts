@@ -116,6 +116,41 @@ export const manageSubscriptionStatusChange = async (
 }
 
 /**
+ * Create a Stripe customer for a user and save the customer ID.
+ */
+export async function createStripeCustomerAction(
+  userId: string
+): Promise<ActionState<{ customerId: string }>> {
+  try {
+    if (!userId) {
+      return { isSuccess: false, message: "User ID is required" }
+    }
+
+    const customer = await stripe.customers.create({ metadata: { userId } })
+
+    const updateResult = await updateProfileAction(userId, {
+      stripeCustomerId: customer.id
+    })
+
+    if (!updateResult.isSuccess) {
+      throw new Error("Failed to update profile with customer ID")
+    }
+
+    return {
+      isSuccess: true,
+      message: "Stripe customer created",
+      data: { customerId: customer.id }
+    }
+  } catch (error) {
+    console.error("Error creating Stripe customer:", error)
+    return {
+      isSuccess: false,
+      message: error instanceof Error ? error.message : "Failed to create Stripe customer"
+    }
+  }
+}
+
+/**
  * Creates a Stripe customer portal session for the given user
  * @param userId The ID of the user
  * @param returnUrl The URL to redirect to after the customer portal session
@@ -143,13 +178,16 @@ export async function createCustomerPortalSessionAction(
       }
     }
 
-    const { stripeCustomerId } = profileResult.data
+    let { stripeCustomerId } = profileResult.data
 
+    // If the user doesn't yet have a Stripe customer, create one so they can
+    // manage billing details.
     if (!stripeCustomerId) {
-      return { 
-        isSuccess: false, 
-        message: "User does not have a Stripe customer ID" 
+      const customerResult = await createStripeCustomerAction(userId)
+      if (!customerResult.isSuccess) {
+        return { isSuccess: false, message: customerResult.message }
       }
+      stripeCustomerId = customerResult.data.customerId
     }
 
     // Create a customer portal session with a timeout to prevent hanging

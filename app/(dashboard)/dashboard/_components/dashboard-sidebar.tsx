@@ -44,13 +44,9 @@ interface DashboardSidebarProps {
  * - We'll rely on Clerk for user info if we need to conditionally display items.
  * - For now, we just show a static list of links for pitch management.
  */
-export default async function DashboardSidebar({
-  userId
-}: DashboardSidebarProps) {
-  // Get the user's profile to check if they have a Stripe customer ID
+export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+  // Retrieve user profile for credits display
   const profileResult = await getProfileByUserIdAction(userId)
-  const hasStripeCustomerId =
-    profileResult.isSuccess && profileResult.data?.stripeCustomerId
   const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
 
   return (
@@ -86,17 +82,15 @@ export default async function DashboardSidebar({
           </Button>
         </Link>
 
-        {hasStripeCustomerId && (
-          <div className="pt-2 mt-2 border-t">
-            <Link
-              href="/dashboard/settings"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Link>
-          </div>
-        )}
+        <div className="pt-2 mt-2 border-t">
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        </div>
       </nav>
     </div>
   )
