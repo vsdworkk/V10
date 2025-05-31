@@ -1,167 +1,165 @@
+/*
+Pricing section for the landing page showing the same plans as the pricing page.
+It redirects unauthenticated users to sign up before reaching Stripe checkout.
+*/
+
 "use client"
 
 import Section from "@/components/section"
-import { buttonVariants } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { siteConfig } from "@/lib/config"
-import useWindowSize from "@/lib/hooks/use-window-size"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
 import { Check } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { FaStar } from "react-icons/fa"
 
 interface NewPricingSectionProps {
   userId: string | null
 }
 
+const FEATURES = [
+  "All core features",
+  "Priority support",
+  "Advanced analytics",
+  "Custom integrations",
+  "API access",
+  "Team collaboration"
+]
+
 export default function NewPricingSection({ userId }: NewPricingSectionProps) {
-  const [isMonthly, setIsMonthly] = useState(true)
-  const { isDesktop } = useWindowSize()
-
-  const handleToggle = () => {
-    setIsMonthly(!isMonthly)
-  }
-
-  const getButtonLink = (plan: typeof siteConfig.pricing[0]) => {
-    if (plan.name === "STARTER") {
-      return userId ? "/dashboard" : "/sign-up"
-    }
-    
-    if (!userId) {
-      return `/sign-up?redirect_url=${encodeURIComponent("/pricing")}`
-    }
-    
-    // For authenticated users, append client_reference_id to Stripe links
-    if (plan.href.includes("stripe") || plan.href.includes("checkout")) {
-      return `${plan.href}?client_reference_id=${userId}`
-    }
-    
-    return plan.href
-  }
-
   return (
-    <Section title="Pricing" subtitle="Choose the plan that's right for you">
-      <div className="flex justify-center mb-10">
-        <span className="mr-2 font-semibold">Monthly</span>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <Label>
-            <Switch checked={!isMonthly} onCheckedChange={handleToggle} />
-          </Label>
-        </label>
-        <span className="ml-2 font-semibold">Yearly</span>
-        <span className="ml-2 text-sm text-primary bg-primary/10 px-2 py-1 rounded-full">
-          Save 20%
-        </span>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 sm:2 gap-4">
-        {siteConfig.pricing.map((plan, index) => (
-          <motion.div
-            key={index}
-            initial={{ y: 50, opacity: 1 }}
-            whileInView={
-              isDesktop
-                ? {
-                    y: 0,
-                    opacity: 1,
-                    x:
-                      index === siteConfig.pricing.length - 1
-                        ? -30
-                        : index === 0
-                        ? 30
-                        : 0,
-                    scale:
-                      index === 0 || index === siteConfig.pricing.length - 1
-                        ? 0.94
-                        : 1.0,
-                  }
-                : {}
-            }
-            viewport={{ once: true }}
-            transition={{
-              duration: 1.6,
-              type: "spring",
-              stiffness: 100,
-              damping: 30,
-              delay: 0.4,
-              opacity: { duration: 0.5 },
-            }}
-            className={cn(
-              `rounded-2xl border-[1px] p-6 bg-background text-center lg:flex lg:flex-col lg:justify-center relative`,
-              plan.isPopular ? "border-primary border-[2px]" : "border-border",
-              index === 0 || index === siteConfig.pricing.length - 1
-                ? "z-0 transform translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg]"
-                : "z-10",
-              index === 0 && "origin-right",
-              index === siteConfig.pricing.length - 1 && "origin-left"
-            )}
-          >
-            {plan.isPopular && (
-              <div className="absolute top-0 right-0 bg-primary py-0.5 px-2 rounded-bl-xl rounded-tr-xl flex items-center">
-                <FaStar className="text-white" />
-                <span className="text-white ml-1 font-sans font-semibold">
-                  Popular
-                </span>
-              </div>
-            )}
-            
-            <div>
-              <p className="text-base font-semibold text-muted-foreground">
-                {plan.name}
-              </p>
-              
-              <p className="mt-6 flex items-center justify-center gap-x-2">
-                <span className="text-5xl font-bold tracking-tight text-foreground">
-                  {isMonthly ? plan.price : plan.yearlyPrice}
-                </span>
-                {plan.period !== "Next 3 months" && (
-                  <span className="text-sm font-semibold leading-6 tracking-wide text-muted-foreground">
-                    / {plan.period}
-                  </span>
-                )}
-              </p>
-
-              <p className="text-xs leading-5 text-muted-foreground">
-                {isMonthly ? "billed monthly" : "billed annually"}
-              </p>
-
-              <ul className="mt-5 gap-2 flex flex-col">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <hr className="w-full my-4" />
-
-              <Link
-                href={getButtonLink(plan)}
-                className={cn(
-                  buttonVariants({
-                    variant: "outline",
-                  }),
-                  "group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter",
-                  "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-1 hover:bg-primary hover:text-white",
-                  plan.isPopular
-                    ? "bg-primary text-white hover:bg-primary/90"
-                    : "bg-white text-black hover:bg-primary hover:text-white"
-                )}
-              >
-                {plan.buttonText}
-              </Link>
-              
-              <p className="mt-6 text-xs leading-5 text-muted-foreground">
-                {plan.description}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+    <Section
+      title="Pricing"
+      subtitle="Choose the plan that's right for you"
+      id="pricing"
+    >
+      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
+        <PricingCard
+          title="Single Pitch"
+          price="1 Credit"
+          description="Purchase a single pitch credit"
+          buttonText="Buy Now"
+          buttonLink={
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_SINGLEPITCH || "#"
+          }
+          features={FEATURES}
+          userId={userId}
+          popular={false}
+        />
+        <PricingCard
+          title="Pitch Pack"
+          price="5 Credits"
+          description="Bundle of five pitch credits"
+          buttonText="Buy Pack"
+          buttonLink={
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PITCHPACK || "#"
+          }
+          features={FEATURES}
+          userId={userId}
+          popular={true}
+        />
+        <PricingCard
+          title="Pro Bundle"
+          price="15 Credits"
+          description="Best value for power users"
+          buttonText="Buy Bundle"
+          buttonLink={
+            process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PROBUNDLE || "#"
+          }
+          features={FEATURES}
+          userId={userId}
+          popular={false}
+        />
       </div>
     </Section>
   )
-} 
+}
+
+interface PricingCardProps {
+  title: string
+  price: string
+  description: string
+  buttonText: string
+  buttonLink: string
+  features: string[]
+  userId: string | null
+  popular: boolean
+}
+
+function PricingCard({
+  title,
+  price,
+  description,
+  buttonText,
+  buttonLink,
+  features,
+  userId,
+  popular
+}: PricingCardProps) {
+  const finalButtonLink = userId
+    ? `${buttonLink}?client_reference_id=${userId}`
+    : `/signup?redirect_url=${encodeURIComponent(
+        `/checkout?payment_link=${encodeURIComponent(buttonLink)}`
+      )}`
+
+  return (
+    <Card
+      className={cn(
+        "relative flex h-full flex-col",
+        popular && "border-primary shadow-lg"
+      )}
+    >
+      {popular && (
+        <div className="bg-primary text-primary-foreground absolute -top-4 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-sm font-medium">
+          Most Popular
+        </div>
+      )}
+
+      <CardHeader>
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+
+      <CardContent className="grow">
+        <div className="mb-6 flex items-baseline justify-center gap-x-2">
+          <span className="text-5xl font-bold">{price}</span>
+          <span className="text-muted-foreground">/month</span>
+        </div>
+
+        <ul className="space-y-3">
+          {features.map((feature, index) => (
+            <li key={index} className="flex items-center gap-x-2">
+              <Check className="text-primary size-4" />
+              <span className="text-muted-foreground text-sm">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+
+      <CardFooter>
+        <Button
+          className={cn(
+            "w-full",
+            popular && "bg-primary text-primary-foreground hover:bg-primary/90"
+          )}
+          asChild
+        >
+          <a
+            href={finalButtonLink}
+            className={cn(
+              "inline-flex items-center justify-center",
+              finalButtonLink === "#" && "pointer-events-none opacity-50"
+            )}
+          >
+            {buttonText}
+          </a>
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
