@@ -59,7 +59,7 @@ function HeroTitles() {
           staggerChildren: 0.2,
         }}
       >
-        {["3X", "Your", "Interview", "Chances"].map((text, index) => (
+        {["3X", "Your", "Interview", "Chances", "With", "The", "APS"].map((text, index) => (
           <motion.span
             key={index}
             className="inline-block px-1 md:px-2 text-balance font-semibold"
@@ -85,7 +85,7 @@ function HeroTitles() {
           ease,
         }}
       >
-        AI transforms your experience into interview-winning pitches. Zero stress, low cost.
+        Personalised APS Statements of Claims Written by AI
       </motion.p>
     </div>
   )
@@ -117,7 +117,7 @@ function HeroCTA() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1.0, duration: 0.8 }}
       >
-        7 day free trial. No credit card required.
+        No credit card required
       </motion.p>
     </>
   )
@@ -134,7 +134,7 @@ function HeroImage() {
       <HeroVideoDialog
         animationStyle="from-center"
         videoSrc="/landingpagev.mp4"
-        thumbnailSrc="/hero.png"
+        thumbnailSrc="/hero-placeholder-image.png"
         thumbnailAlt="Hero Video"
         className="border rounded-lg shadow-lg max-w-screen-lg mt-16"
       />

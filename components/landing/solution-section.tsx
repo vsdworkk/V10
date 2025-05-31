@@ -90,7 +90,7 @@ const features = [
       <Safari
         src={`/any-role.png`}
         url="https://apsinterviewpro.com"
-        className="-mb-32 mt-4 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
+        className="-mb-32 mt-10 max-h-64 w-full px-4 select-none drop-shadow-[0_0_28px_rgba(0,0,0,.1)] group-hover:translate-y-[-10px] transition-all duration-300"
       />
     ),
   },
