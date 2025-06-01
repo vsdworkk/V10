@@ -73,8 +73,8 @@ export default async function DashboardSidebar({
           <Card className="bg-gray-50">
             <CardContent className="p-3">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Credits</span>
+                <CreditCard className="text-muted-foreground size-4" />
+                <span className="text-muted-foreground text-sm">Credits</span>
                 <Badge
                   variant="secondary"
                   className="ml-auto text-sm font-medium"
@@ -86,7 +86,7 @@ export default async function DashboardSidebar({
                 <Button
                   asChild
                   variant="outline"
-                  className="w-full h-8 text-xs"
+                  className="h-8 w-full text-xs"
                 >
                   <Link href="/#pricing">+ More Credits</Link>
                 </Button>
@@ -106,7 +106,7 @@ export default async function DashboardSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
 
-        <div className="pt-4 mt-4 border-t">
+        <div className="mt-4 border-t pt-4">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
@@ -114,7 +114,7 @@ export default async function DashboardSidebar({
                   href="/dashboard/settings"
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings className="size-4" />
                   Settings
                 </Link>
               </SidebarMenuButton>

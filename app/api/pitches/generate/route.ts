@@ -30,10 +30,7 @@ export async function POST(req: NextRequest) {
 
     const creditResult = await spendCreditsAction(userId, 1)
     if (!creditResult.isSuccess) {
-      return NextResponse.json(
-        { error: creditResult.message },
-        { status: 402 }
-      )
+      return NextResponse.json({ error: creditResult.message }, { status: 402 })
     }
 
     // Use the pitchId as the requestId for the agent - this is the key pattern
@@ -106,21 +103,16 @@ export async function POST(req: NextRequest) {
           action: ex.action.steps
             .map(
               (s: any, i: number) =>
-                `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}\n` +
-                `How: ${s["how-did-you-do-it-tools-methods-or-skills"]}\n` +
+                `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}` +
                 (s["what-was-the-outcome-of-this-step-optional"]
-                  ? `Outcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
+                  ? `\nOutcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
                   : "")
             )
             .join("\n\n"),
-          result: [
-            ex.result?.["what-positive-outcome-did-you-achieve"],
+          result:
             ex.result?.[
               "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-            ]
-          ]
-            .filter(Boolean)
-            .join("\n")
+            ] || ""
         })
       )
 

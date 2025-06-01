@@ -14,18 +14,18 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
+  navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu"
 import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
 
 // Type guard functions
 function isDropdownItem(item: any): item is { trigger: string; content: any } {
-  return 'trigger' in item && 'content' in item;
+  return "trigger" in item && "content" in item
 }
 
 function isLinkItem(item: any): item is { href: string; label: string } {
-  return 'href' in item && 'label' in item;
+  return "href" in item && "label" in item
 }
 
 export default function Menu() {
@@ -49,14 +49,14 @@ export default function Menu() {
                       <li className="row-span-3">
                         <NavigationMenuLink asChild>
                           <Link
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-primary/10 from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                            className="bg-primary/10 from-muted/50 to-muted flex size-full select-none flex-col justify-end rounded-md p-6 no-underline outline-none focus:shadow-md"
                             href={item.content.main.href}
                           >
                             {item.content.main.icon}
                             <div className="mb-2 mt-4 text-lg font-medium">
                               {item.content.main.title}
                             </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
+                            <p className="text-muted-foreground text-sm leading-tight">
                               {item.content.main.description}
                             </p>
                           </Link>
@@ -77,11 +77,7 @@ export default function Menu() {
                 </NavigationMenuContent>
               </>
             ) : isLinkItem(item) ? (
-              <Link
-                href={item.href}
-                legacyBehavior
-                passHref
-              >
+              <Link href={item.href} legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   {item.label}
                 </NavigationMenuLink>
@@ -104,13 +100,13 @@ const ListItem = React.forwardRef<
         <a
           ref={ref}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors",
             className
           )}
           {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
             {children}
           </p>
         </a>
@@ -119,4 +115,4 @@ const ListItem = React.forwardRef<
   )
 })
 
-ListItem.displayName = "ListItem" 
+ListItem.displayName = "ListItem"

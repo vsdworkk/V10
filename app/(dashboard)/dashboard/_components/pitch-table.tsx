@@ -23,7 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { SelectPitch } from "@/db/schema/pitches-schema"
-import { Download, Filter, MoreVertical, Calendar, Building, User } from "lucide-react"
+import {
+  Download,
+  Filter,
+  MoreVertical,
+  Calendar,
+  Building,
+  User
+} from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useState } from "react"
@@ -41,32 +48,34 @@ export default function PitchTable({ pitches }: PitchTableProps) {
 
   async function handleExport(pitch: SelectPitch, format: "pdf" | "doc") {
     const content = pitch.pitchContent || ""
-    
+
     if (!content.trim()) {
-      alert("No content available to export. Please ensure the pitch has content.")
+      alert(
+        "No content available to export. Please ensure the pitch has content."
+      )
       return
     }
-    
+
     if (format === "pdf") {
       try {
         const html2pdf = (await import("html2pdf.js")).default
-        
+
         const el = document.createElement("div")
         el.innerHTML = content
-        
+
         el.style.fontFamily = "Arial, sans-serif"
         el.style.lineHeight = "1.6"
         el.style.padding = "20px"
         el.style.maxWidth = "800px"
-        
+
         html2pdf()
           .from(el)
-          .set({ 
+          .set({
             filename: `${pitch.roleName}.pdf`,
             margin: 1,
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
           })
           .save()
       } catch (error) {
@@ -77,28 +86,33 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       try {
         const { saveAs } = await import("file-saver")
         const { Document, Packer, Paragraph } = await import("docx")
-        
+
         const tempDiv = document.createElement("div")
         tempDiv.innerHTML = content
-        
+
         const textContent = tempDiv.textContent || tempDiv.innerText || ""
-        
+
         if (!textContent.trim()) {
           alert("No text content found to export.")
           return
         }
-        
+
         const paragraphs = textContent.split(/\n\s*\n/).filter(p => p.trim())
-        
+
         const docParagraphs = paragraphs.map(text => new Paragraph(text.trim()))
-        
+
         const doc = new Document({
-          sections: [{
-            properties: {},
-            children: docParagraphs.length > 0 ? docParagraphs : [new Paragraph(textContent)]
-          }]
+          sections: [
+            {
+              properties: {},
+              children:
+                docParagraphs.length > 0
+                  ? docParagraphs
+                  : [new Paragraph(textContent)]
+            }
+          ]
         })
-        
+
         const blob = await Packer.toBlob(doc)
         saveAs(blob, `${pitch.roleName}.docx`)
       } catch (error: any) {
@@ -137,24 +151,24 @@ export default function PitchTable({ pitches }: PitchTableProps) {
   })
 
   const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    const dateObj = typeof date === "string" ? new Date(date) : date
+    return dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
     })
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800'
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'in-progress':
-        return 'bg-blue-100 text-blue-800'
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "draft":
+        return "bg-yellow-100 text-yellow-800"
+      case "in-progress":
+        return "bg-blue-100 text-blue-800"
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -162,16 +176,16 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     <div className="space-y-4">
       {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-xl md:text-2xl font-semibold">
+        <h2 className="text-xl font-semibold md:text-2xl">
           {`Welcome ${user?.firstName ?? ""}`}
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-sm text-gray-600">
           View and manage your pitches below
         </p>
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="flex-1">
           <Input
             type="text"
@@ -185,13 +199,13 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="flex items-center gap-2 shadow-sm whitespace-nowrap"
+              className="flex items-center gap-2 whitespace-nowrap shadow-sm"
             >
-              <Filter className="h-4 w-4" />
+              <Filter className="size-4" />
               <span>Filter</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="space-y-3 w-64" align="end">
+          <PopoverContent className="w-64 space-y-3" align="end">
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Role</label>
               <Input
@@ -228,30 +242,35 @@ export default function PitchTable({ pitches }: PitchTableProps) {
 
       {/* Results */}
       {filteredPitches.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No pitches found</p>
-          <p className="text-gray-400 text-sm mt-1">
+        <div className="py-12 text-center">
+          <p className="text-lg text-gray-500">No pitches found</p>
+          <p className="mt-1 text-sm text-gray-400">
             Try adjusting your search criteria or create a new pitch
           </p>
         </div>
       ) : (
         <>
           {/* Mobile Card View - Hidden on md and up */}
-          <div className="md:hidden space-y-4">
-            {filteredPitches.map((pitch) => (
-              <Card key={pitch.id} className="hover:shadow-md transition-shadow">
+          <div className="space-y-4 md:hidden">
+            {filteredPitches.map(pitch => (
+              <Card
+                key={pitch.id}
+                className="transition-shadow hover:shadow-md"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <h3 className="font-semibold text-lg leading-tight">
+                      <h3 className="text-lg font-semibold leading-tight">
                         {pitch.roleName}
                       </h3>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <User className="h-3 w-3" />
+                        <User className="size-3" />
                         <span>{pitch.roleLevel}</span>
                       </div>
                     </div>
-                    <Badge className={`text-xs ${getStatusColor(pitch.status)}`}>
+                    <Badge
+                      className={`text-xs ${getStatusColor(pitch.status)}`}
+                    >
                       {pitch.status}
                     </Badge>
                   </div>
@@ -260,12 +279,12 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                   <div className="space-y-3">
                     {pitch.organisationName && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Building className="h-3 w-3" />
+                        <Building className="size-3" />
                         <span>{pitch.organisationName}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className="size-3" />
                       <span>{formatDate(pitch.createdAt)}</span>
                     </div>
                     <div className="flex items-center justify-between pt-2">
@@ -276,17 +295,25 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                       </Link>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="size-8 p-0"
+                          >
+                            <MoreVertical className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleExport(pitch, "pdf")}>
-                            <Download className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => handleExport(pitch, "pdf")}
+                          >
+                            <Download className="mr-2 size-4" />
                             Export as PDF
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleExport(pitch, "doc")}>
-                            <Download className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => handleExport(pitch, "doc")}
+                          >
+                            <Download className="mr-2 size-4" />
                             Export as DOC
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -299,23 +326,35 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           </div>
 
           {/* Desktop Table View - Hidden on mobile */}
-          <div className="hidden md:block border rounded-md bg-white overflow-x-auto">
+          <div className="hidden overflow-x-auto rounded-md border bg-white md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-gray-50">
-                  <th className="text-left p-4 font-medium text-gray-700">Role</th>
-                  <th className="text-left p-4 font-medium text-gray-700">Level</th>
-                  <th className="text-left p-4 font-medium text-gray-700">Organisation</th>
-                  <th className="text-left p-4 font-medium text-gray-700">Status</th>
-                  <th className="text-left p-4 font-medium text-gray-700">Created</th>
-                  <th className="text-left p-4 font-medium text-gray-700">Actions</th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Role
+                  </th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Level
+                  </th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Organisation
+                  </th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Status
+                  </th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Created
+                  </th>
+                  <th className="p-4 text-left font-medium text-gray-700">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredPitches.map((pitch) => (
+                {filteredPitches.map(pitch => (
                   <tr key={pitch.id} className="border-b hover:bg-gray-50">
                     <td className="p-4">
-                      <Link 
+                      <Link
                         href={`/dashboard/${pitch.id}`}
                         className="font-medium text-blue-600 hover:text-blue-800"
                       >
@@ -323,29 +362,41 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                       </Link>
                     </td>
                     <td className="p-4 text-gray-600">{pitch.roleLevel}</td>
-                    <td className="p-4 text-gray-600">{pitch.organisationName || "—"}</td>
+                    <td className="p-4 text-gray-600">
+                      {pitch.organisationName || "—"}
+                    </td>
                     <td className="p-4">
-                      <Badge className={`text-xs ${getStatusColor(pitch.status)}`}>
+                      <Badge
+                        className={`text-xs ${getStatusColor(pitch.status)}`}
+                      >
                         {pitch.status}
                       </Badge>
                     </td>
-                    <td className="p-4 text-gray-600 text-sm">
+                    <td className="p-4 text-sm text-gray-600">
                       {formatDate(pitch.createdAt)}
                     </td>
                     <td className="p-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="size-8 p-0"
+                          >
+                            <MoreVertical className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleExport(pitch, "pdf")}>
-                            <Download className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => handleExport(pitch, "pdf")}
+                          >
+                            <Download className="mr-2 size-4" />
                             Export as PDF
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleExport(pitch, "doc")}>
-                            <Download className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem
+                            onClick={() => handleExport(pitch, "doc")}
+                          >
+                            <Download className="mr-2 size-4" />
                             Export as DOC
                           </DropdownMenuItem>
                         </DropdownMenuContent>

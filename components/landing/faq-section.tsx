@@ -9,7 +9,7 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion"
 import { siteConfig } from "@/lib/config"
 
@@ -26,7 +26,7 @@ export function FAQSection() {
             <AccordionItem
               key={idx}
               value={faq.question}
-              className="w-full border rounded-lg overflow-hidden"
+              className="w-full overflow-hidden rounded-lg border"
             >
               <AccordionTrigger className="px-4">
                 {faq.question}
@@ -36,7 +36,7 @@ export function FAQSection() {
           ))}
         </Accordion>
       </div>
-      <h4 className="mb-12 text-center text-sm font-medium tracking-tight text-foreground/80">
+      <h4 className="text-foreground/80 mb-12 text-center text-sm font-medium tracking-tight">
         Still have questions? Email us at{" "}
         <a href={`mailto:${siteConfig.links.email}`} className="underline">
           {siteConfig.links.email}

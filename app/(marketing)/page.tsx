@@ -15,7 +15,7 @@ import { FAQSection } from "@/components/landing/faq-section"
 
 export default async function HomePage() {
   const { userId } = await auth()
-  
+
   return (
     <div className="pb-20">
       <HeroSection />

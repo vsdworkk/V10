@@ -1,6 +1,6 @@
 /**
  * types/supabase.ts
- * 
+ *
  * This file contains type definitions for your Supabase database.
  * You can generate more specific types using Supabase CLI:
  * npx supabase gen types typescript --project-id your-project-id > types/supabase.ts
@@ -48,4 +48,4 @@ export interface Database {
       // Define your enums here
     }
   }
-} 
+}

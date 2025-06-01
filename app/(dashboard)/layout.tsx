@@ -61,25 +61,31 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-purple-50 relative" style={{background: 'linear-gradient(to bottom right, #f8fafc, #ffffff, #faf5ff)'}}>
+      <div
+        className="relative flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-purple-50"
+        style={{
+          background:
+            "linear-gradient(to bottom right, #f8fafc, #ffffff, #faf5ff)"
+        }}
+      >
         {/* Subtle grid-pattern overlay */}
         <div
-          className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
+          className="bg-grid-pattern pointer-events-none absolute inset-0 opacity-5"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
           }}
         />
-        
+
         <DashboardSidebar userId={userId} />
-        
+
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header - Only visible on mobile */}
           <MobileHeader />
-          
+
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
-              <div className="bg-white shadow-sm rounded-lg p-4 md:p-6 lg:p-8 relative z-10">
+            <div className="container mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
+              <div className="relative z-10 rounded-lg bg-white p-4 shadow-sm md:p-6 lg:p-8">
                 {children}
               </div>
             </div>

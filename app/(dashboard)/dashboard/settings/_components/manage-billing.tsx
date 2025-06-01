@@ -12,14 +12,14 @@ export default function ManageBilling() {
     try {
       // Set loading state immediately to provide instant feedback
       setIsLoading(true)
-      
+
       // Show a loading toast to inform the user
       toast({
         title: "Preparing billing portal...",
         description: "You'll be redirected to Stripe in a moment.",
         duration: 5000
       })
-      
+
       // Make a POST request to the customer portal API endpoint
       const response = await fetch("/api/stripe/customer-portal", {
         method: "POST",
@@ -33,16 +33,18 @@ export default function ManageBilling() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Failed to create customer portal session")
+        throw new Error(
+          errorData.error || "Failed to create customer portal session"
+        )
       }
 
       const { url } = await response.json()
-      
+
       // Redirect to the Stripe customer portal
       window.location.href = url
     } catch (error) {
       console.error("Error redirecting to customer portal:", error)
-      
+
       // Show error toast instead of alert for better UX
       toast({
         title: "Error",
@@ -50,19 +52,21 @@ export default function ManageBilling() {
         variant: "destructive",
         duration: 5000
       })
-      
+
       setIsLoading(false)
     }
   }
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-2">Manage Billing</h2>
-      <p className="text-gray-500 mb-4">Update payment information by accessing your Stripe customer portal.</p>
-      
+      <h2 className="mb-2 text-xl font-semibold">Manage Billing</h2>
+      <p className="mb-4 text-gray-500">
+        Update payment information by accessing your Stripe customer portal.
+      </p>
+
       <div className="flex justify-end">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handleManageBilling}
           disabled={isLoading}
         >
@@ -73,7 +77,7 @@ export default function ManageBilling() {
             </>
           ) : (
             <>
-              <CreditCard className="h-4 w-4 mr-2" />
+              <CreditCard className="mr-2 size-4" />
               MANAGE BILLING
             </>
           )}
@@ -81,4 +85,4 @@ export default function ManageBilling() {
       </div>
     </div>
   )
-} 
+}

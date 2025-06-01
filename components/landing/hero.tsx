@@ -18,15 +18,15 @@ function HeroPill() {
   return (
     <motion.a
       href="/features"
-      className="flex w-auto items-center space-x-2 rounded-full bg-primary/20 px-2 py-1 ring-1 ring-accent whitespace-pre"
+      className="bg-primary/20 ring-accent flex w-auto items-center space-x-2 whitespace-pre rounded-full px-2 py-1 ring-1"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease }}
     >
-      <div className="w-fit rounded-full bg-accent px-2 py-0.5 text-center text-xs font-medium text-primary sm:text-sm">
+      <div className="bg-accent text-primary w-fit rounded-full px-2 py-0.5 text-center text-xs font-medium sm:text-sm">
         🚀 New Feature
       </div>
-      <p className="text-xs font-medium text-primary sm:text-sm">
+      <p className="text-primary text-xs font-medium sm:text-sm">
         AI-Powered Pitch Generation
       </p>
       <svg
@@ -50,39 +50,41 @@ function HeroTitles() {
   return (
     <div className="flex w-full max-w-2xl flex-col space-y-4 overflow-hidden pt-8">
       <motion.h1
-        className="text-center text-4xl font-medium leading-tight text-foreground sm:text-5xl md:text-6xl"
+        className="text-foreground text-center text-4xl font-medium leading-tight sm:text-5xl md:text-6xl"
         initial={{ filter: "blur(10px)", opacity: 0, y: 50 }}
         animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
         transition={{
           duration: 1,
           ease,
-          staggerChildren: 0.2,
+          staggerChildren: 0.2
         }}
       >
-        {["3X", "Your", "Interview", "Chances", "With", "The", "APS"].map((text, index) => (
-          <motion.span
-            key={index}
-            className="inline-block px-1 md:px-2 text-balance font-semibold"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: index * 0.2,
-              ease,
-            }}
-          >
-            {text}
-          </motion.span>
-        ))}
+        {["3X", "Your", "Interview", "Chances", "With", "The", "APS"].map(
+          (text, index) => (
+            <motion.span
+              key={index}
+              className="inline-block text-balance px-1 font-semibold md:px-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.8,
+                delay: index * 0.2,
+                ease
+              }}
+            >
+              {text}
+            </motion.span>
+          )
+        )}
       </motion.h1>
       <motion.p
-        className="mx-auto max-w-xl text-center text-lg leading-7 text-muted-foreground sm:text-xl sm:leading-9 text-balance"
+        className="text-muted-foreground mx-auto max-w-xl text-balance text-center text-lg leading-7 sm:text-xl sm:leading-9"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
           delay: 0.6,
           duration: 0.8,
-          ease,
+          ease
         }}
       >
         Personalised APS Statements of Claims Written by AI
@@ -104,15 +106,15 @@ function HeroCTA() {
           href="/signup"
           className={cn(
             buttonVariants({ variant: "default" }),
-            "w-full sm:w-auto text-background flex gap-2"
+            "text-background flex w-full gap-2 sm:w-auto"
           )}
         >
-          <Icons.logo className="h-6 w-6" />
+          <Icons.logo className="size-6" />
           Get Started For Free
         </Link>
       </motion.div>
       <motion.p
-        className="mt-5 text-sm text-muted-foreground"
+        className="text-muted-foreground mt-5 text-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.0, duration: 0.8 }}
@@ -136,7 +138,7 @@ function HeroImage() {
         videoSrc="/landingpagev.mp4"
         thumbnailSrc="/hero-placeholder-image.png"
         thumbnailAlt="Hero Video"
-        className="border rounded-lg shadow-lg max-w-screen-lg mt-16"
+        className="mt-16 max-w-screen-lg rounded-lg border shadow-lg"
       />
     </motion.div>
   )
@@ -150,7 +152,7 @@ export function HeroSection() {
         <HeroTitles />
         <HeroCTA />
         <HeroImage />
-        <div className="pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t from-background via-background to-transparent lg:h-1/4"></div>
+        <div className="from-background via-background pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t to-transparent lg:h-1/4"></div>
       </div>
     </section>
   )

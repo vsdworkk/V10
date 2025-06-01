@@ -51,15 +51,16 @@ export default function ExperienceStep() {
 
   return (
     <motion.div
-      className="space-y-8 bg-white rounded-2xl border border-gray-100 overflow-hidden"
-      style={{ 
-        boxShadow: '0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)' 
+      className="space-y-8 overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      style={{
+        boxShadow:
+          "0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)"
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="p-8 space-y-8">
+      <div className="space-y-8 p-8">
         {/* Relevant Experience */}
         <div className="space-y-4">
           <FormField
@@ -67,23 +68,28 @@ export default function ExperienceStep() {
             name="relevantExperience"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-gray-700 mb-4 block">Relevant Experience (Copy and Paste Your Resume Here)</FormLabel>
+                <FormLabel className="mb-4 block text-sm font-medium text-gray-700">
+                  Relevant Experience (Copy and Paste Your Resume Here)
+                </FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
                     placeholder="Paste your resume, CV, or describe your relevant work experience here..."
-                    className="w-full min-h-[300px] p-4 bg-white border border-gray-200 rounded-lg transition-all duration-200 resize-none"
-                    style={{
-                      '--focus-ring-color': '#444ec1',
-                      '--focus-border-color': '#444ec1'
-                    } as React.CSSProperties}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#444ec1'
-                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    className="min-h-[300px] w-full resize-none rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200"
+                    style={
+                      {
+                        "--focus-ring-color": "#444ec1",
+                        "--focus-border-color": "#444ec1"
+                      } as React.CSSProperties
+                    }
+                    onFocus={e => {
+                      e.target.style.borderColor = "#444ec1"
+                      e.target.style.boxShadow =
+                        "0 0 0 1px rgba(68, 78, 193, 0.1)"
                     }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e5e7eb'
-                      e.target.style.boxShadow = 'none'
+                    onBlur={e => {
+                      e.target.style.borderColor = "#e5e7eb"
+                      e.target.style.boxShadow = "none"
                     }}
                   />
                 </FormControl>

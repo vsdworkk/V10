@@ -1,5 +1,6 @@
 "use client"
 
+// Handles the Action step where users list what they did in each STAR example
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "./pitch-wizard/schema"
 import { useState, useEffect } from "react"
@@ -13,7 +14,14 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Plus, Check, ChevronDown, ChevronUp, Lightbulb, Target } from "lucide-react"
+import {
+  Plus,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Target
+} from "lucide-react"
 import {
   Accordion,
   AccordionItem,
@@ -71,21 +79,16 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
           position: index + 1,
           "what-did-you-specifically-do-in-this-step":
             step["what-did-you-specifically-do-in-this-step"] || "",
-          "how-did-you-do-it-tools-methods-or-skills":
-            step["how-did-you-do-it-tools-methods-or-skills"] || "",
           "what-was-the-outcome-of-this-step-optional":
             step["what-was-the-outcome-of-this-step-optional"] || "",
           isCompleted: Boolean(
-            step["what-did-you-specifically-do-in-this-step"] &&
-              step["how-did-you-do-it-tools-methods-or-skills"]
+            step["what-did-you-specifically-do-in-this-step"]
           ),
           // Set fixed title for display
           title: `Step ${index + 1}`,
-          description: `How: ${
-            step["how-did-you-do-it-tools-methods-or-skills"] || ""
-          }\nOutcome: ${
-            step["what-was-the-outcome-of-this-step-optional"] || ""
-          }`
+          description: step["what-was-the-outcome-of-this-step-optional"]
+            ? `Outcome: ${step["what-was-the-outcome-of-this-step-optional"]}`
+            : ""
         })
       )
       if (parsedSteps.length > 0) {
@@ -100,7 +103,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 1,
         "what-did-you-specifically-do-in-this-step": "",
-        "how-did-you-do-it-tools-methods-or-skills": "",
         "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 1",
@@ -110,7 +112,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 2,
         "what-did-you-specifically-do-in-this-step": "",
-        "how-did-you-do-it-tools-methods-or-skills": "",
         "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 2",
@@ -120,7 +121,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 3,
         "what-did-you-specifically-do-in-this-step": "",
-        "how-did-you-do-it-tools-methods-or-skills": "",
         "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 3",
@@ -134,17 +134,11 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
    */
   const updateActionValue = (updatedSteps: ActionStepType[]) => {
     const stepData = updatedSteps
-      .filter(
-        s =>
-          s["what-did-you-specifically-do-in-this-step"]?.trim() ||
-          s["how-did-you-do-it-tools-methods-or-skills"]?.trim()
-      )
+      .filter(s => s["what-did-you-specifically-do-in-this-step"]?.trim())
       .map(step => ({
         stepNumber: step.position,
         "what-did-you-specifically-do-in-this-step":
           step["what-did-you-specifically-do-in-this-step"] || "",
-        "how-did-you-do-it-tools-methods-or-skills":
-          step["how-did-you-do-it-tools-methods-or-skills"] || "",
         "what-was-the-outcome-of-this-step-optional":
           step["what-was-the-outcome-of-this-step-optional"] || ""
       }))
@@ -158,23 +152,17 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   // Save step changes
-  const handleSaveStep = (
-    stepId: string,
-    what: string,
-    how: string,
-    outcome: string
-  ) => {
+  const handleSaveStep = (stepId: string, what: string, outcome: string) => {
     const updatedSteps = steps.map(step => {
       if (step.id === stepId) {
         return {
           ...step,
           "what-did-you-specifically-do-in-this-step": what,
-          "how-did-you-do-it-tools-methods-or-skills": how,
           "what-was-the-outcome-of-this-step-optional": outcome,
-          isCompleted: Boolean(what.trim() && how.trim()),
+          isCompleted: Boolean(what.trim()),
           // Keep title as Step N instead of setting it to the 'what' value
           title: `Step ${step.position}`,
-          description: `How: ${how}\n${outcome ? `Outcome: ${outcome}` : ""}`
+          description: outcome ? `Outcome: ${outcome}` : ""
         }
       }
       return step
@@ -194,7 +182,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       id: uuidv4(),
       position: steps.length + 1,
       "what-did-you-specifically-do-in-this-step": "",
-      "how-did-you-do-it-tools-methods-or-skills": "",
       "what-was-the-outcome-of-this-step-optional": "",
       isCompleted: false,
       title: `Step ${steps.length + 1}`,
@@ -215,7 +202,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   return (
-    <div className="flex flex-col w-full max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6">
       {/* Tips Accordion */}
       <Accordion
         type="single"
@@ -226,17 +213,17 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       >
         <AccordionItem
           value="tips-panel"
-          className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         >
-          <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
+          <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center mr-3 shadow-md border border-amber-200">
+              <div className="mr-3 flex size-8 items-center justify-center rounded-full border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 shadow-md">
                 <div className="relative">
                   <Lightbulb
-                    className="h-5 w-5 text-amber-500 drop-shadow-sm"
+                    className="size-5 text-amber-500 drop-shadow-sm"
                     strokeWidth={2.5}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/30 to-amber-300/0 rounded-full" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/30 to-amber-300/0" />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Tips</span>
@@ -248,7 +235,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 Think about the overarching steps you took to complete the
                 assigned task, for example:
               </p>
-              <div className="space-y-4 ml-6">
+              <div className="ml-6 space-y-4">
                 <p className="text-base text-gray-700">
                   <span className="font-bold">Step 1:</span> Consulting
                   stakeholders or researching the issue.
@@ -273,19 +260,33 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
       {/* Action Section */}
       <div className="w-full">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="px-6 py-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center mr-3 shadow-md" style={{background: 'linear-gradient(to bottom right, #eef2ff, #ddd6fe)', borderColor: '#c7d2fe', borderWidth: '1px'}}>
+              <div
+                className="mr-3 flex size-8 items-center justify-center rounded-full shadow-md"
+                style={{
+                  background:
+                    "linear-gradient(to bottom right, #eef2ff, #ddd6fe)",
+                  borderColor: "#c7d2fe",
+                  borderWidth: "1px"
+                }}
+              >
                 <div className="relative">
                   <Check
-                    className="h-5 w-5 drop-shadow-sm"
+                    className="size-5 drop-shadow-sm"
                     style={{
-                      color: '#444ec1',
+                      color: "#444ec1",
                       filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
                     }}
                   />
-                  <div className="absolute inset-0 rounded-full" style={{background: 'linear-gradient(to top right, rgba(68, 78, 193, 0.3), rgba(68, 78, 193, 0))'}} />
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(to top right, rgba(68, 78, 193, 0.3), rgba(68, 78, 193, 0))"
+                    }}
+                  />
                 </div>
               </div>
               <span className="text-lg font-medium text-gray-900">Action</span>
@@ -312,9 +313,9 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 size="sm"
                 onClick={handleAddStep}
                 disabled={hasReachedMaxSteps}
-                className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-gray-600 hover:border-gray-300 hover:text-gray-700 transition-all duration-200 flex items-center justify-center group mt-4"
+                className="group mt-4 flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-4 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:text-gray-700"
               >
-                <Plus className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                <Plus className="mr-2 size-4 transition-transform group-hover:scale-110" />
                 Add Step {steps.length + 1}
               </Button>
               {hasReachedMaxSteps && (
@@ -332,7 +333,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
 interface StepItemProps {
   step: ActionStepType
-  onSave: (stepId: string, what: string, how: string, outcome: string) => void
+  onSave: (stepId: string, what: string, outcome: string) => void
 }
 
 /**
@@ -342,53 +343,50 @@ function StepItem({ step, onSave }: StepItemProps) {
   const [what, setWhat] = useState(
     step["what-did-you-specifically-do-in-this-step"]
   )
-  const [how, setHow] = useState(
-    step["how-did-you-do-it-tools-methods-or-skills"]
-  )
   const [outcome, setOutcome] = useState(
     step["what-was-the-outcome-of-this-step-optional"]
   )
 
   // Word counts
   const whatWords = countWords(what || "")
-  const howWords = countWords(how || "")
   const outcomeWords = countWords(outcome || "")
 
   useEffect(() => {
     setWhat(step["what-did-you-specifically-do-in-this-step"])
-    setHow(step["how-did-you-do-it-tools-methods-or-skills"])
     setOutcome(step["what-was-the-outcome-of-this-step-optional"])
   }, [step])
 
   const handleSave = () => {
-    onSave(step.id, what ?? "", how ?? "", outcome ?? "")
+    onSave(step.id, what ?? "", outcome ?? "")
   }
 
   return (
     <AccordionItem
       value={step.id}
       className={cn(
-        "border rounded-xl overflow-hidden transition-colors duration-200",
+        "overflow-hidden rounded-xl border transition-colors duration-200",
         step.isCompleted
           ? "bg-gray-50"
           : "border-gray-200 hover:border-gray-300"
       )}
-      style={step.isCompleted ? {
-        borderColor: '#c7d2fe',
-        backgroundColor: '#eef2ff'
-      } : {}}
+      style={
+        step.isCompleted
+          ? {
+              borderColor: "#c7d2fe",
+              backgroundColor: "#eef2ff"
+            }
+          : {}
+      }
     >
-      <AccordionTrigger className="px-6 py-4 hover:no-underline transition-all">
-        <div className="flex items-center justify-between w-full">
+      <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
+        <div className="flex w-full items-center justify-between">
           <div className="flex items-center">
             <div
               className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-sm",
-                step.isCompleted
-                  ? "text-white"
-                  : "bg-gray-100 text-gray-600"
+                "flex size-8 items-center justify-center rounded-full text-sm font-medium shadow-sm",
+                step.isCompleted ? "text-white" : "bg-gray-100 text-gray-600"
               )}
-              style={step.isCompleted ? {backgroundColor: '#444ec1'} : {}}
+              style={step.isCompleted ? { backgroundColor: "#444ec1" } : {}}
             >
               {step.position}
             </div>
@@ -412,7 +410,7 @@ function StepItem({ step, onSave }: StepItemProps) {
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-what`}
-              className="block text-gray-700 font-medium"
+              className="block font-medium text-gray-700"
             >
               What did you specifically do in this step?
             </FormLabel>
@@ -422,18 +420,20 @@ function StepItem({ step, onSave }: StepItemProps) {
                 value={what}
                 onChange={e => setWhat(e.target.value)}
                 placeholder="Describe the steps you took to address the situation..."
-                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
-                style={{
-                  '--focus-ring-color': '#444ec1',
-                  '--focus-border-color': '#444ec1'
-                } as React.CSSProperties}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#444ec1'
-                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                style={
+                  {
+                    "--focus-ring-color": "#444ec1",
+                    "--focus-border-color": "#444ec1"
+                  } as React.CSSProperties
+                }
+                onFocus={e => {
+                  e.target.style.borderColor = "#444ec1"
+                  e.target.style.boxShadow = "0 0 0 1px rgba(68, 78, 193, 0.1)"
                 }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb'
-                  e.target.style.boxShadow = 'none'
+                onBlur={e => {
+                  e.target.style.borderColor = "#e5e7eb"
+                  e.target.style.boxShadow = "none"
                 }}
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
@@ -442,45 +442,11 @@ function StepItem({ step, onSave }: StepItemProps) {
             </div>
           </div>
 
-          {/* HOW */}
-          <div className="space-y-2">
-            <FormLabel
-              htmlFor={`step-${step.id}-how`}
-              className="block text-gray-700 font-medium"
-            >
-              How did you do it? (tools, methods, or skills)
-            </FormLabel>
-            <div className="relative">
-              <Textarea
-                id={`step-${step.id}-how`}
-                value={how}
-                onChange={e => setHow(e.target.value)}
-                placeholder="Explain your thought process and decision-making approach..."
-                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
-                style={{
-                  '--focus-ring-color': '#444ec1',
-                  '--focus-border-color': '#444ec1'
-                } as React.CSSProperties}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#444ec1'
-                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                {howWords}
-              </div>
-            </div>
-          </div>
-
           {/* OUTCOME (optional) */}
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-outcome`}
-              className="block text-gray-700 font-medium"
+              className="block font-medium text-gray-700"
             >
               What was the outcome of this step? (optional)
             </FormLabel>
@@ -490,18 +456,20 @@ function StepItem({ step, onSave }: StepItemProps) {
                 value={outcome}
                 onChange={e => setOutcome(e.target.value)}
                 placeholder="Highlight the key skills, tools, or resources you utilized..."
-                className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
-                style={{
-                  '--focus-ring-color': '#444ec1',
-                  '--focus-border-color': '#444ec1'
-                } as React.CSSProperties}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#444ec1'
-                  e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                style={
+                  {
+                    "--focus-ring-color": "#444ec1",
+                    "--focus-border-color": "#444ec1"
+                  } as React.CSSProperties
+                }
+                onFocus={e => {
+                  e.target.style.borderColor = "#444ec1"
+                  e.target.style.boxShadow = "0 0 0 1px rgba(68, 78, 193, 0.1)"
                 }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb'
-                  e.target.style.boxShadow = 'none'
+                onBlur={e => {
+                  e.target.style.borderColor = "#e5e7eb"
+                  e.target.style.boxShadow = "none"
                 }}
               />
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
@@ -512,8 +480,8 @@ function StepItem({ step, onSave }: StepItemProps) {
 
           <Button
             type="button"
-            className="px-6 py-3 text-white rounded-xl font-medium transition-all duration-200 shadow-sm mt-2 hover:brightness-110"
-            style={{backgroundColor: '#444ec1'}}
+            className="mt-2 rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:brightness-110"
+            style={{ backgroundColor: "#444ec1" }}
             onClick={handleSave}
           >
             Save Step {step.position}

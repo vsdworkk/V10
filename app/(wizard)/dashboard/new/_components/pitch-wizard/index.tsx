@@ -70,7 +70,8 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
 
-      if (subStepIndex === 0) return <SituationStep exampleIndex={exampleIndex} />
+      if (subStepIndex === 0)
+        return <SituationStep exampleIndex={exampleIndex} />
       if (subStepIndex === 1) return <TaskStep exampleIndex={exampleIndex} />
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
@@ -89,20 +90,20 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
   // Return the entire form + wizard controls
   return (
     <FormProvider {...methods}>
-      <div className="h-full flex flex-col relative">
+      <div className="relative flex h-full flex-col">
         {/* Add global styles for form fields */}
         <style jsx global>{`
-          .space-y-8 input, 
-          .space-y-8 textarea, 
+          .space-y-8 input,
+          .space-y-8 textarea,
           .space-y-8 select {
             border-color: #f0f0f5 !important;
             border-width: 1px !important;
             border-radius: 0.5rem !important;
             transition: all 0.2s ease-in-out;
           }
-          
-          .space-y-8 input:focus, 
-          .space-y-8 textarea:focus, 
+
+          .space-y-8 input:focus,
+          .space-y-8 textarea:focus,
           .space-y-8 select:focus {
             border-color: #e0e0ef !important;
             box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.08) !important;
@@ -118,18 +119,21 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         />
 
         {/* Desktop Header - Only visible on desktop */}
-        <div className="hidden lg:block flex-shrink-0 mb-6">
-          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
+        <div className="mb-6 hidden shrink-0 lg:block">
+          <WizardHeader
+            header={currentHeader}
+            isIntro={currentSection === "INTRO"}
+          />
         </div>
 
         {/* Mobile Header - Only visible on mobile */}
-        <div className="lg:hidden flex-shrink-0 mb-4">
+        <div className="mb-4 shrink-0 lg:hidden">
           <div className="px-2">
-            <h1 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight">
+            <h1 className="text-lg font-semibold leading-tight text-gray-900 sm:text-xl">
               {currentHeader}
             </h1>
             {currentSection !== "INTRO" && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="mt-1 text-sm text-gray-600">
                 Complete the fields below to continue
               </p>
             )}
@@ -137,12 +141,13 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Main content area - Scrollable */}
-        <div className="flex-1 min-h-0 lg:mb-6">
+        <div className="min-h-0 flex-1 lg:mb-6">
           {/* Desktop Content Container */}
-          <div 
-            className="hidden lg:block h-full bg-white rounded-2xl overflow-hidden"
-            style={{ 
-              boxShadow: '0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)' 
+          <div
+            className="hidden h-full overflow-hidden rounded-2xl bg-white lg:block"
+            style={{
+              boxShadow:
+                "0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)"
             }}
           >
             <div className="h-full overflow-y-auto">
@@ -159,7 +164,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           </div>
 
           {/* Mobile Content Container */}
-          <div className="lg:hidden h-full">
+          <div className="h-full lg:hidden">
             <motion.div
               key={currentStep}
               initial={{ opacity: 0, y: 10 }}
@@ -174,18 +179,20 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Desktop Navigation - Only visible on desktop */}
-        <div className="hidden lg:flex flex-shrink-0 justify-between items-center pt-4 border-t border-gray-100 bg-white">
+        <div className="hidden shrink-0 items-center justify-between border-t border-gray-100 bg-white pt-4 lg:flex">
           {/* Back button - only show when not on the review step */}
           {currentStep > 1 && currentStep < totalSteps ? (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleBack}
               disabled={isPitchGenerationConfirmed}
-              className={`px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal ${
-                isPitchGenerationConfirmed ? 'opacity-50 cursor-not-allowed' : ''
+              className={`group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
+                isPitchGenerationConfirmed
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
             >
-              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" />
+              <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
               Back
             </Button>
           ) : (
@@ -195,34 +202,34 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
           <div className="flex items-center space-x-4">
             {/* Save and Close - Only show when NOT on the final review step */}
             {currentStep < totalSteps && (
-              <Button 
-                variant="outline" 
-                onClick={handleSaveAndClose} 
-                className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+              <Button
+                variant="outline"
+                onClick={handleSaveAndClose}
+                className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
-                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save &amp; Close
               </Button>
             )}
 
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
-              <Button 
-                onClick={handleNext} 
-                className="px-6 py-3 text-white rounded-xl font-medium flex items-center group transition-all duration-200 shadow-sm hover:shadow hover:brightness-110"
-                style={{backgroundColor: '#444ec1'}}
+              <Button
+                onClick={handleNext}
+                className="group flex items-center rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
+                style={{ backgroundColor: "#444ec1" }}
               >
                 Next Step
-                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
               </Button>
             ) : (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleSubmitFinal}
-                className="px-6 py-3 text-gray-600 hover:text-gray-800 flex items-center group transition-all duration-200 font-normal"
+                className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
-                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save and Close
               </Button>
             )}
@@ -230,50 +237,52 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         </div>
 
         {/* Mobile Navigation - Fixed at bottom, only visible on mobile */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-4 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             {/* Back button */}
             {currentStep > 1 && currentStep < totalSteps ? (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleBack}
                 disabled={isPitchGenerationConfirmed}
-                className={`flex-1 py-3 text-gray-600 hover:text-gray-800 flex items-center justify-center group transition-all duration-200 font-normal ${
-                  isPitchGenerationConfirmed ? 'opacity-50 cursor-not-allowed' : ''
+                className={`group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
+                  isPitchGenerationConfirmed
+                    ? "cursor-not-allowed opacity-50"
+                    : ""
                 }`}
               >
-                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1" />
+                <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
                 Back
               </Button>
             ) : (
-              <Button 
-                variant="outline" 
-                onClick={handleSaveAndClose} 
-                className="flex-1 py-3 text-gray-600 hover:text-gray-800 flex items-center justify-center group transition-all duration-200 font-normal"
+              <Button
+                variant="outline"
+                onClick={handleSaveAndClose}
+                className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
-                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save &amp; Close
               </Button>
             )}
 
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
-              <Button 
-                onClick={handleNext} 
-                className="flex-1 py-3 text-white rounded-xl font-medium flex items-center justify-center group transition-all duration-200 shadow-sm hover:shadow hover:brightness-110"
-                style={{backgroundColor: '#444ec1'}}
+              <Button
+                onClick={handleNext}
+                className="group flex flex-1 items-center justify-center rounded-xl py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
+                style={{ backgroundColor: "#444ec1" }}
               >
                 Next Step
-                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
               </Button>
             ) : (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleSubmitFinal}
-                className="flex-1 py-3 text-gray-600 hover:text-gray-800 flex items-center justify-center group transition-all duration-200 font-normal"
+                className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
-                <Save className="h-4 w-4 mr-2 group-hover:scale-110" />
+                <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save and Close
               </Button>
             )}

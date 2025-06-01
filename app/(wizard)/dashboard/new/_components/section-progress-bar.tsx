@@ -11,14 +11,7 @@ interface SectionProgressSidebarProps {
   className?: string
 }
 
-const STEP_ORDER: Section[] = [
-  "INTRO",
-  "ROLE",
-  "EXP",
-  "GUIDE",
-  "STAR",
-  "FINAL"
-]
+const STEP_ORDER: Section[] = ["INTRO", "ROLE", "EXP", "GUIDE", "STAR", "FINAL"]
 
 const STEP_LABELS: Record<Section, string> = {
   INTRO: "Welcome",
@@ -33,18 +26,20 @@ export default function SectionProgressSidebar({
   current = "INTRO",
   maxCompleted = "INTRO",
   onNavigate,
-  className,
+  className
 }: SectionProgressSidebarProps) {
   return (
     <div className="w-full space-y-6">
       {STEP_ORDER.map((step, idx) => {
         // Check if step is completed based on maxCompleted, not current
-        const isCompleted = STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(maxCompleted) || step === maxCompleted;
-        const isActive = step === current;
-        const isUpcoming = !isCompleted && !isActive;
+        const isCompleted =
+          STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(maxCompleted) ||
+          step === maxCompleted
+        const isActive = step === current
+        const isUpcoming = !isCompleted && !isActive
 
         // Allow clicking on any completed step
-        const clickable = isCompleted && !!onNavigate;
+        const clickable = isCompleted && !!onNavigate
 
         return (
           <button
@@ -56,10 +51,10 @@ export default function SectionProgressSidebar({
             className={clsx(
               "flex items-center whitespace-nowrap transition-all duration-200 rounded-xl p-4 w-full text-left",
               {
-                "hover:bg-gray-50 group": clickable || isUpcoming,
+                "hover:bg-gray-50 group": clickable || isUpcoming
               }
             )}
-            style={isActive ? {backgroundColor: '#f8fafc'} : {}}
+            style={isActive ? { backgroundColor: "#f8fafc" } : {}}
           >
             {/* Step number */}
             <div
@@ -68,13 +63,17 @@ export default function SectionProgressSidebar({
                 {
                   "text-white shadow-md": isActive,
                   "text-white shadow-sm": isCompleted && !isActive,
-                  "bg-white border-gray-300 text-gray-500 shadow-sm": isUpcoming,
+                  "bg-white border-gray-300 text-gray-500 shadow-sm": isUpcoming
                 }
               )}
-              style={isActive || (isCompleted && !isActive) ? {
-                backgroundColor: '#444ec1',
-                borderColor: '#444ec1'
-              } : {}}
+              style={
+                isActive || (isCompleted && !isActive)
+                  ? {
+                      backgroundColor: "#444ec1",
+                      borderColor: "#444ec1"
+                    }
+                  : {}
+              }
             >
               {idx + 1}
             </div>
@@ -82,9 +81,9 @@ export default function SectionProgressSidebar({
             {/* Label */}
             <span
               className={clsx("ml-4 text-sm font-medium", {
-                "text-gray-500": isUpcoming || (isCompleted && !isActive),
+                "text-gray-500": isUpcoming || (isCompleted && !isActive)
               })}
-              style={isActive ? {color: '#444ec1'} : {}}
+              style={isActive ? { color: "#444ec1" } : {}}
             >
               {STEP_LABELS[step]}
             </span>

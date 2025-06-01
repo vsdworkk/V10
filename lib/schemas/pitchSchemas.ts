@@ -6,7 +6,6 @@ import { z } from "zod"
 export const actionStepSchema = z.object({
   stepNumber: z.number(),
   "what-did-you-specifically-do-in-this-step": z.string(),
-  "how-did-you-do-it-tools-methods-or-skills": z.string(),
   "what-was-the-outcome-of-this-step-optional": z.string().optional()
 })
 
@@ -17,18 +16,25 @@ export const actionStepSchema = z.object({
 export const starSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": z.string().optional(),
-    "briefly-describe-the-situation-or-challenge-you-faced": z.string().optional()
+    "briefly-describe-the-situation-or-challenge-you-faced": z
+      .string()
+      .optional()
   }),
   task: z.object({
-    "what-was-your-responsibility-in-addressing-this-issue": z.string().optional(),
-    "what-constraints-or-requirements-did-you-need-to-consider": z.string().optional()
+    "what-was-your-responsibility-in-addressing-this-issue": z
+      .string()
+      .optional(),
+    "what-constraints-or-requirements-did-you-need-to-consider": z
+      .string()
+      .optional()
   }),
   action: z.object({
     steps: z.array(actionStepSchema).min(1).optional()
   }),
   result: z.object({
-    "what-positive-outcome-did-you-achieve": z.string().optional(),
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z.string().optional()
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z
+      .string()
+      .optional()
   })
 })
 
