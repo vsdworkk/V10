@@ -23,11 +23,12 @@
 "use server"
 
 import Link from "next/link"
-import { Settings, Plus, CreditCard } from "lucide-react"
+import { Settings, CreditCard } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import CreatePitchButton from "./create-pitch-button"
 import {
   Sidebar,
   SidebarContent,
@@ -53,26 +54,42 @@ interface DashboardSidebarProps {
  * - We'll rely on Clerk for user info if we need to conditionally display items.
  * - For now, we just show a static list of links for pitch management.
  */
-export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+export default async function DashboardSidebar({
+  userId
+}: DashboardSidebarProps) {
   // Retrieve user profile for credits display
   const profileResult = await getProfileByUserIdAction(userId)
-  const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
+  const credits = profileResult.isSuccess
+    ? (profileResult.data?.credits ?? 0)
+    : 0
 
   return (
     <Sidebar variant="inset">
       <SidebarHeader className="border-b border-gray-200 p-4">
         <div className="space-y-3">
           <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
-          
+
           {/* Credits Display */}
           <Card className="bg-gray-50">
             <CardContent className="p-3">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Credits</span>
-                <Badge variant="secondary" className="ml-auto text-sm font-medium">
+                <Badge
+                  variant="secondary"
+                  className="ml-auto text-sm font-medium"
+                >
                   {credits}
                 </Badge>
+              </div>
+              <div className="mt-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full h-8 text-xs"
+                >
+                  <Link href="/#pricing">+ More Credits</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -84,15 +101,7 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
           {/* Create New Pitch Button */}
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="w-full">
-              <Link href="/dashboard/new?new=true">
-                <Button 
-                  className="w-full shadow-sm justify-start h-10 px-3 text-sm text-white transition-all hover:brightness-110" 
-                  style={{backgroundColor: '#444ec1'}}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Pitch
-                </Button>
-              </Link>
+              <CreatePitchButton credits={credits} />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
