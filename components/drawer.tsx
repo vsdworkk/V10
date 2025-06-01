@@ -11,7 +11,7 @@ import {
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
-  DrawerTrigger,
+  DrawerTrigger
 } from "@/components/ui/drawer"
 import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
@@ -21,11 +21,11 @@ import { IoMenuSharp } from "react-icons/io5"
 
 // Type guard functions
 function isDropdownItem(item: any): item is { trigger: string; content: any } {
-  return 'trigger' in item && 'content' in item;
+  return "trigger" in item && "content" in item
 }
 
 function isLinkItem(item: any): item is { href: string; label: string } {
-  return 'href' in item && 'label' in item;
+  return "href" in item && "label" in item
 }
 
 export default function MobileDrawer() {
@@ -42,8 +42,8 @@ export default function MobileDrawer() {
               title="brand-logo"
               className="relative mr-6 flex items-center space-x-2"
             >
-              <Icons.logo className="w-auto h-[40px]" />
-              <span className="font-bold text-xl">{siteConfig.name}</span>
+              <Icons.logo className="h-[40px] w-auto" />
+              <span className="text-xl font-bold">{siteConfig.name}</span>
             </Link>
           </div>
           <nav>
@@ -80,17 +80,17 @@ export default function MobileDrawer() {
               href="/signup"
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "w-full sm:w-auto text-background flex gap-2"
+                "text-background flex w-full gap-2 sm:w-auto"
               )}
             >
-              <Icons.logo className="h-6 w-6" />
+              <Icons.logo className="size-6" />
               Get Started For Free
             </Link>
           </SignedOut>
           <SignedIn>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Signed in</span>
-              <UserButton 
+              <span className="text-muted-foreground text-sm">Signed in</span>
+              <UserButton
                 appearance={{
                   elements: {
                     avatarBox: "w-8 h-8"
@@ -103,4 +103,4 @@ export default function MobileDrawer() {
       </DrawerContent>
     </Drawer>
   )
-} 
+}

@@ -35,24 +35,24 @@ import { Skeleton } from "@/components/ui/skeleton"
 function PitchTableSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="space-y-2">
           <Skeleton className="h-7 w-48" />
           <Skeleton className="h-4 w-64" />
         </div>
       </div>
-      
-      <div className="flex flex-col sm:flex-row gap-3">
+
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Skeleton className="h-10 flex-1" />
         <Skeleton className="h-10 w-24" />
       </div>
 
       {/* Mobile Card Skeletons - Hidden on md and up */}
-      <div className="md:hidden space-y-4">
+      <div className="space-y-4 md:hidden">
         {[1, 2, 3].map(i => (
-          <div key={i} className="border rounded-lg p-4 space-y-3">
+          <div key={i} className="space-y-3 rounded-lg border p-4">
             <div className="flex items-start justify-between">
-              <div className="space-y-2 flex-1">
+              <div className="flex-1 space-y-2">
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
               </div>
@@ -64,15 +64,15 @@ function PitchTableSkeleton() {
             </div>
             <div className="flex items-center justify-between pt-2">
               <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-8 w-8" />
+              <Skeleton className="size-8" />
             </div>
           </div>
         ))}
       </div>
 
       {/* Desktop Table Skeleton - Hidden on mobile */}
-      <div className="hidden md:block border rounded-md">
-        <div className="grid grid-cols-6 gap-4 p-4 border-b">
+      <div className="hidden rounded-md border md:block">
+        <div className="grid grid-cols-6 gap-4 border-b p-4">
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-20" />
@@ -81,7 +81,7 @@ function PitchTableSkeleton() {
           <Skeleton className="h-6 w-20" />
         </div>
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="grid grid-cols-6 gap-4 p-4 border-b">
+          <div key={i} className="grid grid-cols-6 gap-4 border-b p-4">
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-full" />

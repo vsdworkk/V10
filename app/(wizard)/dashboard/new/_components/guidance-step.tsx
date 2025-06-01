@@ -181,7 +181,7 @@ export default function GuidanceStep({
 
   return (
     <div className="p-6">
-      <div className="h-[500px] overflow-y-auto pr-2 flex flex-col gap-6">
+      <div className="flex h-[500px] flex-col gap-6 overflow-y-auto pr-2">
         {/* Tips accordion - moved to top */}
         <Accordion
           type="single"
@@ -191,24 +191,24 @@ export default function GuidanceStep({
           onValueChange={setTipsOpen}
         >
           <AccordionItem value="guidance-tips" className="border-none">
-            <AccordionTrigger 
-              className="py-4 px-4 text-sm font-normal hover:no-underline rounded-xl flex gap-2 items-center transition-colors"
+            <AccordionTrigger
+              className="flex items-center gap-2 rounded-xl p-4 text-sm font-normal transition-colors hover:no-underline"
               style={{
-                backgroundColor: '#eef2ff',
-                color: '#444ec1'
+                backgroundColor: "#eef2ff",
+                color: "#444ec1"
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#ddd6fe'
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = "#ddd6fe"
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#eef2ff'
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = "#eef2ff"
               }}
             >
-              <Lightbulb className="h-4 w-4" />
+              <Lightbulb className="size-4" />
               <span>Tips for this step</span>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pt-2 pb-4 text-sm text-gray-700">
-              <ul className="list-disc pl-5 space-y-2">
+            <AccordionContent className="px-4 pb-4 pt-2 text-sm text-gray-700">
+              <ul className="list-disc space-y-2 pl-5">
                 <li>
                   The AI will analyze your experience and job requirements to
                   provide guidance.
@@ -229,21 +229,24 @@ export default function GuidanceStep({
         {/* If loading */}
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
-            <RefreshCw className="h-8 w-8 animate-spin" style={{color: '#444ec1'}} />
+            <RefreshCw
+              className="size-8 animate-spin"
+              style={{ color: "#444ec1" }}
+            />
             <p>Generating AI Guidance...</p>
           </div>
         )}
 
         {/* If error */}
         {error && !isLoading && (
-          <div className="bg-red-50 p-4 rounded-xl border border-red-200">
-            <p className="text-sm text-red-600 mb-3">{error}</p>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="mb-3 text-sm text-red-600">{error}</p>
           </div>
         )}
 
         {/* If there's existing guidance, show it */}
         {!isLoading && !error && albertGuidance && (
-          <Card className="bg-gray-50 border border-gray-200 rounded-xl">
+          <Card className="rounded-xl border border-gray-200 bg-gray-50">
             <CardContent className="pt-6">
               <div className="whitespace-pre-wrap text-sm">
                 {albertGuidance}
@@ -254,7 +257,7 @@ export default function GuidanceStep({
 
         {/* STAR examples count selector */}
         <div className="space-y-4">
-          <p className="text-gray-700 font-medium">
+          <p className="font-medium text-gray-700">
             How many STAR examples do you want to include?
           </p>
           <div className="grid grid-cols-4 gap-4">
@@ -262,15 +265,19 @@ export default function GuidanceStep({
               <button
                 key={val}
                 onClick={() => handleStarExamplesCountChange(val)}
-                className={`h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${
+                className={`flex h-12 items-center justify-center rounded-xl transition-all duration-200 ${
                   starCount === val
                     ? "font-medium"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                 }`}
-                style={starCount === val ? {
-                  backgroundColor: '#eef2ff',
-                  color: '#444ec1'
-                } : {}}
+                style={
+                  starCount === val
+                    ? {
+                        backgroundColor: "#eef2ff",
+                        color: "#444ec1"
+                      }
+                    : {}
+                }
               >
                 {val}
               </button>
@@ -281,7 +288,7 @@ export default function GuidanceStep({
         {/* STAR example descriptions */}
         {parseInt(starCount, 10) > 0 && (
           <div className="space-y-4">
-            <p className="text-gray-700 font-medium">
+            <p className="font-medium text-gray-700">
               In one sentence describe each STAR example you'll include:
             </p>
             <div className="space-y-4">

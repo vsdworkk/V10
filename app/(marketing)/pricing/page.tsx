@@ -13,7 +13,7 @@ export default async function PricingPage() {
   return (
     <div className="pb-20">
       <NewPricingSection userId={userId} />
-      
+
       <p className="text-muted-foreground mt-8 text-center text-sm">
         All prices are in USD. Need a custom plan?{" "}
         <a href="/contact" className="font-medium underline underline-offset-4">

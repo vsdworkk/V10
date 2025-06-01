@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
+  CollapsibleTrigger
 } from "@/components/ui/collapsible"
 import clsx from "clsx"
 
@@ -17,19 +17,12 @@ interface MobileProgressHeaderProps {
   onNavigate?: (section: Section) => void
 }
 
-const STEP_ORDER: Section[] = [
-  "INTRO",
-  "ROLE",
-  "EXP",
-  "GUIDE",
-  "STAR",
-  "FINAL"
-]
+const STEP_ORDER: Section[] = ["INTRO", "ROLE", "EXP", "GUIDE", "STAR", "FINAL"]
 
 const STEP_LABELS: Record<Section, string> = {
   INTRO: "Welcome",
   ROLE: "Role Details",
-  EXP: "Your Experience", 
+  EXP: "Your Experience",
   GUIDE: "AI Guidance",
   STAR: "STAR Examples",
   FINAL: "Review & Edit"
@@ -37,8 +30,8 @@ const STEP_LABELS: Record<Section, string> = {
 
 export default function MobileProgressHeader({
   current = "INTRO",
-  maxCompleted = "INTRO", 
-  onNavigate,
+  maxCompleted = "INTRO",
+  onNavigate
 }: MobileProgressHeaderProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -46,7 +39,7 @@ export default function MobileProgressHeader({
   const totalSteps = STEP_ORDER.length
 
   return (
-    <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <div className="sticky top-0 z-20 border-b border-gray-200 bg-white">
       {/* Main Header */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
@@ -60,29 +53,28 @@ export default function MobileProgressHeader({
             <div className="text-sm text-gray-600">
               Step {currentIndex} of {totalSteps}
             </div>
-            
+
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
               <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                >
+                <Button variant="ghost" size="sm" className="size-8 p-0">
                   {isOpen ? (
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp className="size-4" />
                   ) : (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="size-4" />
                   )}
                 </Button>
               </CollapsibleTrigger>
-              
+
               <CollapsibleContent>
-                <div className="absolute right-4 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-30">
+                <div className="absolute right-4 top-full z-30 mt-2 w-64 rounded-lg border border-gray-200 bg-white py-2 shadow-lg">
                   {STEP_ORDER.map((step, idx) => {
-                    const isCompleted = STEP_ORDER.indexOf(step) < STEP_ORDER.indexOf(maxCompleted) || step === maxCompleted;
-                    const isActive = step === current;
-                    const isUpcoming = !isCompleted && !isActive;
-                    const clickable = isCompleted && !!onNavigate;
+                    const isCompleted =
+                      STEP_ORDER.indexOf(step) <
+                        STEP_ORDER.indexOf(maxCompleted) ||
+                      step === maxCompleted
+                    const isActive = step === current
+                    const isUpcoming = !isCompleted && !isActive
+                    const clickable = isCompleted && !!onNavigate
 
                     return (
                       <button
@@ -99,7 +91,8 @@ export default function MobileProgressHeader({
                           "w-full flex items-center px-4 py-3 text-left hover:bg-gray-50 transition-colors",
                           {
                             "bg-purple-50": isActive,
-                            "cursor-not-allowed opacity-50": !clickable && !isActive,
+                            "cursor-not-allowed opacity-50":
+                              !clickable && !isActive
                           }
                         )}
                       >
@@ -108,13 +101,19 @@ export default function MobileProgressHeader({
                           className={clsx(
                             "flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium border mr-3",
                             {
-                              "text-white border-transparent": isActive || (isCompleted && !isActive),
-                              "bg-white border-gray-300 text-gray-500": isUpcoming,
+                              "text-white border-transparent":
+                                isActive || (isCompleted && !isActive),
+                              "bg-white border-gray-300 text-gray-500":
+                                isUpcoming
                             }
                           )}
-                          style={isActive || (isCompleted && !isActive) ? {
-                            backgroundColor: '#444ec1',
-                          } : {}}
+                          style={
+                            isActive || (isCompleted && !isActive)
+                              ? {
+                                  backgroundColor: "#444ec1"
+                                }
+                              : {}
+                          }
                         >
                           {idx + 1}
                         </div>
@@ -122,9 +121,10 @@ export default function MobileProgressHeader({
                         {/* Label */}
                         <span
                           className={clsx("text-sm font-medium", {
-                            "text-gray-500": isUpcoming || (isCompleted && !isActive),
+                            "text-gray-500":
+                              isUpcoming || (isCompleted && !isActive)
                           })}
-                          style={isActive ? {color: '#444ec1'} : {}}
+                          style={isActive ? { color: "#444ec1" } : {}}
                         >
                           {STEP_LABELS[step]}
                         </span>
@@ -139,16 +139,16 @@ export default function MobileProgressHeader({
 
         {/* Progress bar */}
         <div className="mt-3">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+          <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
             <span>{STEP_LABELS[current]}</span>
             <span>{Math.round((currentIndex / totalSteps) * 100)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="h-2 w-full rounded-full bg-gray-200">
             <div
               className="h-2 rounded-full transition-all duration-300"
               style={{
                 width: `${(currentIndex / totalSteps) * 100}%`,
-                backgroundColor: '#444ec1'
+                backgroundColor: "#444ec1"
               }}
             />
           </div>
@@ -156,4 +156,4 @@ export default function MobileProgressHeader({
       </div>
     </div>
   )
-} 
+}

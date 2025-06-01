@@ -16,24 +16,24 @@ export default function Section({
   className = ""
 }: SectionProps) {
   const sectionId = title ? title.toLowerCase().replace(/\s+/g, "-") : id
-  
+
   return (
     <section id={id || sectionId}>
       <div className={className}>
-        <div className="relative container mx-auto px-4 py-16 max-w-7xl">
-          <div className="text-center space-y-4 pb-6 mx-auto">
+        <div className="container relative mx-auto max-w-7xl px-4 py-16">
+          <div className="mx-auto space-y-4 pb-6 text-center">
             {title && (
-              <h2 className="text-sm text-primary font-mono font-medium tracking-wider uppercase">
+              <h2 className="text-primary font-mono text-sm font-medium uppercase tracking-wider">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl text-balance">
+              <h3 className="mx-auto mt-4 max-w-xs text-balance text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">
                 {subtitle}
               </h3>
             )}
             {description && (
-              <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-8">
                 {description}
               </p>
             )}
@@ -43,4 +43,4 @@ export default function Section({
       </div>
     </section>
   )
-} 
+}

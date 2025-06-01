@@ -1,5 +1,7 @@
 "use client"
 
+// Task step collects responsibility and optional constraints for each STAR example
+
 import { useFormContext } from "react-hook-form"
 import { useMemo } from "react"
 import { PitchWizardFormData } from "./pitch-wizard/schema"
@@ -50,10 +52,10 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
   const constraintsWords = countWords(constraints)
 
   return (
-    <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
+    <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
       <div className="w-full px-8">
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-5">Task</h2>
+        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-xl font-bold text-gray-800">Task</h2>
 
           <div className="mb-6">
             <FormField
@@ -61,7 +63,7 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
               name={`starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     What was your responsibility in addressing this issue?
                   </FormLabel>
                   <div className="relative">
@@ -69,22 +71,24 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                       <Textarea
                         {...field}
                         placeholder="Describe your specific responsibility and what you needed to accomplish..."
-                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
-                        style={{
-                          '--focus-ring-color': '#444ec1',
-                          '--focus-border-color': '#444ec1'
-                        } as React.CSSProperties}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#444ec1'
-                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                        style={
+                          {
+                            "--focus-ring-color": "#444ec1",
+                            "--focus-border-color": "#444ec1"
+                          } as React.CSSProperties
+                        }
+                        onFocus={e => {
+                          e.target.style.borderColor = "#444ec1"
+                          e.target.style.boxShadow =
+                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
                         }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#e5e7eb'
-                          e.target.style.boxShadow = 'none'
+                        onBlur={e => {
+                          e.target.style.borderColor = "#e5e7eb"
+                          e.target.style.boxShadow = "none"
                         }}
                       />
                     </FormControl>
-                    <FormMessage />
                     <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                       {responsibilityWords}
                     </div>
@@ -100,30 +104,33 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
               name={`starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="block text-gray-700 font-medium mb-2">
+                  <FormLabel className="mb-2 block font-medium text-gray-700">
                     What constraints or requirements did you need to consider?
+                    <span className="text-gray-500"> (optional)</span>
                   </FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Textarea
                         {...field}
                         placeholder="Describe any constraints, requirements, or challenges you had to consider..."
-                        className="w-full p-4 bg-white border border-gray-200 rounded-lg transition-all duration-300 text-gray-700 resize-none min-h-24"
-                        style={{
-                          '--focus-ring-color': '#444ec1',
-                          '--focus-border-color': '#444ec1'
-                        } as React.CSSProperties}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#444ec1'
-                          e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                        className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                        style={
+                          {
+                            "--focus-ring-color": "#444ec1",
+                            "--focus-border-color": "#444ec1"
+                          } as React.CSSProperties
+                        }
+                        onFocus={e => {
+                          e.target.style.borderColor = "#444ec1"
+                          e.target.style.boxShadow =
+                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
                         }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#e5e7eb'
-                          e.target.style.boxShadow = 'none'
+                        onBlur={e => {
+                          e.target.style.borderColor = "#e5e7eb"
+                          e.target.style.boxShadow = "none"
                         }}
                       />
                     </FormControl>
-                    <FormMessage />
                     <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                       {constraintsWords}
                     </div>

@@ -51,9 +51,12 @@ export async function POST(req: Request) {
 async function handleCheckoutSession(event: Stripe.Event) {
   const checkoutSession = event.data.object as Stripe.Checkout.Session
   if (checkoutSession.mode === "payment") {
-    const session = await stripe.checkout.sessions.retrieve(checkoutSession.id, {
-      expand: ["line_items.data.price.product"]
-    })
+    const session = await stripe.checkout.sessions.retrieve(
+      checkoutSession.id,
+      {
+        expand: ["line_items.data.price.product"]
+      }
+    )
     const lineItem = session.line_items?.data[0]
     const product = lineItem?.price?.product as Stripe.Product | undefined
     const productId = typeof product === "string" ? product : product?.id

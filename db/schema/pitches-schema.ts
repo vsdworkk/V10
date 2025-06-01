@@ -29,7 +29,6 @@ export const pitchStatusEnum = pgEnum("pitch_status", [
 export interface ActionStep {
   stepNumber: number
   "what-did-you-specifically-do-in-this-step": string
-  "how-did-you-do-it-tools-methods-or-skills": string
   "what-was-the-outcome-of-this-step-optional"?: string
 }
 
@@ -46,7 +45,6 @@ export interface StarSchema {
     steps: ActionStep[]
   }
   result: {
-    "what-positive-outcome-did-you-achieve"?: string
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"?: string
   }
 }
@@ -89,7 +87,10 @@ export const pitchesTable = pgTable("pitches", {
   starExamplesCount: integer("star_examples_count").default(1).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull().$onUpdate(() => new Date())
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date())
 })
 
 /* inferred types */

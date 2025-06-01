@@ -1,11 +1,15 @@
-import { ImgHTMLAttributes } from "react";
+import { ImgHTMLAttributes } from "react"
 
-export interface SafariProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'width' | 'height'> {
-  url?: string;
-  src?: string;
-  width?: number;
-  height?: number;
-  className?: string;
+export interface SafariProps
+  extends Omit<
+    ImgHTMLAttributes<HTMLImageElement>,
+    "src" | "width" | "height"
+  > {
+  url?: string
+  src?: string
+  width?: number
+  height?: number
+  className?: string
 }
 
 export default function Safari({
@@ -23,9 +27,9 @@ export default function Safari({
         alt=""
         width={width}
         height={height}
-        className="w-full h-full object-cover rounded-lg"
+        className="size-full rounded-lg object-cover"
         {...props}
       />
     </div>
-  );
-} 
+  )
+}

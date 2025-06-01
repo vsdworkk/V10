@@ -85,7 +85,7 @@ export default function HeroVideoDialog({
   return (
     <div className={cn("relative", className)}>
       <div
-        className="relative cursor-pointer group rounded-md p-2 ring-1 ring-slate-200/50 dark:bg-gray-900/70 dark:ring-white/10 backdrop-blur-md"
+        className="group relative cursor-pointer rounded-md p-2 ring-1 ring-slate-200/50 backdrop-blur-md dark:bg-gray-900/70 dark:ring-white/10"
         onClick={() => setIsVideoOpen(true)}
       >
         <Image
@@ -93,15 +93,15 @@ export default function HeroVideoDialog({
           alt={thumbnailAlt}
           width={1920}
           height={1080}
-          className="transition-all duration-200 group-hover:brightness-[0.8] ease-out rounded-md border"
+          className="rounded-md border transition-all duration-200 ease-out group-hover:brightness-[0.8]"
         />
-        <div className="absolute inset-0 flex items-center justify-center group-hover:scale-100 scale-[0.9] transition-all duration-200 ease-out rounded-2xl">
-          <div className="z-30 bg-primary/10 flex items-center justify-center rounded-full backdrop-blur-md size-28">
+        <div className="absolute inset-0 flex scale-[0.9] items-center justify-center rounded-2xl transition-all duration-200 ease-out group-hover:scale-100">
+          <div className="bg-primary/10 z-30 flex size-28 items-center justify-center rounded-full backdrop-blur-md">
             <div
-              className={`flex items-center justify-center bg-gradient-to-b from-primary/30 to-primary shadow-md rounded-full size-20 transition-all ease-out duration-200 relative group-hover:scale-[1.2] scale-100`}
+              className={`from-primary/30 to-primary relative flex size-20 scale-100 items-center justify-center rounded-full bg-gradient-to-b shadow-md transition-all duration-200 ease-out group-hover:scale-[1.2]`}
             >
               <Play
-                className="size-8 text-white fill-white group-hover:scale-105 scale-100 transition-transform duration-200 ease-out"
+                className="size-8 scale-100 fill-white text-white transition-transform duration-200 ease-out group-hover:scale-105"
                 style={{
                   filter:
                     "drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))"
@@ -123,13 +123,15 @@ export default function HeroVideoDialog({
             <motion.div
               {...selectedAnimation}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="relative w-full max-w-4xl aspect-video mx-4 md:mx-0"
+              className="relative mx-4 aspect-video w-full max-w-4xl md:mx-0"
             >
-              <motion.button className="absolute -top-16 right-0 text-white text-xl bg-neutral-900/50 ring-1 backdrop-blur-md rounded-full p-2 dark:bg-neutral-100/50 dark:text-black">
+              <motion.button className="absolute -top-16 right-0 rounded-full bg-neutral-900/50 p-2 text-xl text-white ring-1 backdrop-blur-md dark:bg-neutral-100/50 dark:text-black">
                 <XIcon className="size-5" />
               </motion.button>
-              <div className="size-full border-2 border-white rounded-2xl overflow-hidden isolate z-[1] relative">
-                {videoSrc.includes('youtube.com') || videoSrc.includes('youtu.be') || videoSrc.includes('embed') ? (
+              <div className="relative isolate z-[1] size-full overflow-hidden rounded-2xl border-2 border-white">
+                {videoSrc.includes("youtube.com") ||
+                videoSrc.includes("youtu.be") ||
+                videoSrc.includes("embed") ? (
                   <iframe
                     src={videoSrc}
                     className="size-full rounded-2xl"
@@ -174,7 +176,7 @@ export function HeroVideoInline({
     <div className={cn("relative w-full", className)}>
       {!isPlaying ? (
         <div
-          className="relative cursor-pointer group rounded-lg overflow-hidden"
+          className="group relative cursor-pointer overflow-hidden rounded-lg"
           onClick={() => setIsPlaying(true)}
         >
           <Image
@@ -182,13 +184,13 @@ export function HeroVideoInline({
             alt={thumbnailAlt}
             width={1920}
             height={1080}
-            className="w-full h-auto transition-all duration-200 group-hover:brightness-[0.8] ease-out"
+            className="h-auto w-full transition-all duration-200 ease-out group-hover:brightness-[0.8]"
           />
-          <div className="absolute inset-0 flex items-center justify-center group-hover:scale-100 scale-[0.9] transition-all duration-200 ease-out">
-            <div className="z-30 bg-primary/10 flex items-center justify-center rounded-full backdrop-blur-md size-28">
-              <div className="flex items-center justify-center bg-gradient-to-b from-primary/30 to-primary shadow-md rounded-full size-20 transition-all ease-out duration-200 relative group-hover:scale-[1.2] scale-100">
+          <div className="absolute inset-0 flex scale-[0.9] items-center justify-center transition-all duration-200 ease-out group-hover:scale-100">
+            <div className="bg-primary/10 z-30 flex size-28 items-center justify-center rounded-full backdrop-blur-md">
+              <div className="from-primary/30 to-primary relative flex size-20 scale-100 items-center justify-center rounded-full bg-gradient-to-b shadow-md transition-all duration-200 ease-out group-hover:scale-[1.2]">
                 <Play
-                  className="size-8 text-white fill-white group-hover:scale-105 scale-100 transition-transform duration-200 ease-out"
+                  className="size-8 scale-100 fill-white text-white transition-transform duration-200 ease-out group-hover:scale-105"
                   style={{
                     filter:
                       "drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06))"
@@ -203,19 +205,21 @@ export function HeroVideoInline({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="w-full aspect-video rounded-lg overflow-hidden"
+          className="aspect-video w-full overflow-hidden rounded-lg"
         >
-          {videoSrc.includes('youtube.com') || videoSrc.includes('youtu.be') || videoSrc.includes('embed') ? (
+          {videoSrc.includes("youtube.com") ||
+          videoSrc.includes("youtu.be") ||
+          videoSrc.includes("embed") ? (
             <iframe
               src={videoSrc}
-              className="w-full h-full"
+              className="size-full"
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             ></iframe>
           ) : (
             <video
               src={videoSrc}
-              className="w-full h-full object-cover"
+              className="size-full object-cover"
               controls
               autoPlay
               muted

@@ -17,4 +17,4 @@ export interface SectionProps {
   description?: string
   children?: React.ReactNode
   className?: string
-} 
+}

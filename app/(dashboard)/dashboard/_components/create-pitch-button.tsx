@@ -36,10 +36,10 @@ export default function CreatePitchButton({ credits }: CreatePitchButtonProps) {
   return (
     <Button
       onClick={handleClick}
-      className="w-full shadow-sm justify-start h-10 px-3 text-sm text-white transition-all hover:brightness-110"
+      className="h-10 w-full justify-start px-3 text-sm text-white shadow-sm transition-all hover:brightness-110"
       style={{ backgroundColor: "#444ec1" }}
     >
-      <Plus className="h-4 w-4 mr-2" />
+      <Plus className="mr-2 size-4" />
       Create New Pitch
     </Button>
   )

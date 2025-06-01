@@ -79,21 +79,16 @@ export async function generateAgentPitchAction(
         action: ex.action.steps
           .map(
             (s, i) =>
-              `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}\n` +
-              `How: ${s["how-did-you-do-it-tools-methods-or-skills"]}\n` +
+              `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}` +
               (s["what-was-the-outcome-of-this-step-optional"]
-                ? `Outcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
+                ? `\nOutcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
                 : "")
           )
           .join("\n\n"),
-        result: [
-          ex.result?.["what-positive-outcome-did-you-achieve"],
+        result:
           ex.result?.[
             "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-          ]
-        ]
-          .filter(Boolean)
-          .join("\n")
+          ] || ""
       })
     )
 

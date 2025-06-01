@@ -8,19 +8,19 @@ export default function MobileHeader() {
   const { toggleSidebar } = useSidebar()
 
   return (
-    <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 relative z-20">
+    <header className="relative z-20 flex items-center justify-between border-b border-gray-200 bg-white p-4 md:hidden">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="h-8 w-8 p-0"
+          className="size-8 p-0"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="size-4" />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
         <h1 className="text-lg font-semibold text-gray-800">Pitch Manager</h1>
       </div>
     </header>
   )
-} 
+}

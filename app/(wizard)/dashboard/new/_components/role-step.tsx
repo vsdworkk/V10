@@ -31,7 +31,7 @@ import {
   FormItem,
   FormControl,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
@@ -78,8 +78,8 @@ export default function RoleStep() {
   const { errors } = formState
 
   return (
-    <div className="w-full h-full lg:max-w-3xl lg:mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
-      <motion.div 
+    <div className="size-full space-y-6 p-4 sm:p-6 lg:mx-auto lg:max-w-3xl lg:space-y-8 lg:p-8">
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -88,7 +88,9 @@ export default function RoleStep() {
         <div className="space-y-4 lg:space-y-6">
           {/* Role Name */}
           <motion.div variants={itemVariants} className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">Role Name</FormLabel>
+            <FormLabel className="text-sm font-medium text-gray-700">
+              Role Name
+            </FormLabel>
             <FormField
               control={control}
               name="roleName"
@@ -97,31 +99,38 @@ export default function RoleStep() {
                   <Input
                     {...field}
                     placeholder="e.g., Senior Policy Analyst"
-                    className="w-full h-12 lg:h-12 bg-white border border-gray-200 rounded-lg px-4 text-base lg:text-sm transition-all duration-200"
-                    style={{
-                      '--focus-ring-color': '#444ec1',
-                      '--focus-border-color': '#444ec1'
-                    } as React.CSSProperties}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#444ec1'
-                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    className="h-12 w-full rounded-lg border border-gray-200 bg-white px-4 text-base transition-all duration-200 lg:h-12 lg:text-sm"
+                    style={
+                      {
+                        "--focus-ring-color": "#444ec1",
+                        "--focus-border-color": "#444ec1"
+                      } as React.CSSProperties
+                    }
+                    onFocus={e => {
+                      e.target.style.borderColor = "#444ec1"
+                      e.target.style.boxShadow =
+                        "0 0 0 1px rgba(68, 78, 193, 0.1)"
                     }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e5e7eb'
-                      e.target.style.boxShadow = 'none'
+                    onBlur={e => {
+                      e.target.style.borderColor = "#e5e7eb"
+                      e.target.style.boxShadow = "none"
                     }}
                   />
                 </FormControl>
               )}
             />
             {errors.roleName && (
-              <p className="text-red-500 text-sm mt-1">{errors.roleName.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.roleName.message}
+              </p>
             )}
           </motion.div>
 
           {/* Organisation Name */}
           <motion.div variants={itemVariants} className="space-y-2">
-            <FormLabel className="text-sm font-medium text-gray-700">Organisation Name</FormLabel>
+            <FormLabel className="text-sm font-medium text-gray-700">
+              Organisation Name
+            </FormLabel>
             <FormField
               control={control}
               name="organisationName"
@@ -130,57 +139,79 @@ export default function RoleStep() {
                   <Input
                     {...field}
                     placeholder="e.g., Department of Public Works"
-                    className="w-full h-12 lg:h-12 bg-white border border-gray-200 rounded-lg px-4 text-base lg:text-sm transition-all duration-200"
-                    style={{
-                      '--focus-ring-color': '#444ec1',
-                      '--focus-border-color': '#444ec1'
-                    } as React.CSSProperties}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#444ec1'
-                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    className="h-12 w-full rounded-lg border border-gray-200 bg-white px-4 text-base transition-all duration-200 lg:h-12 lg:text-sm"
+                    style={
+                      {
+                        "--focus-ring-color": "#444ec1",
+                        "--focus-border-color": "#444ec1"
+                      } as React.CSSProperties
+                    }
+                    onFocus={e => {
+                      e.target.style.borderColor = "#444ec1"
+                      e.target.style.boxShadow =
+                        "0 0 0 1px rgba(68, 78, 193, 0.1)"
                     }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e5e7eb'
-                      e.target.style.boxShadow = 'none'
+                    onBlur={e => {
+                      e.target.style.borderColor = "#e5e7eb"
+                      e.target.style.boxShadow = "none"
                     }}
                   />
                 </FormControl>
               )}
             />
             {errors.organisationName && (
-              <p className="text-red-500 text-sm mt-1">{errors.organisationName.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.organisationName.message}
+              </p>
             )}
           </motion.div>
 
           {/* Role Level and Pitch Word Limit - Side by side on larger screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
             {/* Role Level */}
             <motion.div variants={itemVariants} className="space-y-2">
-              <FormLabel className="text-sm font-medium text-gray-700">Role Level</FormLabel>
+              <FormLabel className="text-sm font-medium text-gray-700">
+                Role Level
+              </FormLabel>
               <FormField
                 control={control}
                 name="roleLevel"
                 render={({ field }) => (
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className="w-full h-12 lg:h-12 bg-white border border-gray-200 rounded-lg px-4 text-base lg:text-sm transition-all duration-200"
-                        style={{
-                          '--focus-ring-color': '#444ec1',
-                          '--focus-border-color': '#444ec1'
-                        } as React.CSSProperties}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = '#444ec1'
-                          e.currentTarget.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                      <SelectTrigger
+                        className="h-12 w-full rounded-lg border border-gray-200 bg-white px-4 text-base transition-all duration-200 lg:h-12 lg:text-sm"
+                        style={
+                          {
+                            "--focus-ring-color": "#444ec1",
+                            "--focus-border-color": "#444ec1"
+                          } as React.CSSProperties
+                        }
+                        onFocus={e => {
+                          e.currentTarget.style.borderColor = "#444ec1"
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
                         }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = '#e5e7eb'
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}>
+                        onBlur={e => {
+                          e.currentTarget.style.borderColor = "#e5e7eb"
+                          e.currentTarget.style.boxShadow = "none"
+                        }}
+                      >
                         <SelectValue placeholder="Select APS level" />
                       </SelectTrigger>
                       <SelectContent>
-                        {["APS1","APS2","APS3","APS4","APS5","APS6","EL1"].map(l => (
-                          <SelectItem key={l} value={l}>{l}</SelectItem>
+                        {[
+                          "APS1",
+                          "APS2",
+                          "APS3",
+                          "APS4",
+                          "APS5",
+                          "APS6",
+                          "EL1"
+                        ].map(l => (
+                          <SelectItem key={l} value={l}>
+                            {l}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -188,13 +219,17 @@ export default function RoleStep() {
                 )}
               />
               {errors.roleLevel && (
-                <p className="text-red-500 text-sm mt-1">{errors.roleLevel.message}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.roleLevel.message}
+                </p>
               )}
             </motion.div>
 
             {/* Pitch Word Limit */}
             <motion.div variants={itemVariants} className="space-y-2">
-              <FormLabel className="text-sm font-medium text-gray-700">Pitch Word Limit</FormLabel>
+              <FormLabel className="text-sm font-medium text-gray-700">
+                Pitch Word Limit
+              </FormLabel>
               <FormField
                 control={control}
                 name="pitchWordLimit"
@@ -205,25 +240,30 @@ export default function RoleStep() {
                       type="number"
                       min={400}
                       placeholder="Minimum 400 words"
-                      className="w-full h-12 lg:h-12 bg-white border border-gray-200 rounded-lg px-4 text-base lg:text-sm transition-all duration-200"
-                      style={{
-                        '--focus-ring-color': '#444ec1',
-                        '--focus-border-color': '#444ec1'
-                      } as React.CSSProperties}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#444ec1'
-                        e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                      className="h-12 w-full rounded-lg border border-gray-200 bg-white px-4 text-base transition-all duration-200 lg:h-12 lg:text-sm"
+                      style={
+                        {
+                          "--focus-ring-color": "#444ec1",
+                          "--focus-border-color": "#444ec1"
+                        } as React.CSSProperties
+                      }
+                      onFocus={e => {
+                        e.target.style.borderColor = "#444ec1"
+                        e.target.style.boxShadow =
+                          "0 0 0 1px rgba(68, 78, 193, 0.1)"
                       }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#e5e7eb'
-                        e.target.style.boxShadow = 'none'
+                      onBlur={e => {
+                        e.target.style.borderColor = "#e5e7eb"
+                        e.target.style.boxShadow = "none"
                       }}
                     />
                   </FormControl>
                 )}
               />
               {errors.pitchWordLimit && (
-                <p className="text-red-500 text-sm mt-1">{errors.pitchWordLimit.message}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.pitchWordLimit.message}
+                </p>
               )}
             </motion.div>
           </div>
@@ -231,8 +271,8 @@ export default function RoleStep() {
           {/* Role Description (Optional) */}
           <motion.div variants={itemVariants} className="space-y-2">
             <FormLabel className="text-sm font-medium text-gray-700">
-              Role Description 
-              <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+              Role Description
+              <span className="ml-1 font-normal text-gray-400">(Optional)</span>
             </FormLabel>
             <FormField
               control={control}
@@ -242,34 +282,40 @@ export default function RoleStep() {
                   <Textarea
                     {...field}
                     placeholder="Describe your role and key responsibilities..."
-                    className="w-full min-h-[100px] lg:min-h-[120px] bg-white border border-gray-200 rounded-lg p-4 text-base lg:text-sm resize-none transition-all duration-200"
-                    style={{
-                      '--focus-ring-color': '#444ec1',
-                      '--focus-border-color': '#444ec1'
-                    } as React.CSSProperties}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#444ec1'
-                      e.target.style.boxShadow = '0 0 0 1px rgba(68, 78, 193, 0.1)'
+                    className="min-h-[100px] w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-base transition-all duration-200 lg:min-h-[120px] lg:text-sm"
+                    style={
+                      {
+                        "--focus-ring-color": "#444ec1",
+                        "--focus-border-color": "#444ec1"
+                      } as React.CSSProperties
+                    }
+                    onFocus={e => {
+                      e.target.style.borderColor = "#444ec1"
+                      e.target.style.boxShadow =
+                        "0 0 0 1px rgba(68, 78, 193, 0.1)"
                     }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e5e7eb'
-                      e.target.style.boxShadow = 'none'
+                    onBlur={e => {
+                      e.target.style.borderColor = "#e5e7eb"
+                      e.target.style.boxShadow = "none"
                     }}
                   />
                 </FormControl>
               )}
             />
             {errors.roleDescription && (
-              <p className="text-red-500 text-sm mt-1">{errors.roleDescription.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.roleDescription.message}
+              </p>
             )}
           </motion.div>
         </div>
 
         {/* Mobile helper text */}
-        <div className="lg:hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mt-6">
-          <p className="text-sm text-blue-800 leading-relaxed">
-            💡 <strong>Tip:</strong> Fill out all required fields to continue to the next step. 
-            You can always come back and edit your responses later.
+        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-3 lg:hidden">
+          <p className="text-sm leading-relaxed text-blue-800">
+            💡 <strong>Tip:</strong> Fill out all required fields to continue to
+            the next step. You can always come back and edit your responses
+            later.
           </p>
         </div>
       </motion.div>

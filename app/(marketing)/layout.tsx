@@ -12,9 +12,9 @@ export default async function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-white relative">
+    <div className="relative flex min-h-screen flex-col bg-white">
       <Header />
-      <div className="flex-1 relative z-10">{children}</div>
+      <div className="relative z-10 flex-1">{children}</div>
     </div>
   )
 }

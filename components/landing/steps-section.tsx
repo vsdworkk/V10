@@ -2,11 +2,11 @@
 Steps section component showing how the product works in 3 steps.
 */
 
-"use client";
+"use client"
 
-import Features from "@/components/features-vertical";
-import Section from "@/components/utilities/section";
-import { MessageSquare, Zap, Download } from "lucide-react";
+import Features from "@/components/features-vertical"
+import Section from "@/components/utilities/section"
+import { MessageSquare, Zap, Download } from "lucide-react"
 
 const data = [
   {
@@ -15,7 +15,7 @@ const data = [
     content:
       "Sign up, open your dashboard, and hit create pitch. The wizard asks super simple questions to gather information about your experience ~ 10 minutes.",
     image: "/First-step-image.png",
-    icon: <MessageSquare className="w-6 h-6 text-primary" />,
+    icon: <MessageSquare className="text-primary size-6" />
   },
   {
     id: 2,
@@ -23,26 +23,25 @@ const data = [
     content:
       "Our specialised APS-focused AI takes your unique information, aligns it precisely with relevant APS frameworks, addresses key selection criteria using the STAR structure, and crafts a personalised pitch that resonates with APS recruiters.",
     image: "/Second-step-image.png",
-    icon: <Zap className="w-6 h-6 text-primary" />,
+    icon: <Zap className="text-primary size-6" />
   },
   {
     id: 3,
     title: "3. Download & Submit",
-    content:
-      "Export your ready to submit pitch in pdf/doc and submit. Done.",
+    content: "Export your ready to submit pitch in pdf/doc and submit. Done.",
     image: "/Third-step-image.png",
-    icon: <Download className="w-6 h-6 text-primary" />,
-  },
-];
+    icon: <Download className="text-primary size-6" />
+  }
+]
 
 export function StepsSection() {
   return (
-    <Section 
-      title="How it works" 
+    <Section
+      title="How it works"
       subtitle="Three steps to get ahead"
       description="From experience to interview-winning pitch in minutes, not hours."
     >
       <Features data={data} />
     </Section>
-  );
+  )
 }

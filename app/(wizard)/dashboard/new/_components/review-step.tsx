@@ -42,7 +42,7 @@ import AIThinkingLoader from "./ai-thinking-loader"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ReviewStepProps {
-  /** 
+  /**
    * If true, show a loading skeleton/spinner instead of the actual pitch content.
    * This is set when the user transitions from the last STAR step to this step and
    * we haven't yet received the final pitch text from the agent.
@@ -51,12 +51,16 @@ interface ReviewStepProps {
 
   /** Callback invoked when the pitch content has loaded */
   onPitchLoaded: () => void
-  
+
   /** Error message if pitch generation failed */
   errorMessage?: string | null
 }
 
-export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage }: ReviewStepProps) {
+export default function ReviewStep({
+  isPitchLoading,
+  onPitchLoaded,
+  errorMessage
+}: ReviewStepProps) {
   const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
@@ -65,16 +69,16 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   /* ----------------------------------------------------------- */
   const pitchContent = watch("pitchContent") || ""
   const execId = watch("agentExecutionId") || null
-  
+
   /* ----------------------------------------------------------- */
   /* 2) Use the new pitch generation hook                        */
   /* ----------------------------------------------------------- */
-  const { 
-    isLoading: isPitchGenerating, 
-    pitchContent: generatedPitchContent, 
+  const {
+    isLoading: isPitchGenerating,
+    pitchContent: generatedPitchContent,
     error: pitchGenerationError,
-    generatePitch 
-  } = usePitchGeneration();
+    generatePitch
+  } = usePitchGeneration()
 
   /* ----------------------------------------------------------- */
   /* 3) Editor setup (TipTap)                                    */
@@ -103,22 +107,27 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   /* ----------------------------------------------------------- */
   useEffect(() => {
     if (editor && pitchContent && pitchContent !== editor.getHTML()) {
-      editor.commands.setContent(pitchContent, false);
+      editor.commands.setContent(pitchContent, false)
     }
-  }, [editor, pitchContent]);
+  }, [editor, pitchContent])
 
   /* ----------------------------------------------------------- */
   /* 5) Effect to trigger pitch generation when component mounts  */
   /* ----------------------------------------------------------- */
-  const initRef = useRef<boolean>(false);
+  const initRef = useRef<boolean>(false)
   useEffect(() => {
     // Only run this once and only if we have an execution ID but no pitch content
-    if (!initRef.current && execId && (!pitchContent || pitchContent.trim() === '') && !isPitchGenerating) {
-      initRef.current = true;
-      
+    if (
+      !initRef.current &&
+      execId &&
+      (!pitchContent || pitchContent.trim() === "") &&
+      !isPitchGenerating
+    ) {
+      initRef.current = true
+
       // Get the required data from the form
-      const formData = getValues();
-      
+      const formData = getValues()
+
       // Trigger pitch generation
       generatePitch({
         userId: formData.userId || "", // Ensure userId is never undefined
@@ -132,27 +141,27 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         albertGuidance: formData.albertGuidance || "",
         starExamples: formData.starExamples || [],
         starExamplesCount: parseInt(formData.starExamplesCount || "0", 10)
-      });
+      })
     }
-  }, [execId, pitchContent, isPitchGenerating, generatePitch, getValues]);
+  }, [execId, pitchContent, isPitchGenerating, generatePitch, getValues])
 
   /* ----------------------------------------------------------- */
   /* 6) Effect to handle generated pitch content                 */
   /* ----------------------------------------------------------- */
   useEffect(() => {
     if (generatedPitchContent) {
-      setValue("pitchContent", generatedPitchContent, { shouldDirty: true });
-      editor?.commands.setContent(generatedPitchContent, false);
-      
+      setValue("pitchContent", generatedPitchContent, { shouldDirty: true })
+      editor?.commands.setContent(generatedPitchContent, false)
+
       toast({
         title: "Pitch ready!",
         description: "Albert has finished generating your pitch."
-      });
-      
+      })
+
       // Call the callback from parent
-      onPitchLoaded();
+      onPitchLoaded()
     }
-  }, [generatedPitchContent, editor, setValue, toast, onPitchLoaded]);
+  }, [generatedPitchContent, editor, setValue, toast, onPitchLoaded])
 
   /* ----------------------------------------------------------- */
   /* 7) Effect to handle pitch generation error                 */
@@ -163,14 +172,14 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
         title: "Error generating pitch",
         description: pitchGenerationError,
         variant: "destructive"
-      });
+      })
     }
-  }, [pitchGenerationError, toast]);
+  }, [pitchGenerationError, toast])
 
   // Add custom styles for spacing between sections
   useEffect(() => {
     if (editor) {
-      const style = document.createElement('style');
+      const style = document.createElement("style")
       style.innerHTML = `
         .ProseMirror h2 {
           margin-top: 2rem;
@@ -187,14 +196,14 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
           outline: none !important;
           background: transparent !important;
         }
-      `;
-      document.head.appendChild(style);
-      
+      `
+      document.head.appendChild(style)
+
       return () => {
-        document.head.removeChild(style);
-      };
+        document.head.removeChild(style)
+      }
     }
-  }, [editor]);
+  }, [editor])
 
   /* ----------------------------------------------------------- */
   /* 8) Loading skeleton if pitch is not ready                   */
@@ -203,50 +212,55 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   if (isPitchLoading || isPitchGenerating || !pitchContent.trim()) {
     return (
       <div className="space-y-4">
-        <div className="p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-center font-medium">
-          <strong>Generating your pitch...</strong> The content will appear below as soon as it's ready.
+        <div className="rounded-md border border-green-200 bg-green-50 p-3 text-center font-medium text-green-800">
+          <strong>Generating your pitch...</strong> The content will appear
+          below as soon as it's ready.
         </div>
 
         {/* Editor toolbar (disabled during loading) */}
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md p-3 opacity-60 shadow-lg">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/40 p-3 opacity-60 shadow-lg backdrop-blur-md dark:bg-gray-900/30">
           <Button type="button" size="sm" variant="outline" disabled>
-            <Bold className="h-4 w-4" />
+            <Bold className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <Italic className="h-4 w-4" />
+            <Italic className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <Heading1 className="h-4 w-4" />
+            <Heading1 className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <List className="h-4 w-4" />
+            <List className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <ListOrdered className="h-4 w-4" />
+            <ListOrdered className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <Undo2 className="h-4 w-4" />
+            <Undo2 className="size-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" disabled>
-            <Redo2 className="h-4 w-4" />
+            <Redo2 className="size-4" />
           </Button>
-          <div className="ml-auto text-xs text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground ml-auto text-xs">
+            Loading...
+          </div>
         </div>
 
         {/* Loading animation in the editor area */}
-        <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 dark:bg-gray-900/40 backdrop-blur-md p-0 shadow-inner">
-          <AIThinkingLoader 
+        <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 p-0 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
+          <AIThinkingLoader
             visible={true}
             errorMessage={pitchGenerationError || errorMessage}
             onCancel={() => {
               // Set empty content to exit loading state
-              setValue("pitchContent", "<p>Your pitch content...</p>", { shouldDirty: true });
-              onPitchLoaded(); // Reset isLoading in parent
+              setValue("pitchContent", "<p>Your pitch content...</p>", {
+                shouldDirty: true
+              })
+              onPitchLoaded() // Reset isLoading in parent
             }}
             onComplete={() => {
               // This shouldn't be needed as the content should
               // be loaded via the hook, but just in case
-              onPitchLoaded();
+              onPitchLoaded()
             }}
             className="h-full min-h-[300px]"
           />
@@ -263,7 +277,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
     return (
       <div className="flex flex-col items-center space-y-2 py-4">
         <svg
-          className="h-6 w-6 animate-spin text-muted-foreground"
+          className="text-muted-foreground size-6 animate-spin"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -282,7 +296,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
             d="M4 12a8 8 0 018-8v8H4z"
           />
         </svg>
-        <p className="text-sm text-muted-foreground">Loading editor…</p>
+        <p className="text-muted-foreground text-sm">Loading editor…</p>
       </div>
     )
   }
@@ -295,27 +309,29 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
   const handleHeading = (lvl: 1 | 2 | 3) =>
     editor.chain().focus().toggleHeading({ level: lvl }).run()
   const handleBulletList = () => editor.chain().focus().toggleBulletList().run()
-  const handleOrderedList = () => editor.chain().focus().toggleOrderedList().run()
+  const handleOrderedList = () =>
+    editor.chain().focus().toggleOrderedList().run()
   const handleUndo = () => editor.chain().focus().undo().run()
   const handleRedo = () => editor.chain().focus().redo().run()
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3">
-        <p className="text-center text-base font-medium text-gray-700 pb-2">
-          Your pitch is now ready. Feel free to refine the wording or formatting below.
+        <p className="pb-2 text-center text-base font-medium text-gray-700">
+          Your pitch is now ready. Feel free to refine the wording or formatting
+          below.
         </p>
       </div>
 
       {/* Editor Toolbar */}
-      <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/60 dark:bg-gray-900/40 backdrop-blur-md p-3 shadow-lg">
+      <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-white/30 bg-white/60 p-3 shadow-lg backdrop-blur-md dark:bg-gray-900/40">
         <Button
           type="button"
           size="sm"
           variant={editor.isActive("bold") ? "default" : "outline"}
           onClick={handleBold}
         >
-          <Bold className="h-4 w-4" />
+          <Bold className="size-4" />
         </Button>
 
         <Button
@@ -324,11 +340,16 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
           variant={editor.isActive("italic") ? "default" : "outline"}
           onClick={handleItalic}
         >
-          <Italic className="h-4 w-4" />
+          <Italic className="size-4" />
         </Button>
 
-        <Button type="button" size="sm" variant="outline" onClick={() => handleHeading(1)}>
-          <Heading1 className="h-4 w-4" />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => handleHeading(1)}
+        >
+          <Heading1 className="size-4" />
         </Button>
 
         <Button
@@ -337,7 +358,7 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
           variant={editor.isActive("bulletList") ? "default" : "outline"}
           onClick={handleBulletList}
         >
-          <List className="h-4 w-4" />
+          <List className="size-4" />
         </Button>
 
         <Button
@@ -346,18 +367,18 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
           variant={editor.isActive("orderedList") ? "default" : "outline"}
           onClick={handleOrderedList}
         >
-          <ListOrdered className="h-4 w-4" />
+          <ListOrdered className="size-4" />
         </Button>
 
         <Button type="button" size="sm" variant="outline" onClick={handleUndo}>
-          <Undo2 className="h-4 w-4" />
+          <Undo2 className="size-4" />
         </Button>
 
         <Button type="button" size="sm" variant="outline" onClick={handleRedo}>
-          <Redo2 className="h-4 w-4" />
+          <Redo2 className="size-4" />
         </Button>
 
-        <div className="ml-auto text-xs text-muted-foreground">
+        <div className="text-muted-foreground ml-auto text-xs">
           {editor.storage.characterCount
             ? `Characters: ${editor.storage.characterCount.characters() ?? 0}`
             : null}
@@ -365,10 +386,10 @@ export default function ReviewStep({ isPitchLoading, onPitchLoaded, errorMessage
       </div>
 
       {/* The Editor Content */}
-      <ScrollArea className="h-[50vh] w-full overflow-hidden rounded-xl border border-white/30 bg-white/50 dark:bg-gray-900/40 backdrop-blur-md shadow-inner">
+      <ScrollArea className="h-[50vh] w-full overflow-hidden rounded-xl border border-white/30 bg-white/50 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
         <div
-          className="prose prose-slate prose-neutral text-neutral-900 dark:prose-invert max-w-none p-6"
-          style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}
+          className="prose prose-slate prose-neutral dark:prose-invert max-w-none p-6 text-neutral-900"
+          style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
         >
           <EditorContent editor={editor} />
         </div>

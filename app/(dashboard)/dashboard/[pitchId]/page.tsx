@@ -18,7 +18,9 @@ interface PitchDetailPageProps {
   params: Promise<{ pitchId: string }>
 }
 
-export default async function PitchDetailPage({ params }: PitchDetailPageProps) {
+export default async function PitchDetailPage({
+  params
+}: PitchDetailPageProps) {
   const { pitchId } = await params
 
   const { userId } = await auth()
@@ -47,11 +49,14 @@ export default async function PitchDetailPage({ params }: PitchDetailPageProps) 
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <div className="container max-w-5xl mx-auto flex-1 flex flex-col py-6 px-4 sm:px-6">
+    <div className="bg-background flex min-h-screen flex-col">
+      <div className="container mx-auto flex max-w-5xl flex-1 flex-col px-4 py-6 sm:px-6">
         <h1 className="mb-4 text-2xl font-semibold">Edit Pitch</h1>
-        <div className="flex-1 flex flex-col">
-          <PitchEditor pitchId={pitch.id} initialContent={pitch.pitchContent || ""} />
+        <div className="flex flex-1 flex-col">
+          <PitchEditor
+            pitchId={pitch.id}
+            initialContent={pitch.pitchContent || ""}
+          />
         </div>
       </div>
     </div>

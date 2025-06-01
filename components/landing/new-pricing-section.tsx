@@ -35,7 +35,7 @@ const PRICING_PLANS = [
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_SINGLEPITCH || "#",
     features: FEATURES,
     isPopular: false,
-    credits: "1 credit = 1 pitch",
+    credits: "1 credit = 1 pitch"
   },
   {
     name: "Pitch Pack",
@@ -45,7 +45,7 @@ const PRICING_PLANS = [
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PITCHPACK || "#",
     features: FEATURES,
     isPopular: true,
-    credits: "5 credits = 5 pitches",
+    credits: "5 credits = 5 pitches"
   },
   {
     name: "Pro Bundle",
@@ -55,8 +55,8 @@ const PRICING_PLANS = [
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PROBUNDLE || "#",
     features: FEATURES,
     isPopular: false,
-    credits: "15 credits = 15 pitches",
-  },
+    credits: "15 credits = 15 pitches"
+  }
 ]
 
 export default function NewPricingSection({ userId }: NewPricingSectionProps) {
@@ -69,7 +69,7 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
       id="pricing"
       className="py-20"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 sm:2 gap-4 mt-8">
+      <div className="sm:2 mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
         {PRICING_PLANS.map((plan, index) => (
           <motion.div
             key={index}
@@ -83,12 +83,12 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
                       index === PRICING_PLANS.length - 1
                         ? -30
                         : index === 0
-                        ? 30
-                        : 0,
+                          ? 30
+                          : 0,
                     scale:
                       index === 0 || index === PRICING_PLANS.length - 1
                         ? 0.94
-                        : 1.0,
+                        : 1.0
                   }
                 : {}
             }
@@ -99,57 +99,54 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
               stiffness: 100,
               damping: 30,
               delay: 0.4,
-              opacity: { duration: 0.5 },
+              opacity: { duration: 0.5 }
             }}
             className={cn(
-              `rounded-2xl border-[1px] p-6 bg-background text-center lg:flex lg:flex-col lg:justify-center relative`,
+              `bg-background relative rounded-2xl border-[1px] p-6 text-center lg:flex lg:flex-col lg:justify-center`,
               plan.isPopular ? "border-primary border-[2px]" : "border-border",
               index === 0 || index === PRICING_PLANS.length - 1
-                ? "z-0 transform translate-x-0 translate-y-0 -translate-z-[50px] rotate-y-[10deg]"
+                ? "-translate-z-[50px] rotate-y-[10deg] z-0 translate-x-0 translate-y-0"
                 : "z-10",
               index === 0 && "origin-right",
               index === PRICING_PLANS.length - 1 && "origin-left"
             )}
           >
             {plan.isPopular && (
-              <div className="absolute top-0 right-0 bg-primary py-0.5 px-2 rounded-bl-xl rounded-tr-xl flex items-center">
+              <div className="bg-primary absolute right-0 top-0 flex items-center rounded-bl-xl rounded-tr-xl px-2 py-0.5">
                 <FaStar className="text-white" />
-                <span className="text-white ml-1 font-sans font-semibold">
+                <span className="ml-1 font-sans font-semibold text-white">
                   Popular
                 </span>
               </div>
             )}
             <div>
-              <p className="text-base font-semibold text-muted-foreground">
+              <p className="text-muted-foreground text-base font-semibold">
                 {plan.name}
               </p>
               <p className="mt-6 flex items-center justify-center gap-x-2">
-                <span className="text-5xl font-bold tracking-tight text-foreground">
+                <span className="text-foreground text-5xl font-bold tracking-tight">
                   {plan.price}
                 </span>
               </p>
 
-              <p className="text-xs leading-5 text-muted-foreground">
+              <p className="text-muted-foreground text-xs leading-5">
                 {plan.credits}
               </p>
 
-              <ul className="mt-5 gap-2 flex flex-col">
+              <ul className="mt-5 flex flex-col gap-2">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center">
-                    <Check className="mr-2 h-4 w-4 text-primary" />
+                    <Check className="text-primary mr-2 size-4" />
                     <span>{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              <hr className="w-full my-4" />
+              <hr className="my-4 w-full" />
 
-              <PricingButton 
-                plan={plan}
-                userId={userId}
-              />
-              
-              <p className="mt-6 text-xs leading-5 text-muted-foreground">
+              <PricingButton plan={plan} userId={userId} />
+
+              <p className="text-muted-foreground mt-6 text-xs leading-5">
                 {plan.description}
               </p>
             </div>
@@ -161,7 +158,7 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
 }
 
 interface PricingButtonProps {
-  plan: typeof PRICING_PLANS[0]
+  plan: (typeof PRICING_PLANS)[0]
   userId: string | null
 }
 
@@ -176,10 +173,10 @@ function PricingButton({ plan, userId }: PricingButtonProps) {
     <Button
       className={cn(
         "group relative w-full gap-2 overflow-hidden text-lg font-semibold tracking-tighter",
-        "transform-gpu ring-offset-current transition-all duration-300 ease-out hover:ring-2 hover:ring-primary hover:ring-offset-1 hover:bg-primary hover:text-white",
+        "hover:ring-primary hover:bg-primary transform-gpu ring-offset-current transition-all duration-300 ease-out hover:text-white hover:ring-2 hover:ring-offset-1",
         plan.isPopular
           ? "bg-primary text-white"
-          : "bg-white text-black border border-border"
+          : "border-border border bg-white text-black"
       )}
       asChild
     >

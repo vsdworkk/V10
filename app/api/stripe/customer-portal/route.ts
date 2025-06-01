@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server"
 import { NextRequest, NextResponse } from "next/server"
 
 // Set cache control headers to prevent caching of this API route
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,16 +17,13 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Get the return URL from the request body or use the default
     const { returnUrl } = await req.json().catch(() => ({}))
     const defaultReturnUrl = new URL("/dashboard", req.url).toString()
-    
+
     // Create a customer portal session
     const result = await createCustomerPortalSessionAction(
       userId,
@@ -34,10 +31,7 @@ export async function POST(req: NextRequest) {
     )
 
     if (!result.isSuccess) {
-      return NextResponse.json(
-        { error: result.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: result.message }, { status: 400 })
     }
 
     // Return the URL to redirect to
@@ -49,4 +43,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

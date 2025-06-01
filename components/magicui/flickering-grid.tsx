@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils"
+import { useEffect, useRef } from "react"
 
 interface FlickeringGridProps {
-  squareSize?: number;
-  gridGap?: number;
-  flickerChance?: number;
-  color?: string;
-  maxOpacity?: number;
-  width?: number;
-  height?: number;
-  className?: string;
+  squareSize?: number
+  gridGap?: number
+  flickerChance?: number
+  color?: string
+  maxOpacity?: number
+  width?: number
+  height?: number
+  className?: string
 }
 
 export default function FlickeringGrid({
@@ -22,30 +22,30 @@ export default function FlickeringGrid({
   maxOpacity = 0.3,
   width = 100,
   height = 100,
-  className,
+  className
 }: FlickeringGridProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
 
     const resizeCanvas = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-    };
+      const rect = canvas.getBoundingClientRect()
+      canvas.width = rect.width
+      canvas.height = rect.height
+    }
 
-    resizeCanvas();
+    resizeCanvas()
 
     const animateGrid = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      const rows = Math.floor(canvas.height / (squareSize + gridGap));
-      const cols = Math.floor(canvas.width / (squareSize + gridGap));
+      const rows = Math.floor(canvas.height / (squareSize + gridGap))
+      const cols = Math.floor(canvas.width / (squareSize + gridGap))
 
       for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
@@ -54,29 +54,29 @@ export default function FlickeringGrid({
               Math.random() * maxOpacity * 255
             )
               .toString(16)
-              .padStart(2, "0")}`;
+              .padStart(2, "0")}`
 
             ctx.fillRect(
               j * (squareSize + gridGap),
               i * (squareSize + gridGap),
               squareSize,
               squareSize
-            );
+            )
           }
         }
       }
 
-      requestAnimationFrame(animateGrid);
-    };
+      requestAnimationFrame(animateGrid)
+    }
 
-    animateGrid();
+    animateGrid()
 
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("resize", resizeCanvas)
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas);
-    };
-  }, [squareSize, gridGap, flickerChance, color, maxOpacity]);
+      window.removeEventListener("resize", resizeCanvas)
+    }
+  }, [squareSize, gridGap, flickerChance, color, maxOpacity])
 
   return (
     <canvas
@@ -84,8 +84,8 @@ export default function FlickeringGrid({
       className={cn("pointer-events-none", className)}
       style={{
         width: `${width}%`,
-        height: `${height}%`,
+        height: `${height}%`
       }}
     />
-  );
-} 
+  )
+}
