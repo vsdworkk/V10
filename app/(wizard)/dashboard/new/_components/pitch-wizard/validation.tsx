@@ -28,8 +28,21 @@ export async function validateStep(
     // Experience step - only validate relevantExperience
     result = await methods.trigger(["relevantExperience"])
   } else if (step === 4) {
-    // Guidance step - optional
-    result = true
+    // Guidance step - validate guidance and STAR selections
+    result = await methods.trigger([
+      "albertGuidance",
+      "starExamplesCount",
+      "starExampleDescriptions"
+    ])
+
+    if (result) {
+      const count = parseInt(methods.getValues("starExamplesCount") || "0", 10)
+      const descriptions = methods.getValues("starExampleDescriptions") || []
+      const descValid =
+        descriptions.length === count &&
+        descriptions.every(d => d.trim().length >= 10 && d.trim().length <= 100)
+      result = descValid && !!methods.getValues("albertGuidance")
+    }
   }
 
   // STAR steps
@@ -49,9 +62,10 @@ export async function validateStep(
           `starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`
         ])
       } else if (subStepIndex === 1) {
-        // Task step (constraints optional)
+        // Task step (constraints required)
         result = await methods.trigger([
-          `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`
+          `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`,
+          `starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`
         ])
       } else if (subStepIndex === 2) {
         // Action step

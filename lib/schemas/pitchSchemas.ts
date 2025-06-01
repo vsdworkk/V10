@@ -1,12 +1,27 @@
 import { z } from "zod"
 
+// ---------------------------------------------------------------------------
+// Word count utilities (server side)
+// ---------------------------------------------------------------------------
+
+function countWords(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean).length
+}
+
+function wordRange(min: number, max: number) {
+  return z.string().refine(val => {
+    const words = countWords(val)
+    return words >= min && words <= max
+  }, `Must be between ${min} and ${max} words`)
+}
+
 /**
  * Zod schema for a single Action step
  */
 export const actionStepSchema = z.object({
   stepNumber: z.number(),
-  "what-did-you-specifically-do-in-this-step": z.string(),
-  "what-was-the-outcome-of-this-step-optional": z.string().optional()
+  "what-did-you-specifically-do-in-this-step": wordRange(20, 150),
+  "what-was-the-outcome-of-this-step-optional": wordRange(10, 150)
 })
 
 /**
@@ -15,26 +30,22 @@ export const actionStepSchema = z.object({
  */
 export const starSchema = z.object({
   situation: z.object({
-    "where-and-when-did-this-experience-occur": z.string().optional(),
-    "briefly-describe-the-situation-or-challenge-you-faced": z
-      .string()
-      .optional()
+    "where-and-when-did-this-experience-occur": wordRange(15, 150),
+    "briefly-describe-the-situation-or-challenge-you-faced": wordRange(20, 150)
   }),
   task: z.object({
-    "what-was-your-responsibility-in-addressing-this-issue": z
-      .string()
-      .optional(),
-    "what-constraints-or-requirements-did-you-need-to-consider": z
-      .string()
-      .optional()
+    "what-was-your-responsibility-in-addressing-this-issue": wordRange(20, 150),
+    "what-constraints-or-requirements-did-you-need-to-consider": wordRange(
+      20,
+      150
+    )
   }),
   action: z.object({
     steps: z.array(actionStepSchema).min(1).optional()
   }),
   result: z.object({
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": z
-      .string()
-      .optional()
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
+      wordRange(20, 150)
   })
 })
 
@@ -46,26 +57,26 @@ export const updatePitchSchema = z
   .object({
     id: z.string().uuid().optional(),
     userId: z.string().optional(),
-    roleName: z.string().min(2).optional(),
+    roleName: z.string().min(10).max(150).optional(),
     roleLevel: z.string().nonempty().optional(),
-    pitchWordLimit: z.number().min(400).max(2000).optional(),
+    pitchWordLimit: z.number().min(400).max(1250).optional(),
     roleDescription: z.string().optional().nullable(),
-    relevantExperience: z.string().min(10).optional(),
+    relevantExperience: z.string().min(1000).max(10000).optional(),
 
     // The array of star examples, each must match starSchema
     starExamples: z.array(starSchema).optional(),
 
-    albertGuidance: z.string().optional().nullable(),
+    albertGuidance: z.string().min(1).optional().nullable(),
     pitchContent: z.string().optional().nullable(),
 
     // Add agentExecutionId for PromptLayer integration
     agentExecutionId: z.string().optional().nullable(),
 
     // starExamplesCount can be 1..10
-    starExamplesCount: z.number().min(1).max(10).optional(),
+    starExamplesCount: z.number().min(1).max(4).optional(),
 
     // starExampleDescriptions for short descriptions of each STAR example
-    starExampleDescriptions: z.array(z.string()).optional(),
+    starExampleDescriptions: z.array(z.string().min(10).max(100)).optional(),
 
     // Add fields like currentStep or status if needed
     currentStep: z.number().optional(),
