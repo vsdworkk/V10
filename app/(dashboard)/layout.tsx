@@ -26,6 +26,8 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
 import DashboardSidebar from "./dashboard/_components/dashboard-sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
+import MobileHeader from "./dashboard/_components/mobile-header"
 
 /**
  * @interface DashboardLayoutProps
@@ -58,20 +60,32 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50 relative" style={{background: 'linear-gradient(to bottom right, #f8fafc, #ffffff, #faf5ff)'}}>
-      {/* Subtle grid-pattern overlay */}
-      <div
-        className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
-      
-      <DashboardSidebar userId={userId} />
-
-      <main className="flex-1 p-8 bg-white shadow-sm m-4 rounded-lg relative z-10">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-purple-50 relative" style={{background: 'linear-gradient(to bottom right, #f8fafc, #ffffff, #faf5ff)'}}>
+        {/* Subtle grid-pattern overlay */}
+        <div
+          className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        
+        <DashboardSidebar userId={userId} />
+        
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Mobile Header - Only visible on mobile */}
+          <MobileHeader />
+          
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl">
+              <div className="bg-white shadow-sm rounded-lg p-4 md:p-6 lg:p-8 relative z-10">
+                {children}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   )
 }

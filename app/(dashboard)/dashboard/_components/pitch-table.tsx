@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Popover,
   PopoverTrigger,
@@ -20,8 +21,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import { SelectPitch } from "@/db/schema/pitches-schema"
-import { Download, Filter } from "lucide-react"
+import { Download, Filter, MoreVertical, Calendar, Building, User } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useState } from "react"
@@ -40,7 +42,6 @@ export default function PitchTable({ pitches }: PitchTableProps) {
   async function handleExport(pitch: SelectPitch, format: "pdf" | "doc") {
     const content = pitch.pitchContent || ""
     
-    // If content is empty, show a warning
     if (!content.trim()) {
       alert("No content available to export. Please ensure the pitch has content.")
       return
@@ -48,14 +49,11 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     
     if (format === "pdf") {
       try {
-        // Dynamic import to prevent SSR issues
         const html2pdf = (await import("html2pdf.js")).default
         
-        // Create a temporary div with proper HTML content
         const el = document.createElement("div")
         el.innerHTML = content
         
-        // Apply some basic styling for better PDF output
         el.style.fontFamily = "Arial, sans-serif"
         el.style.lineHeight = "1.6"
         el.style.padding = "20px"
@@ -77,16 +75,12 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       }
     } else {
       try {
-        // Dynamic imports to prevent SSR issues
         const { saveAs } = await import("file-saver")
         const { Document, Packer, Paragraph } = await import("docx")
         
-        // For Word export, we need to convert HTML to docx format
-        // Create a temporary div to parse HTML content
         const tempDiv = document.createElement("div")
         tempDiv.innerHTML = content
         
-        // Extract text content and try to preserve basic formatting
         const textContent = tempDiv.textContent || tempDiv.innerText || ""
         
         if (!textContent.trim()) {
@@ -94,7 +88,6 @@ export default function PitchTable({ pitches }: PitchTableProps) {
           return
         }
         
-        // Split content into paragraphs based on line breaks and HTML structure
         const paragraphs = textContent.split(/\n\s*\n/).filter(p => p.trim())
         
         const docParagraphs = paragraphs.map(text => new Paragraph(text.trim()))
@@ -143,10 +136,33 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     return searchMatch && roleMatch && orgMatch && statusMatch
   })
 
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    return dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800'
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-xl md:text-2xl font-semibold">
           {`Welcome ${user?.firstName ?? ""}`}
         </h2>
         <p className="text-gray-600 text-sm">
@@ -154,154 +170,194 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="relative w-full max-w-md">
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="flex-1">
           <Input
             type="text"
             placeholder="Search pitches..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-3 pr-4 py-1.5 w-full shadow-sm"
+            className="w-full shadow-sm"
           />
         </div>
-        <div className="flex items-center">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 shadow-sm"
-              >
-                <Filter className="h-4 w-4" />
-                <span>Filter</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="space-y-3 w-64" align="end">
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Role</label>
-                <Input
-                  value={roleFilter}
-                  onChange={e => setRoleFilter(e.target.value)}
-                  placeholder="Role name"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Organisation</label>
-                <Input
-                  value={orgFilter}
-                  onChange={e => setOrgFilter(e.target.value)}
-                  placeholder="Organisation"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 shadow-sm whitespace-nowrap"
+            >
+              <Filter className="h-4 w-4" />
+              <span>Filter</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="space-y-3 w-64" align="end">
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Role</label>
+              <Input
+                value={roleFilter}
+                onChange={e => setRoleFilter(e.target.value)}
+                placeholder="Role name"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Organisation</label>
+              <Input
+                value={orgFilter}
+                onChange={e => setOrgFilter(e.target.value)}
+                placeholder="Organisation"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      <div className="border rounded-md shadow-md overflow-hidden">
-        <div className="grid grid-cols-4 gap-4 p-3 bg-gray-50 border-b font-medium text-gray-500 text-sm">
-          <div>ROLE</div>
-          <div>ORGANISATION</div>
-          <div>STATUS</div>
-          <div>EXPORT</div>
+      {/* Results */}
+      {filteredPitches.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-lg">No pitches found</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Try adjusting your search criteria or create a new pitch
+          </p>
         </div>
-
-        {filteredPitches.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            No pitches found. Create your first pitch to get started!
-          </div>
-        ) : (
-          <div className="divide-y">
-            {filteredPitches.map(pitch => (
-              <div
-                key={pitch.id}
-                className="grid grid-cols-4 gap-4 p-2.5 items-center hover:bg-gray-50 transition-colors"
-              >
-                {/* Role Name */}
-                <div>
-                  <Link
-                    href={
-                      pitch.status === "draft"
-                        ? `/dashboard/new/${pitch.id}`
-                        : `/dashboard/${pitch.id}`
-                    }
-                    className="font-medium hover:underline"
-                    style={{color: '#444ec1'}}
-                  >
-                    {pitch.roleName}
-                  </Link>
-                </div>
-
-                {/* Organisation */}
-                <div className="text-sm text-gray-600">
-                  {pitch.organisationName || "Not specified"}
-                </div>
-
-                {/* Status Badge */}
-                <div>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      pitch.status === "draft"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
-                  >
-                    {pitch.status === "draft" ? "Draft" : "Completed"}
-                  </span>
-                </div>
-
-                {/* Export */}
-                <div className="flex gap-2">
-                  {pitch.status !== "draft" ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 h-auto hover:bg-gray-100 rounded-full"
-                        >
-                          <Download className="h-4 w-4 text-gray-500" />
+      ) : (
+        <>
+          {/* Mobile Card View - Hidden on md and up */}
+          <div className="md:hidden space-y-4">
+            {filteredPitches.map((pitch) => (
+              <Card key={pitch.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-lg leading-tight">
+                        {pitch.roleName}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <User className="h-3 w-3" />
+                        <span>{pitch.roleLevel}</span>
+                      </div>
+                    </div>
+                    <Badge className={`text-xs ${getStatusColor(pitch.status)}`}>
+                      {pitch.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {pitch.organisationName && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Building className="h-3 w-3" />
+                        <span>{pitch.organisationName}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatDate(pitch.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <Link href={`/dashboard/${pitch.id}`}>
+                        <Button variant="outline" size="sm">
+                          View
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onSelect={() => handleExport(pitch, "pdf")}
-                        >
-                          Export PDF
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => handleExport(pitch, "doc")}
-                        >
-                          Export Word
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : null}
-                </div>
-              </div>
+                      </Link>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleExport(pitch, "pdf")}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export as PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(pitch, "doc")}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export as DOC
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        )}
 
-        {filteredPitches.length > 0 && (
-          <div className="p-2 border-t text-xs text-gray-500 bg-gray-50">
-            Showing 1 to {filteredPitches.length} of {filteredPitches.length}{" "}
-            results
+          {/* Desktop Table View - Hidden on mobile */}
+          <div className="hidden md:block border rounded-md bg-white overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left p-4 font-medium text-gray-700">Role</th>
+                  <th className="text-left p-4 font-medium text-gray-700">Level</th>
+                  <th className="text-left p-4 font-medium text-gray-700">Organisation</th>
+                  <th className="text-left p-4 font-medium text-gray-700">Status</th>
+                  <th className="text-left p-4 font-medium text-gray-700">Created</th>
+                  <th className="text-left p-4 font-medium text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPitches.map((pitch) => (
+                  <tr key={pitch.id} className="border-b hover:bg-gray-50">
+                    <td className="p-4">
+                      <Link 
+                        href={`/dashboard/${pitch.id}`}
+                        className="font-medium text-blue-600 hover:text-blue-800"
+                      >
+                        {pitch.roleName}
+                      </Link>
+                    </td>
+                    <td className="p-4 text-gray-600">{pitch.roleLevel}</td>
+                    <td className="p-4 text-gray-600">{pitch.organisationName || "—"}</td>
+                    <td className="p-4">
+                      <Badge className={`text-xs ${getStatusColor(pitch.status)}`}>
+                        {pitch.status}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-gray-600 text-sm">
+                      {formatDate(pitch.createdAt)}
+                    </td>
+                    <td className="p-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleExport(pitch, "pdf")}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export as PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(pitch, "doc")}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export as DOC
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }

@@ -28,6 +28,15 @@ import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem
+} from "@/components/ui/sidebar"
 
 /**
  * @interface DashboardSidebarProps
@@ -50,48 +59,64 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
   const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
 
   return (
-    <div className="w-64 flex-shrink-0 border-r bg-white shadow-sm">
-      <div className="p-5 border-b">
-        <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
-        
-        {/* Credits Display */}
-        <div className="mt-4">
+    <Sidebar variant="inset">
+      <SidebarHeader className="border-b border-gray-200 p-4">
+        <div className="space-y-3">
+          <h1 className="text-xl font-bold text-gray-800">Pitch Manager</h1>
+          
+          {/* Credits Display */}
           <Card className="bg-gray-50">
-            <CardContent className="p-2">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Credits</span>
-                <Badge variant="secondary" className="ml-auto text-xs font-medium">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Credits</span>
+                <Badge variant="secondary" className="ml-auto text-sm font-medium">
                   {credits}
                 </Badge>
               </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </SidebarHeader>
 
-      <nav className="px-5 py-3 space-y-1">
-        {/* Create New Pitch Button */}
-        <Link href="/dashboard/new?new=true">
-          <Button 
-            className="w-full shadow-sm justify-start h-8 px-2 text-xs text-white transition-all hover:brightness-110" 
-            style={{backgroundColor: '#444ec1'}}
-          >
-            <Plus className="h-3 w-3 mr-2" />
-            Create New Pitch
-          </Button>
-        </Link>
+      <SidebarContent className="p-4">
+        <SidebarMenu>
+          {/* Create New Pitch Button */}
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="w-full">
+              <Link href="/dashboard/new?new=true">
+                <Button 
+                  className="w-full shadow-sm justify-start h-10 px-3 text-sm text-white transition-all hover:brightness-110" 
+                  style={{backgroundColor: '#444ec1'}}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create New Pitch
+                </Button>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
-        <div className="pt-2 mt-2 border-t">
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
-          >
-            <Settings className="h-4 w-4" />
-            Settings
-          </Link>
+        <div className="pt-4 mt-4 border-t">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  href="/dashboard/settings"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </div>
-      </nav>
-    </div>
+      </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        {/* Footer content can go here if needed */}
+      </SidebarFooter>
+    </Sidebar>
   )
 }
