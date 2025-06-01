@@ -303,7 +303,12 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                 className="space-y-3"
               >
                 {steps.map(step => (
-                  <StepItem key={step.id} step={step} onSave={handleSaveStep} />
+                  <StepItem
+                    key={step.id}
+                    step={step}
+                    onSave={handleSaveStep}
+                    exampleIndex={exampleIndex}
+                  />
                 ))}
               </Accordion>
 
@@ -334,12 +339,23 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 interface StepItemProps {
   step: ActionStepType
   onSave: (stepId: string, what: string, outcome: string) => void
+  exampleIndex: number
 }
 
 /**
  * Renders a single collapsible step item.
  */
-function StepItem({ step, onSave }: StepItemProps) {
+function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
+  const {
+    formState: { errors }
+  } = useFormContext<PitchWizardFormData>()
+  const stepIndex = step.position - 1
+  const whatError = (
+    errors.starExamples?.[exampleIndex]?.action?.steps as any
+  )?.[stepIndex]?.["what-did-you-specifically-do-in-this-step"]
+  const outcomeError = (
+    errors.starExamples?.[exampleIndex]?.action?.steps as any
+  )?.[stepIndex]?.["what-was-the-outcome-of-this-step-optional"]
   const [what, setWhat] = useState(
     step["what-did-you-specifically-do-in-this-step"]
   )
@@ -439,6 +455,11 @@ function StepItem({ step, onSave }: StepItemProps) {
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {whatWords}
               </div>
+              {whatError && (
+                <p className="mt-1 text-sm text-red-500">
+                  {whatError.message as string}
+                </p>
+              )}
             </div>
           </div>
 
@@ -475,6 +496,11 @@ function StepItem({ step, onSave }: StepItemProps) {
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
                 {outcomeWords}
               </div>
+              {outcomeError && (
+                <p className="mt-1 text-sm text-red-500">
+                  {outcomeError.message as string}
+                </p>
+              )}
             </div>
           </div>
 

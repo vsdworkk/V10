@@ -26,7 +26,9 @@ export default function GuidanceStep({
   pitchId: pitchIdFromProp
 }: GuidanceStepProps) {
   // Destructure and rename prop
-  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+  const { watch, setValue, getValues, control, formState } =
+    useFormContext<PitchWizardFormData>()
+  const { errors } = formState
   const params = useParams() // Keep for other potential uses or fallback
 
   // Form fields that matter for requesting guidance
@@ -283,6 +285,11 @@ export default function GuidanceStep({
               </button>
             ))}
           </div>
+          {errors.starExamplesCount && (
+            <p className="text-sm text-red-500">
+              {errors.starExamplesCount.message as string}
+            </p>
+          )}
         </div>
 
         {/* STAR example descriptions */}
@@ -307,6 +314,15 @@ export default function GuidanceStep({
                       }
                       className="bg-white/80 backdrop-blur-sm"
                     />
+                    {Array.isArray(errors.starExampleDescriptions) &&
+                      errors.starExampleDescriptions[index] && (
+                        <p className="text-sm text-red-500">
+                          {
+                            errors.starExampleDescriptions[index]
+                              ?.message as string
+                          }
+                        </p>
+                      )}
                   </div>
                 )
               )}

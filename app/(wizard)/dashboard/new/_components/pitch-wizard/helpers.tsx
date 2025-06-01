@@ -100,18 +100,7 @@ export function mapExistingDataToDefaults(
     : "1"
 
   // Define valid star counts and derive the enum type
-  const validStarCounts = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10"
-  ] as const
+  const validStarCounts = ["1", "2", "3", "4"] as const
   type StarCountEnum = (typeof validStarCounts)[number]
 
   const safeStarCount = validStarCounts.includes(sc as any) ? sc : "1"
@@ -154,7 +143,7 @@ export function mapExistingDataToDefaults(
                 "what-did-you-specifically-do-in-this-step":
                   step["what-did-you-specifically-do-in-this-step"] ?? "",
                 "what-was-the-outcome-of-this-step-optional":
-                  step["what-was-the-outcome-of-this-step-optional"]
+                  step["what-was-the-outcome-of-this-step-optional"] ?? ""
               })) ?? [
                 {
                   stepNumber: 1,
