@@ -12,7 +12,7 @@ import {
   firstStepOfSection,
   mapExistingDataToDefaults
 } from "./helpers"
-import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
+import { savePitchData, submitFinalPitch } from "./api"
 import { validateStep } from "./validation"
 
 interface UseWizardOptions {
@@ -177,20 +177,26 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
       setIsPitchGenerationConfirmed(true)
 
       try {
-        await triggerFinalPitch(
-          pendingFormDataRef.current,
+        methods.setValue("agentExecutionId", pitchId || "", {
+          shouldDirty: true
+        })
+        methods.setValue("pitchContent", "", { shouldDirty: true })
+
+        await savePitchData(
+          methods.getValues(),
           pitchId,
-          methods,
           setPitchId,
           toast,
-          setIsPitchLoading,
-          setFinalPitchError,
           currentStep
         )
-      } catch (err) {
-        // Error handling is done in the triggerFinalPitch function
-        // Even if there's an error, we keep isPitchGenerationConfirmed true
-        // to prevent going back and changing inputs
+      } catch (err: any) {
+        setFinalPitchError(err.message || "Failed to start pitch generation")
+        toast({
+          title: "Error",
+          description: err.message || "Failed to start pitch generation",
+          variant: "destructive"
+        })
+        setIsPitchLoading(false)
       }
 
       // Clear the pending form data
