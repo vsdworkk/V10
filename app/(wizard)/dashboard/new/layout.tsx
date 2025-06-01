@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import SectionProgressSidebar from "./_components/section-progress-bar"
+import MobileProgressHeader from "./_components/mobile-progress-header"
 import { Section } from "@/types"
 import { useRouter } from "next/navigation"
 
@@ -74,7 +75,7 @@ export default function PitchWizardLayout({
  }, [maxCompletedSection])
 
  return (
-   <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50 overflow-hidden">
+   <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50">
      {/* Subtle grid-pattern overlay */}
      <div
        className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"
@@ -83,43 +84,61 @@ export default function PitchWizardLayout({
        }}
      />
 
-     {/* Header - Fixed height */}
-     <header id="header" className="bg-white shadow-sm flex-shrink-0 z-10">
-       <div className="max-w-full w-full px-12 mx-auto flex items-center justify-between py-6">
-         {/* Logo positioned with padding from the left edge */}
-         <div className="flex items-center pl-3">
-           <span className="text-2xl font-bold text-black">
+     {/* Mobile Header - Only visible on mobile */}
+     <div className="lg:hidden">
+       <MobileProgressHeader
+         current={currentSection}
+         maxCompleted={maxCompletedSection}
+         onNavigate={handleSectionNavigate}
+       />
+     </div>
+
+     {/* Desktop Header - Only visible on desktop */}
+     <header className="hidden lg:block bg-white shadow-sm flex-shrink-0 z-10">
+       <div className="max-w-full w-full px-4 lg:px-12 mx-auto flex items-center justify-between py-4 lg:py-6">
+         <div className="flex items-center lg:pl-3">
+           <span className="text-xl lg:text-2xl font-bold text-black">
              APSPitchPro
            </span>
          </div>
        </div>
      </header>
      
-     {/* Main container - Takes remaining height */}
-     <div id="main-container" className="flex-1 flex items-center justify-center p-6 min-h-0">
-       <div
-         id="application-card"
-         className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl h-[calc(100vh-140px)] flex"
-       >
-         {/* Sidebar with vertical progress - Fixed width */}
-         <div
-           id="sidebar"
-           className="w-72 border-r border-gray-100 bg-white flex-shrink-0 shadow-lg"
-         >
-           <div className="h-full overflow-y-auto p-8">
-             <SectionProgressSidebar 
-               current={currentSection}
-               maxCompleted={maxCompletedSection}
-               onNavigate={handleSectionNavigate}
-             />
+     {/* Main container - Mobile and Desktop layouts */}
+     <div className="flex-1 flex">
+       {/* Mobile Layout - Stacked */}
+       <div className="lg:hidden flex-1 flex flex-col">
+         <div className="flex-1 p-4 pb-20"> {/* Extra bottom padding for mobile nav */}
+           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 h-full overflow-hidden">
+             <div ref={scrollContainerRef} className="h-full overflow-y-auto">
+               <div className="p-4 sm:p-6">
+                 {children}
+               </div>
+             </div>
            </div>
          </div>
+       </div>
 
-         {/* Main content area - Takes remaining space with internal scrolling */}
-         <div id="main-content" className="flex-1 flex flex-col min-w-0">
-           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-             <div className="p-8">
-               {children}
+       {/* Desktop Layout - Sidebar + Content */}
+       <div className="hidden lg:flex flex-1 items-center justify-center p-6">
+         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden w-[90%] max-w-6xl h-[calc(100vh-140px)] flex">
+           {/* Desktop Sidebar */}
+           <div className="w-72 border-r border-gray-100 bg-white flex-shrink-0 shadow-lg">
+             <div className="h-full overflow-y-auto p-8">
+               <SectionProgressSidebar 
+                 current={currentSection}
+                 maxCompleted={maxCompletedSection}
+                 onNavigate={handleSectionNavigate}
+               />
+             </div>
+           </div>
+
+           {/* Desktop Main content */}
+           <div className="flex-1 flex flex-col min-w-0">
+             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+               <div className="p-8">
+                 {children}
+               </div>
              </div>
            </div>
          </div>

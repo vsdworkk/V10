@@ -6,6 +6,7 @@
  * Key Features:
  * - Auth check using Clerk's `auth()`
  * - Renders `PitchWizard` client component
+ * - Mobile-first responsive design
  *
  * @dependencies
  * - `auth` from "@clerk/nextjs/server" for user authentication
@@ -15,6 +16,7 @@
  * @notes
  * - The wizard is a multi-step process collecting role/experience/STAR data
  * - Actual DB insertion is done by calling "/api/pitches" in the final step
+ * - Layout is mobile-first with responsive breakpoints
  */
 
 "use server"
@@ -35,7 +37,7 @@ export default async function CreateNewPitchPage() {
 
   // Render the client-side wizard, passing the userId
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <div className="w-full h-full">
       <CheckStoredPitch />
       <PitchWizard userId={userId} />
     </div>
