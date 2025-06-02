@@ -262,7 +262,9 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 variant="outline"
                 onClick={handleSaveAndClose}
                 className={`group flex items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                  currentStep > 1 && currentStep < totalSteps ? "flex-1" : "flex-1"
+                  currentStep > 1 && currentStep < totalSteps
+                    ? "flex-1"
+                    : "flex-1"
                 }`}
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
