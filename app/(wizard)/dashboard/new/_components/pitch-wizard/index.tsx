@@ -208,7 +208,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
-                Save &amp; Close
+                Close
               </Button>
             )}
 
@@ -219,7 +219,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 className="group flex items-center rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
                 style={{ backgroundColor: "#444ec1" }}
               >
-                Next Step
+                Next
                 <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
               </Button>
             ) : (
@@ -239,7 +239,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
         {/* Mobile Navigation - Fixed at bottom, only visible on mobile */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-4 lg:hidden">
           <div className="flex items-center justify-between gap-3">
-            {/* Back button */}
+            {/* Back button - show when not on first step and not on final step */}
             {currentStep > 1 && currentStep < totalSteps ? (
               <Button
                 variant="outline"
@@ -254,14 +254,19 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
                 Back
               </Button>
-            ) : (
+            ) : null}
+
+            {/* Save & Close - Always show except on final step */}
+            {currentStep < totalSteps && (
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
-                className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
+                className={`group flex items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
+                  currentStep > 1 && currentStep < totalSteps ? "flex-1" : "flex-1"
+                }`}
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
-                Save &amp; Close
+                Close
               </Button>
             )}
 
@@ -272,7 +277,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
                 className="group flex flex-1 items-center justify-center rounded-xl py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
                 style={{ backgroundColor: "#444ec1" }}
               >
-                Next Step
+                Next
                 <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
               </Button>
             ) : (
