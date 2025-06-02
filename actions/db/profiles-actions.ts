@@ -13,12 +13,14 @@ import {
 import { ActionState } from "@/types"
 import { eq, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { setCachedProfile } from "@/lib/profile-cache"
 
 export async function createProfileAction(
   data: InsertProfile
 ): Promise<ActionState<SelectProfile>> {
   try {
     const [newProfile] = await db.insert(profilesTable).values(data).returning()
+    await setCachedProfile(newProfile)
     return {
       isSuccess: true,
       message: "Profile created successfully",
@@ -67,6 +69,7 @@ export async function updateProfileAction(
       return { isSuccess: false, message: "Profile not found to update" }
     }
 
+    await setCachedProfile(updatedProfile)
     return {
       isSuccess: true,
       message: "Profile updated successfully",
@@ -96,6 +99,7 @@ export async function updateProfileByStripeCustomerIdAction(
       }
     }
 
+    await setCachedProfile(updatedProfile)
     return {
       isSuccess: true,
       message: "Profile updated by Stripe customer ID successfully",
@@ -144,6 +148,7 @@ export async function addCreditsAction(
     // Refresh dashboard cache so the UI shows updated credits immediately
     revalidatePath("/dashboard")
 
+    await setCachedProfile(updatedProfile)
     return {
       isSuccess: true,
       message: "Credits added successfully",
@@ -179,6 +184,7 @@ export async function spendCreditsAction(
       .where(eq(profilesTable.userId, userId))
       .returning()
 
+    await setCachedProfile(updatedProfile)
     return {
       isSuccess: true,
       message: "Credits used successfully",

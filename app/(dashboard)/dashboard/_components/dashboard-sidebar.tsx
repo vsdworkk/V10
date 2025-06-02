@@ -25,6 +25,7 @@
 import Link from "next/link"
 import { Settings, CreditCard } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
+import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -57,11 +58,15 @@ interface DashboardSidebarProps {
 export default async function DashboardSidebar({
   userId
 }: DashboardSidebarProps) {
-  // Retrieve user profile for credits display
-  const profileResult = await getProfileByUserIdAction(userId)
-  const credits = profileResult.isSuccess
-    ? (profileResult.data?.credits ?? 0)
-    : 0
+  let profile = await getCachedProfile(userId)
+  if (!profile) {
+    const profileResult = await getProfileByUserIdAction(userId)
+    if (profileResult.isSuccess && profileResult.data) {
+      profile = profileResult.data
+      await setCachedProfile(profile)
+    }
+  }
+  const credits = profile?.credits ?? 0
 
   return (
     <Sidebar variant="inset">

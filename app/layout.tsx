@@ -10,6 +10,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "@/components/utilities/providers"
 import { TailwindIndicator } from "@/components/utilities/tailwind-indicator"
 import { cn } from "@/lib/utils"
+import { getCachedProfile, setCachedProfile } from "@/lib/profile-cache"
+import type { SelectProfile } from "@/db/schema"
 import { ClerkProvider } from "@clerk/nextjs"
 import { auth } from "@clerk/nextjs/server"
 import type { Metadata } from "next"
@@ -26,11 +28,23 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const { userId } = await auth()
+  let initialProfile: SelectProfile | null = null
 
   if (userId) {
-    const profileRes = await getProfileByUserIdAction(userId)
-    if (!profileRes.isSuccess) {
-      await createProfileAction({ userId })
+    initialProfile = await getCachedProfile(userId)
+    if (!initialProfile) {
+      const profileRes = await getProfileByUserIdAction(userId)
+      if (profileRes.isSuccess && profileRes.data) {
+        initialProfile = profileRes.data
+      } else {
+        const created = await createProfileAction({ userId })
+        if (created.isSuccess) {
+          initialProfile = created.data
+        }
+      }
+      if (initialProfile) {
+        await setCachedProfile(initialProfile)
+      }
     }
   }
 
@@ -51,6 +65,7 @@ export default async function RootLayout({
             defaultTheme="light"
             enableSystem={false}
             disableTransitionOnChange
+            initialProfile={initialProfile}
           >
             {children}
 

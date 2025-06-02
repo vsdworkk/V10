@@ -9,11 +9,24 @@ import {
   ThemeProvider as NextThemesProvider,
   ThemeProviderProps
 } from "next-themes"
+import { ProfileProvider } from "@/components/utilities/profile-provider"
+import type { SelectProfile } from "@/db/schema"
 
-export const Providers = ({ children, ...props }: ThemeProviderProps) => {
+interface ProvidersProps extends ThemeProviderProps {
+  initialProfile?: SelectProfile | null
+}
+export const Providers = ({
+  children,
+  initialProfile,
+  ...props
+}: ProvidersProps) => {
   return (
     <NextThemesProvider {...props}>
-      <TooltipProvider>{children}</TooltipProvider>
+      <TooltipProvider>
+        <ProfileProvider initialProfile={initialProfile || null}>
+          {children}
+        </ProfileProvider>
+      </TooltipProvider>
     </NextThemesProvider>
   )
 }
