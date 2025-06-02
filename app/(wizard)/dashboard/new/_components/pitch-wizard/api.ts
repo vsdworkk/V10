@@ -19,6 +19,7 @@ export async function savePitchData(
   currentStep: number = 1
 ) {
   const payload = createPitchPayload(data, pitchId, currentStep)
+  console.log(`[savePitchData] Starting save for step ${currentStep}`)
   console.log(`[savePitchData] Saving pitch data for step ${currentStep}`, {
     pitchId,
     payloadKeys: Object.keys(payload),
@@ -53,6 +54,8 @@ export async function savePitchData(
       id: json.data?.id,
       message: json.message
     })
+
+    console.log(`[savePitchData] Step ${currentStep} saved successfully`)
 
     if (json.data?.id) {
       console.log(`[savePitchData] Setting pitch ID: ${json.data.id}`)

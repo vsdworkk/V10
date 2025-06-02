@@ -129,6 +129,13 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
         }
 
         const targetStep = firstStepOfSection(targetSection, starCount)
+        savePitchData(
+          methods.getValues(),
+          pitchId,
+          setPitchId,
+          toast,
+          targetStep
+        )
         setCurrentStep(targetStep)
       }
     }
@@ -136,11 +143,34 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     window.addEventListener("sectionNavigate", handleSectionNavigate)
     return () =>
       window.removeEventListener("sectionNavigate", handleSectionNavigate)
-  }, [starCount, isPitchGenerationConfirmed, toast])
+  }, [
+    starCount,
+    isPitchGenerationConfirmed,
+    toast,
+    methods,
+    pitchId,
+    setPitchId
+  ])
+
+  // Persist step changes automatically (debounced)
+  useEffect(() => {
+    if (!pitchId || currentStep <= 1) return
+    const timeout = setTimeout(() => {
+      savePitchData(
+        methods.getValues(),
+        pitchId,
+        setPitchId,
+        toast,
+        currentStep
+      )
+    }, 1000)
+
+    return () => clearTimeout(timeout)
+  }, [currentStep, pitchId, methods, setPitchId, toast])
 
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
-    (target: Section) => {
+    async (target: Section) => {
       // If pitch generation is confirmed, only allow navigation to FINAL section
       if (isPitchGenerationConfirmed && target !== "FINAL") {
         toast({
@@ -153,10 +183,25 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
       const targetStep = firstStepOfSection(target, starCount)
       if (targetStep <= currentStep) {
+        await savePitchData(
+          methods.getValues(),
+          pitchId,
+          setPitchId,
+          toast,
+          targetStep
+        )
         setCurrentStep(targetStep)
       }
     },
-    [currentStep, starCount, isPitchGenerationConfirmed, toast]
+    [
+      currentStep,
+      starCount,
+      isPitchGenerationConfirmed,
+      toast,
+      methods,
+      pitchId,
+      setPitchId
+    ]
   )
 
   // Handler for proceeding with pitch generation
@@ -206,9 +251,11 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
   // Handler for "Next" button
   const handleNext = useCallback(async () => {
+    const nextStep = Math.min(currentStep + 1, totalSteps)
+
     // Intro step (step 1) has no validation
     if (currentStep === 1) {
-      setCurrentStep(2)
+      setCurrentStep(nextStep)
       return
     }
 
@@ -216,9 +263,9 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     const isValid = await validateStep(currentStep, starCount, methods)
     if (!isValid) return
 
-    // Save current step's data
+    // Save current step's data but persist the next step number
     const formData = methods.getValues()
-    await savePitchData(formData, pitchId, setPitchId, toast, currentStep)
+    await savePitchData(formData, pitchId, setPitchId, toast, nextStep)
 
     // Check if we're moving from last STAR step to review
     const lastStarStep = 4 + starCount * 4
@@ -232,7 +279,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
     }
 
     // Proceed to next step
-    setCurrentStep(s => Math.min(s + 1, totalSteps))
+    setCurrentStep(nextStep)
   }, [currentStep, starCount, totalSteps, methods, pitchId, toast])
 
   // Handler for "Back" button

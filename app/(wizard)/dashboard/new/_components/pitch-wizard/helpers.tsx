@@ -191,6 +191,8 @@ export function createPitchPayload(
     starExamplesCount: parseInt(data.starExamplesCount, 10),
     starExampleDescriptions: data.starExampleDescriptions || [],
     status,
+    // `currentStep` maps to the `current_step` column in the DB
+    // Drizzle uses camelCase properties for snake_case columns
     currentStep,
     agentExecutionId: data.agentExecutionId || null
   }
