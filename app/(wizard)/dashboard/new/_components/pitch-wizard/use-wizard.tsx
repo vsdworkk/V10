@@ -185,7 +185,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
           toast,
           setIsPitchLoading,
           setFinalPitchError,
-          currentStep
+          currentStep + 1
         )
       } catch (err) {
         // Error handling is done in the triggerFinalPitch function
@@ -218,7 +218,7 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
     // Save current step's data
     const formData = methods.getValues()
-    await savePitchData(formData, pitchId, setPitchId, toast, currentStep)
+    await savePitchData(formData, pitchId, setPitchId, toast, currentStep + 1)
 
     // Check if we're moving from last STAR step to review
     const lastStarStep = 4 + starCount * 4

@@ -78,6 +78,8 @@ export async function savePitchData(
 
 /**
  * Final pitch generation.
+ *
+ * @param stepToSave - Wizard step to persist when generation begins
  */
 export async function triggerFinalPitch(
   data: PitchWizardFormData,
@@ -87,7 +89,7 @@ export async function triggerFinalPitch(
   toast: ToastFunction,
   setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
-  currentStep: number
+  stepToSave: number
 ) {
   try {
     const res = await fetch("/api/pitches/generate", {
@@ -130,7 +132,7 @@ export async function triggerFinalPitch(
       pitchId,
       setPitchId,
       toast,
-      currentStep
+      stepToSave
     )
 
     // poll for final content
@@ -142,7 +144,7 @@ export async function triggerFinalPitch(
       toast,
       setIsPitchLoading,
       setFinalPitchError,
-      currentStep
+      stepToSave
     )
 
     return result.requestId
@@ -170,7 +172,7 @@ export async function pollForPitchContent(
   toast: ToastFunction,
   setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
-  currentStep: number = 999 // Use a large number as default to represent the final step
+  stepToSave: number = 999 // Use a large number as default to represent the final step
 ) {
   const pollIntervalMs = 3000
   const maxAttempts = 40
@@ -195,7 +197,7 @@ export async function pollForPitchContent(
           pitchId,
           setPitchId,
           toast,
-          currentStep
+          stepToSave
         )
         return pollJson.pitchContent
       }
