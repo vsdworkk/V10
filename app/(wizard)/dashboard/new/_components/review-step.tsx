@@ -8,7 +8,8 @@
  * Enhancements:
  *  • Accepts `isPitchLoading` from parent. If true or if pitchContent is empty,
  *    show a loading skeleton rather than the TipTap editor.
- *  • Uses the usePitchGeneration hook to handle the pitch generation and status polling
+ *  • Uses the usePitchGeneration hook to poll for pitch status when an
+ *    execution ID is present
  */
 
 import React, { useEffect, useRef } from "react"
@@ -61,7 +62,7 @@ export default function ReviewStep({
   onPitchLoaded,
   errorMessage
 }: ReviewStepProps) {
-  const { watch, setValue, getValues } = useFormContext<PitchWizardFormData>()
+  const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
 
   /* ----------------------------------------------------------- */
@@ -77,7 +78,7 @@ export default function ReviewStep({
     isLoading: isPitchGenerating,
     pitchContent: generatedPitchContent,
     error: pitchGenerationError,
-    generatePitch
+    startPolling
   } = usePitchGeneration()
 
   /* ----------------------------------------------------------- */
@@ -112,7 +113,7 @@ export default function ReviewStep({
   }, [editor, pitchContent])
 
   /* ----------------------------------------------------------- */
-  /* 5) Effect to trigger pitch generation when component mounts  */
+  /* 5) Effect to start polling for pitch status when component mounts */
   /* ----------------------------------------------------------- */
   const initRef = useRef<boolean>(false)
   useEffect(() => {
@@ -125,25 +126,10 @@ export default function ReviewStep({
     ) {
       initRef.current = true
 
-      // Get the required data from the form
-      const formData = getValues()
-
-      // Trigger pitch generation
-      generatePitch({
-        userId: formData.userId || "", // Ensure userId is never undefined
-        pitchId: execId, // Pass the pitch ID - it will be used as the execution ID
-        roleName: formData.roleName,
-        organisationName: formData.organisationName || "",
-        roleLevel: formData.roleLevel,
-        pitchWordLimit: formData.pitchWordLimit,
-        roleDescription: formData.roleDescription || "",
-        relevantExperience: formData.relevantExperience || "",
-        albertGuidance: formData.albertGuidance || "",
-        starExamples: formData.starExamples || [],
-        starExamplesCount: parseInt(formData.starExamplesCount || "0", 10)
-      })
+      // Begin polling for the generated pitch
+      startPolling(execId)
     }
-  }, [execId, pitchContent, isPitchGenerating, generatePitch, getValues])
+  }, [execId, pitchContent, isPitchGenerating, startPolling])
 
   /* ----------------------------------------------------------- */
   /* 6) Effect to handle generated pitch content                 */

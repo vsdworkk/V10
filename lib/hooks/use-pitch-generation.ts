@@ -1,3 +1,6 @@
+// React hook for generating a pitch via the API and polling for the result.
+// Also supports polling for an existing pitch by ID without re-triggering
+
 import { useState, useEffect } from "react"
 import {
   requestPitchGeneration,
@@ -82,6 +85,24 @@ export function usePitchGeneration() {
           : "Failed to request pitch generation"
       )
       setIsLoading(false)
+    }
+  }
+
+  // Start polling for an existing pitch without triggering a new generation
+  const startPolling = async (existingRequestId: string) => {
+    setPitchContent(null)
+    setError(null)
+    setIsLoading(true)
+    setRequestId(existingRequestId)
+
+    try {
+      const statusResult = await checkPitchGenerationStatus(existingRequestId)
+      if (statusResult.isSuccess && statusResult.data) {
+        setPitchContent(statusResult.data)
+        setIsLoading(false)
+      }
+    } catch (err) {
+      console.error("[usePitchGeneration] Error checking immediate pitch:", err)
     }
   }
 
@@ -180,6 +201,7 @@ export function usePitchGeneration() {
     error,
     requestId, // This is actually the pitch ID
     generatePitch,
+    startPolling,
     reset: () => {
       setPitchContent(null)
       setError(null)
