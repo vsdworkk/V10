@@ -30,7 +30,8 @@ export default function CheckStoredPitch() {
     const storedPitchId = localStorage.getItem("currentPitchId")
 
     if (storedPitchId) {
-      // Redirect to the pitch edit page
+      // Redirect to the pitch edit page using new URL structure
+      // This will trigger the redirect logic in [pitchId]/page.tsx
       router.push(`/dashboard/new/${storedPitchId}`)
     }
   }, [router, isNewPitch])

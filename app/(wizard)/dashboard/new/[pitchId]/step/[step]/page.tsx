@@ -7,10 +7,6 @@ import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface PitchWizardStepPageProps {
-  params: Promise<{ pitchId: string; step: string }>
-}
-
 function PitchWizardSkeleton() {
   return (
     <div className="space-y-6">
@@ -27,54 +23,55 @@ function PitchWizardSkeleton() {
   )
 }
 
-async function PitchWizardFetcher({
-  pitchId,
-  stepNum,
-  userId
-}: {
+async function PitchWizardFetcher({ 
+  pitchId, 
+  stepNumber 
+}: { 
   pitchId: string
-  stepNum: number
-  userId: string
+  stepNumber: number 
 }) {
+  const { userId } = await auth()
+
+  if (!userId) {
+    redirect("/login")
+  }
+
+  // Fetch the pitch by ID
   const pitchResult = await getPitchByIdAction(pitchId, userId)
 
-  if (!pitchResult.isSuccess || !pitchResult.data) {
+  // If the pitch is not found or doesn't belong to the user, redirect to dashboard
+  if (!pitchResult.isSuccess) {
     redirect("/dashboard")
   }
 
+  // Pass the pitch data to the PitchWizard component
   return (
-    <PitchWizard
-      userId={userId}
+    <PitchWizard 
+      userId={userId} 
       pitchData={pitchResult.data}
-      initialStep={stepNum}
+      initialStep={stepNumber}
     />
   )
 }
 
-export default async function PitchWizardStepPage({
+export default async function ResumePitchWithStepPage({
   params
-}: PitchWizardStepPageProps) {
+}: {
+  params: Promise<{ pitchId: string; step: string }>
+}) {
   const { pitchId, step } = await params
-  const stepNum = parseInt(step, 10)
-
-  if (!Number.isFinite(stepNum) || stepNum < 1 || stepNum > 100) {
-    redirect(`/dashboard/new/${pitchId}/1`)
-  }
-
-  const { userId } = await auth()
-  if (!userId) {
-    redirect("/login")
+  const stepNumber = parseInt(step, 10)
+  
+  // Validate step number
+  if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 50) {
+    redirect(`/dashboard/new/${pitchId}/step/1`)
   }
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <Suspense fallback={<PitchWizardSkeleton />}>
-        <PitchWizardFetcher
-          pitchId={pitchId}
-          stepNum={stepNum}
-          userId={userId}
-        />
+        <PitchWizardFetcher pitchId={pitchId} stepNumber={stepNumber} />
       </Suspense>
     </div>
   )
-}
+} 

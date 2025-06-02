@@ -182,9 +182,9 @@ export function useWizard({
   useEffect(() => {
     const step = currentStep
     if (pitchId) {
-      router.replace(`/dashboard/new/${pitchId}/${step}`)
+      router.replace(`/dashboard/new/${pitchId}/step/${step}`)
     } else {
-      router.replace(`/dashboard/new/${step}`)
+      router.replace(`/dashboard/new/step/${step}`)
     }
   }, [currentStep, pitchId, router])
 

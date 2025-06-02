@@ -1,21 +1,21 @@
 /**
  * @description
  * Server page for "/dashboard/new/[pitchId]". It ensures the user is authenticated,
- * fetches the pitch by ID, and renders the multi-step wizard to resume a draft pitch.
+ * fetches the pitch by ID, and redirects to the step-based URL structure.
  *
  * Key Features:
  * - Auth check using Clerk's `auth()`
  * - Fetches pitch data using getPitchByIdAction
- * - Renders `PitchWizard` client component with the pitch data
+ * - Redirects to step-based URL structure with current step
  *
  * @dependencies
  * - `auth` from "@clerk/nextjs/server" for user authentication
  * - `redirect` from "next/navigation" to handle unauthorized access
  * - `getPitchByIdAction` from "@/actions/db/pitches-actions"
- * - `PitchWizard` from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
  *
  * @notes
- * - This page allows users to resume a draft pitch from where they left off
+ * - This page redirects users to the step-based URL structure
+ * - Preserves the user's progress by redirecting to their current step
  * - If the pitch is not found or doesn't belong to the user, redirects to /dashboard
  */
 
@@ -42,6 +42,7 @@ export default async function ResumePitchPage({
     redirect("/dashboard")
   }
 
+  // Redirect to the new step-based URL structure
   const step = result.data.currentStep || 1
-  redirect(`/dashboard/new/${pitchId}/${step}`)
+  redirect(`/dashboard/new/${pitchId}/step/${step}`)
 }
