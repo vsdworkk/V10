@@ -21,25 +21,8 @@
 
 "use server"
 
-import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
-import CheckStoredPitch from "@/app/(wizard)/dashboard/new/_components/check-stored-pitch"
 
 export default async function CreateNewPitchPage() {
-  // Check if the user is authenticated
-  const { userId } = await auth()
-
-  if (!userId) {
-    // If not authenticated, redirect to login
-    redirect("/login")
-  }
-
-  // Render the client-side wizard, passing the userId
-  return (
-    <div className="size-full">
-      <CheckStoredPitch />
-      <PitchWizard userId={userId} />
-    </div>
-  )
+  redirect("/dashboard/new/1")
 }

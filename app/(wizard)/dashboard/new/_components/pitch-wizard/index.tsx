@@ -26,9 +26,14 @@ import { useWizard } from "./use-wizard"
 interface PitchWizardProps {
   userId: string
   pitchData?: SelectPitch
+  initialStep?: number
 }
 
-export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
+export default function PitchWizard({
+  userId,
+  pitchData,
+  initialStep
+}: PitchWizardProps) {
   const {
     methods,
     currentStep,
@@ -49,7 +54,7 @@ export default function PitchWizard({ userId, pitchData }: PitchWizardProps) {
     handleSaveAndClose,
     handleSubmitFinal,
     handlePitchLoaded
-  } = useWizard({ userId, pitchData })
+  } = useWizard({ userId, pitchData, initialStep })
 
   // Render the appropriate step component based on current step
   function renderStep() {

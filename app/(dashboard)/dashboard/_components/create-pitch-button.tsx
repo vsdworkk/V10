@@ -30,7 +30,7 @@ export default function CreatePitchButton({ credits }: CreatePitchButtonProps) {
       return
     }
 
-    router.push("/dashboard/new?new=true")
+    router.push("/dashboard/new/1?new=true")
   }
 
   return (

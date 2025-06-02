@@ -18,14 +18,24 @@ import { validateStep } from "./validation"
 interface UseWizardOptions {
   userId: string
   pitchData?: SelectPitch
+  initialStep?: number
 }
 
-export function useWizard({ userId, pitchData }: UseWizardOptions) {
+export function useWizard({
+  userId,
+  pitchData,
+  initialStep
+}: UseWizardOptions) {
   const router = useRouter()
   const { toast } = useToast()
 
   // Local wizard state
-  const [currentStep, setCurrentStep] = useState(pitchData?.currentStep || 1)
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (initialStep && Number.isInteger(initialStep) && initialStep > 0) {
+      return initialStep
+    }
+    return pitchData?.currentStep || 1
+  })
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
@@ -167,6 +177,16 @@ export function useWizard({ userId, pitchData }: UseWizardOptions) {
 
     return () => clearTimeout(timeout)
   }, [currentStep, pitchId, methods, setPitchId, toast])
+
+  // Sync URL with current step
+  useEffect(() => {
+    const step = currentStep
+    if (pitchId) {
+      router.replace(`/dashboard/new/${pitchId}/${step}`)
+    } else {
+      router.replace(`/dashboard/new/${step}`)
+    }
+  }, [currentStep, pitchId, router])
 
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
