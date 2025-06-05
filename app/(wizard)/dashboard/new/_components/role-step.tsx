@@ -69,7 +69,7 @@ Wizard step to capture role-level info:
  - Organisation Name
  - Role Level (APS1...EL1)
  - Word Limit (<500...<1000)
- - Optional Role Description
+ - Role Description
 */
 export default function RoleStep() {
   const { control, watch, formState } = useFormContext<PitchWizardFormData>()
@@ -268,11 +268,10 @@ export default function RoleStep() {
             </motion.div>
           </div>
 
-          {/* Role Description (Optional) */}
+          {/* Role Description */}
           <motion.div variants={itemVariants} className="space-y-2">
             <FormLabel className="text-sm font-medium text-gray-700">
               Role Description
-              <span className="ml-1 font-normal text-gray-400">(Optional)</span>
             </FormLabel>
             <FormField
               control={control}

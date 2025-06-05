@@ -37,8 +37,8 @@ const actionStepSchema = z.object({
 
 const starExampleSchema = z.object({
   situation: z.object({
-    "where-and-when-did-this-experience-occur": wordRange(15, 150),
-    "briefly-describe-the-situation-or-challenge-you-faced": wordRange(20, 150)
+    "where-and-when-did-this-experience-occur": wordRange(10, 150),
+    "briefly-describe-the-situation-or-challenge-you-faced": wordRange(10, 150)
   }),
   task: z.object({
     "what-was-your-responsibility-in-addressing-this-issue": wordRange(20, 150),
