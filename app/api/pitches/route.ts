@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       starExamples: body.starExamples || [],
       starExamplesCount: body.starExamplesCount
         ? parseInt(body.starExamplesCount, 10)
-        : 1,
+        : 2,
       starExampleDescriptions: body.starExampleDescriptions || [],
 
       // generated content

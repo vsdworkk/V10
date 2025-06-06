@@ -40,6 +40,7 @@ export default function GuidanceStep({
   const albertGuidance = watch("albertGuidance") // existing guidance
   const starExamplesCount = watch("starExamplesCount")
   const starExampleDescriptions = watch("starExampleDescriptions") || []
+  const pitchWordLimit = watch("pitchWordLimit")
 
   // Determine the definitive pitch ID to use
   // Prioritize the ID from props (coming from useWizard state)
@@ -171,8 +172,10 @@ export default function GuidanceStep({
     }
   }
 
-  const possibleStarCounts = ["1", "2", "3", "4"]
+  const possibleStarCounts = ["2", "3", "4"]
   const starCount = starExamplesCount || "2"
+  const recommendedCount =
+    pitchWordLimit < 550 ? "2" : pitchWordLimit <= 700 ? "3" : "4"
   const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
 
   // Log form state of albertGuidance before rendering
@@ -262,27 +265,33 @@ export default function GuidanceStep({
           <p className="font-medium text-gray-700">
             How many STAR examples do you want to include?
           </p>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {possibleStarCounts.map(val => (
-              <button
-                key={val}
-                onClick={() => handleStarExamplesCountChange(val)}
-                className={`flex h-12 items-center justify-center rounded-xl transition-all duration-200 ${
-                  starCount === val
-                    ? "font-medium"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                }`}
-                style={
-                  starCount === val
-                    ? {
-                        backgroundColor: "#eef2ff",
-                        color: "#444ec1"
-                      }
-                    : {}
-                }
-              >
-                {val}
-              </button>
+              <div key={val} className="flex flex-col items-center gap-1">
+                <button
+                  onClick={() => handleStarExamplesCountChange(val)}
+                  className={`flex h-12 w-full items-center justify-center rounded-xl transition-all duration-200 ${
+                    starCount === val
+                      ? "font-medium"
+                      : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  }`}
+                  style={
+                    starCount === val
+                      ? {
+                          backgroundColor: "#eef2ff",
+                          color: "#444ec1"
+                        }
+                      : {}
+                  }
+                >
+                  {val}
+                </button>
+                {recommendedCount === val && (
+                  <span className="text-xs text-gray-500">
+                    Recommended by Recruiters
+                  </span>
+                )}
+              </div>
             ))}
           </div>
           {errors.starExamplesCount && (

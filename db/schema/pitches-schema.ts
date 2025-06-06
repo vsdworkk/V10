@@ -84,7 +84,7 @@ export const pitchesTable = pgTable("pitches", {
 
   /* bookkeeping */
   status: pitchStatusEnum("status").default("draft").notNull(),
-  starExamplesCount: integer("star_examples_count").default(1).notNull(),
+  starExamplesCount: integer("star_examples_count").default(2).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

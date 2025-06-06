@@ -14,10 +14,10 @@ export default async function CreateNewPitchWithStepPage({
   if (!userId) {
     redirect("/login")
   }
-  
+
   const { step } = await params
   const stepNumber = parseInt(step, 10)
-  
+
   // Validate step number (1-based, reasonable range)
   if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 50) {
     redirect("/dashboard/new/step/1")
@@ -29,4 +29,4 @@ export default async function CreateNewPitchWithStepPage({
       <PitchWizard userId={userId} initialStep={stepNumber} />
     </div>
   )
-} 
+}
