@@ -463,13 +463,13 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
             </div>
           </div>
 
-          {/* OUTCOME (optional) */}
+          {/* OUTCOME */}
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-outcome`}
               className="block font-medium text-gray-700"
             >
-              What was the outcome of this step? (optional)
+              What was the outcome of this step?
             </FormLabel>
             <div className="relative">
               <Textarea

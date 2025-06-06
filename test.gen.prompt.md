@@ -16,7 +16,7 @@ Action
 For each action step (users can add multiple steps, up to 5):
 What did you specifically do in this step?
 Example placeholder: "I analyzed the log files to identify error patterns."
-What was the outcome of this step? (optional)
+What was the outcome of this step?
 Example placeholder: "I pinpointed a memory leak in a specific module."
 Result
 How did this outcome benefit your team, stakeholders, or organisation?
