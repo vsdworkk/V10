@@ -39,6 +39,7 @@ export function useWizard({
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
+  const [isNavigating, setIsNavigating] = useState(false)
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -271,6 +272,8 @@ export function useWizard({
 
   // Handler for "Next" button
   const handleNext = useCallback(async () => {
+    if (isNavigating) return
+
     const nextStep = Math.min(currentStep + 1, totalSteps)
 
     // Intro step (step 1) has no validation
@@ -279,31 +282,46 @@ export function useWizard({
       return
     }
 
-    // Validate current step fields
-    const isValid = await validateStep(currentStep, starCount, methods)
-    if (!isValid) return
+    setIsNavigating(true)
+    try {
+      // Validate current step fields
+      const isValid = await validateStep(currentStep, starCount, methods)
+      if (!isValid) return
 
-    // Save current step's data but persist the next step number
-    const formData = methods.getValues()
-    await savePitchData(formData, pitchId, setPitchId, toast, nextStep)
+      // Save current step's data but persist the next step number
+      const formData = methods.getValues()
+      await savePitchData(formData, pitchId, setPitchId, toast, nextStep)
 
-    // Check if we're moving from last STAR step to review
-    const lastStarStep = 4 + starCount * 4
-    if (currentStep === lastStarStep) {
-      // Store the form data for later use
-      pendingFormDataRef.current = formData
+      // Check if we're moving from last STAR step to review
+      const lastStarStep = 4 + starCount * 4
+      if (currentStep === lastStarStep) {
+        // Store the form data for later use
+        pendingFormDataRef.current = formData
 
-      // Show the confirmation dialog
-      setShowConfirmDialog(true)
-      return
+        // Show the confirmation dialog
+        setShowConfirmDialog(true)
+        return
+      }
+
+      // Proceed to next step
+      setCurrentStep(nextStep)
+    } finally {
+      setIsNavigating(false)
     }
-
-    // Proceed to next step
-    setCurrentStep(nextStep)
-  }, [currentStep, starCount, totalSteps, methods, pitchId, toast])
+  }, [
+    currentStep,
+    starCount,
+    totalSteps,
+    methods,
+    pitchId,
+    toast,
+    isNavigating
+  ])
 
   // Handler for "Back" button
   const handleBack = useCallback(() => {
+    if (isNavigating) return
+
     // If pitch generation is confirmed, prevent going back
     if (isPitchGenerationConfirmed) {
       toast({
@@ -315,7 +333,7 @@ export function useWizard({
     }
 
     setCurrentStep(s => Math.max(s - 1, 1))
-  }, [isPitchGenerationConfirmed, toast])
+  }, [isPitchGenerationConfirmed, toast, isNavigating])
 
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
@@ -351,6 +369,7 @@ export function useWizard({
     // Loading states
     isPitchLoading,
     finalPitchError,
+    isNavigating,
     // Confirmation dialog state
     showConfirmDialog,
     setShowConfirmDialog,

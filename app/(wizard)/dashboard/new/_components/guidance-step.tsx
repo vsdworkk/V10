@@ -270,7 +270,7 @@ export default function GuidanceStep({
               <div key={val} className="flex flex-col items-center gap-1">
                 <button
                   onClick={() => handleStarExamplesCountChange(val)}
-                  className={`flex h-12 w-full items-center justify-center rounded-xl transition-all duration-200 ${
+                  className={`flex h-16 w-full flex-col items-center justify-center rounded-xl transition-all duration-200 ${
                     starCount === val
                       ? "font-medium"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100"
@@ -284,13 +284,14 @@ export default function GuidanceStep({
                       : {}
                   }
                 >
-                  {val}
+                  <span className="text-lg font-semibold">{val}</span>
+                  {recommendedCount === val && (
+                    <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "#444ec1" }}>
+                      <span>✨</span>
+                      Recommended by Recruiters
+                    </span>
+                  )}
                 </button>
-                {recommendedCount === val && (
-                  <span className="text-xs text-gray-500">
-                    Recommended by Recruiters
-                  </span>
-                )}
               </div>
             ))}
           </div>

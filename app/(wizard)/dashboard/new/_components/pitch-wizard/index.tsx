@@ -3,7 +3,7 @@
 
 import { FormProvider } from "react-hook-form"
 import { motion } from "framer-motion"
-import { Save, ArrowRight, ArrowLeft } from "lucide-react"
+import { Save, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 
 // Components
@@ -49,6 +49,7 @@ export default function PitchWizard({
     handleConfirmPitchGeneration,
     handleCancelPitchGeneration,
     isPitchGenerationConfirmed,
+    isNavigating,
     handleNext,
     handleBack,
     handleSaveAndClose,
@@ -190,7 +191,7 @@ export default function PitchWizard({
             <Button
               variant="outline"
               onClick={handleBack}
-              disabled={isPitchGenerationConfirmed}
+              disabled={isNavigating || isPitchGenerationConfirmed}
               className={`group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
                 isPitchGenerationConfirmed
                   ? "cursor-not-allowed opacity-50"
@@ -221,11 +222,18 @@ export default function PitchWizard({
             {currentStep < totalSteps ? (
               <Button
                 onClick={handleNext}
-                className="group flex items-center rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
+                disabled={isNavigating}
+                className="group flex w-[108px] items-center justify-center rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
                 style={{ backgroundColor: "#444ec1" }}
               >
-                Next
-                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
+                {isNavigating ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
+                  </>
+                )}
               </Button>
             ) : (
               <Button
@@ -249,7 +257,7 @@ export default function PitchWizard({
               <Button
                 variant="outline"
                 onClick={handleBack}
-                disabled={isPitchGenerationConfirmed}
+                disabled={isNavigating || isPitchGenerationConfirmed}
                 className={`group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
                   isPitchGenerationConfirmed
                     ? "cursor-not-allowed opacity-50"
@@ -281,11 +289,18 @@ export default function PitchWizard({
             {currentStep < totalSteps ? (
               <Button
                 onClick={handleNext}
+                disabled={isNavigating}
                 className="group flex flex-1 items-center justify-center rounded-xl py-3 font-medium text-white shadow-sm transition-all duration-200 hover:shadow hover:brightness-110"
                 style={{ backgroundColor: "#444ec1" }}
               >
-                Next
-                <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
+                {isNavigating ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
+                  </>
+                )}
               </Button>
             ) : (
               <Button
