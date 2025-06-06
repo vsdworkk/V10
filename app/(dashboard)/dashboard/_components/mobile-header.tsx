@@ -3,6 +3,7 @@
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
+import { UserButton } from "@clerk/nextjs"
 
 export default function MobileHeader() {
   const { toggleSidebar } = useSidebar()
@@ -20,6 +21,16 @@ export default function MobileHeader() {
           <span className="sr-only">Toggle sidebar</span>
         </Button>
         <h1 className="text-lg font-semibold text-gray-800">Pitch Manager</h1>
+      </div>
+      
+      <div className="flex items-center">
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "w-8 h-8"
+            }
+          }}
+        />
       </div>
     </header>
   )

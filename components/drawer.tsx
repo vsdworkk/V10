@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/drawer"
 import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { IoMenuSharp } from "react-icons/io5"
 
@@ -71,11 +71,12 @@ export default function MobileDrawer() {
         </DrawerHeader>
         <DrawerFooter>
           <SignedOut>
-            <SignInButton mode="modal" forceRedirectUrl="/dashboard">
-              <button className={buttonVariants({ variant: "outline" })}>
-                Sign In
-              </button>
-            </SignInButton>
+            <Link
+              href="/login"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Sign In
+            </Link>
             <Link
               href="/signup"
               className={cn(

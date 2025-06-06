@@ -28,6 +28,7 @@ import { auth } from "@clerk/nextjs/server"
 import DashboardSidebar from "./dashboard/_components/dashboard-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import MobileHeader from "./dashboard/_components/mobile-header"
+import DesktopHeader from "./dashboard/_components/desktop-header"
 
 /**
  * @interface DashboardLayoutProps
@@ -81,6 +82,9 @@ export default async function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header - Only visible on mobile */}
           <MobileHeader />
+          
+          {/* Desktop Header - Only visible on desktop */}
+          <DesktopHeader />
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
