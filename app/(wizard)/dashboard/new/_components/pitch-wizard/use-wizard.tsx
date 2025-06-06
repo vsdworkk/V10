@@ -179,6 +179,16 @@ export function useWizard({
     return () => clearTimeout(timeout)
   }, [currentStep, pitchId, methods, setPitchId, toast])
 
+  // Prefetch the next step to avoid loading flashes
+  useEffect(() => {
+    const next = Math.min(currentStep + 1, totalSteps)
+    const url = pitchId
+      ? `/dashboard/new/${pitchId}/step/${next}`
+      : `/dashboard/new/step/${next}`
+
+    router.prefetch(url)
+  }, [currentStep, pitchId, totalSteps, router])
+
   // Sync URL with current step
   useEffect(() => {
     const step = currentStep
