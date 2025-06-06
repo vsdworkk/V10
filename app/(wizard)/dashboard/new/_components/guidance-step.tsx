@@ -1,3 +1,9 @@
+/**
+ * Client component for wizard step 4 of the pitch builder.
+ * Fetches AI guidance automatically and manages STAR example inputs.
+ * Field changes are stored locally and persisted by the wizard when the
+ * user clicks Next or Close.
+ */
 "use client"
 
 import { useFormContext } from "react-hook-form"
@@ -16,7 +22,6 @@ import {
 } from "@/components/ui/accordion"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { partialUpdatePitch } from "@/lib/utils"
 
 interface GuidanceStepProps {
   pitchId?: string // Accept pitchId as an optional prop
@@ -143,16 +148,7 @@ export default function GuidanceStep({
     const finalArr = newArr.slice(0, newCount)
     setValue("starExampleDescriptions", finalArr, { shouldDirty: true })
 
-    // If we have a pitchId, patch the DB
-    const formData = getValues()
-
-    // Use definitivePitchId here as well for consistency
-    if (definitivePitchId && formData.userId) {
-      void partialUpdatePitch(definitivePitchId, formData.userId, {
-        starExamplesCount: newCount,
-        starExampleDescriptions: finalArr
-      })
-    }
+    // Values will be persisted when the user moves away from this step
   }
 
   // Handle STAR example description change
@@ -163,13 +159,7 @@ export default function GuidanceStep({
       shouldDirty: true
     })
 
-    // Update the database if we have a pitch ID
-    const currentUserId = getValues("userId")
-    if (definitivePitchId && currentUserId) {
-      void partialUpdatePitch(definitivePitchId, currentUserId, {
-        starExampleDescriptions: updatedDescriptions
-      })
-    }
+    // Values will be persisted when the user moves away from this step
   }
 
   const possibleStarCounts = ["2", "3", "4"]
@@ -286,7 +276,10 @@ export default function GuidanceStep({
                 >
                   <span className="text-lg font-semibold">{val}</span>
                   {recommendedCount === val && (
-                    <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "#444ec1" }}>
+                    <span
+                      className="flex items-center gap-1 text-xs font-medium"
+                      style={{ color: "#444ec1" }}
+                    >
                       <span>✨</span>
                       Recommended by Recruiters
                     </span>
