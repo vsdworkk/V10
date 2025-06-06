@@ -1,25 +1,51 @@
 /**
  * @description
  * Server page for "/dashboard/new". It ensures the user is authenticated
- * and redirects to the step-based URL structure for the wizard.
+ * and renders the wizard with step management via search parameters.
  *
  * Key Features:
- * - Redirects to step-based URL structure
+ * - Uses search params for step navigation (no server re-renders)
  * - Maintains backward compatibility
+ * - Handles localStorage pitch resumption
  *
  * @dependencies
- * - `redirect` from "next/navigation" to handle URL redirection
+ * - `auth` from "@clerk/nextjs/server" for authentication
+ * - `redirect` from "next/navigation" to handle authentication redirects
  *
  * @notes
- * - This page now redirects to the new step-based URL structure
- * - The actual wizard logic is handled in the step-specific routes
+ * - Step navigation is now handled client-side via search parameters
+ * - No more server round-trips for step changes
  */
 
 "use server"
 
+import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
+import PitchWizard from "./_components/pitch-wizard"
+import CheckStoredPitch from "./_components/check-stored-pitch"
 
-export default async function CreateNewPitchPage() {
-  // Redirect to the new step-based URL structure
-  redirect("/dashboard/new/step/1")
+interface CreateNewPitchPageProps {
+  searchParams: Promise<{ step?: string }>
+}
+
+export default async function CreateNewPitchPage({
+  searchParams
+}: CreateNewPitchPageProps) {
+  const { userId } = await auth()
+  if (!userId) {
+    redirect("/login")
+  }
+
+  const { step } = await searchParams
+  const initialStep = step ? parseInt(step, 10) : 1
+
+  // Validate step number
+  const validStep = !isNaN(initialStep) && initialStep > 0 && initialStep <= 50 ? initialStep : 1
+
+  return (
+    <div className="size-full">
+      <CheckStoredPitch />
+      <PitchWizard userId={userId} initialStep={validStep} />
+    </div>
+  )
 }

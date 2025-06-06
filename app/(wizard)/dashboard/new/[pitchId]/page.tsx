@@ -24,25 +24,45 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
+import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
+
+interface ResumePitchPageProps {
+  params: Promise<{ pitchId: string }>
+  searchParams: Promise<{ step?: string }>
+}
 
 export default async function ResumePitchPage({
-  params
-}: {
-  params: Promise<{ pitchId: string }>
-}) {
-  const { pitchId } = await params
-
+  params,
+  searchParams
+}: ResumePitchPageProps) {
   const { userId } = await auth()
   if (!userId) {
     redirect("/login")
   }
 
-  const result = await getPitchByIdAction(pitchId, userId)
-  if (!result.isSuccess || !result.data) {
+  const { pitchId } = await params
+  const { step } = await searchParams
+  
+  // Fetch the pitch by ID
+  const pitchResult = await getPitchByIdAction(pitchId, userId)
+
+  // If the pitch is not found or doesn't belong to the user, redirect to dashboard
+  if (!pitchResult.isSuccess) {
     redirect("/dashboard")
   }
 
-  // Redirect to the new step-based URL structure
-  const step = result.data.currentStep || 1
-  redirect(`/dashboard/new/${pitchId}/step/${step}`)
+  const initialStep = step ? parseInt(step, 10) : pitchResult.data.currentStep || 1
+
+  // Validate step number
+  const validStep = !isNaN(initialStep) && initialStep > 0 && initialStep <= 50 ? initialStep : 1
+
+  return (
+    <div className="size-full">
+      <PitchWizard
+        userId={userId}
+        pitchData={pitchResult.data}
+        initialStep={validStep}
+      />
+    </div>
+  )
 }

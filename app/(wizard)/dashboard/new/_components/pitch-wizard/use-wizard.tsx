@@ -31,9 +31,23 @@ export function useWizard({
 
   // Local wizard state
   const [currentStep, setCurrentStep] = useState(() => {
+    // Priority order: initialStep prop > URL search params > pitchData > default
     if (initialStep && Number.isInteger(initialStep) && initialStep > 0) {
       return initialStep
     }
+    
+    // Check URL search params for step
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const stepParam = urlParams.get('step')
+      if (stepParam) {
+        const stepFromUrl = parseInt(stepParam, 10)
+        if (!isNaN(stepFromUrl) && stepFromUrl > 0) {
+          return stepFromUrl
+        }
+      }
+    }
+    
     return pitchData?.currentStep || 1
   })
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
@@ -179,25 +193,19 @@ export function useWizard({
     return () => clearTimeout(timeout)
   }, [currentStep, pitchId, methods, setPitchId, toast])
 
-  // Prefetch the next step to avoid loading flashes
+  // Sync URL with current step - USE SEARCH PARAMS INSTEAD OF ROUTE CHANGES
   useEffect(() => {
-    const next = Math.min(currentStep + 1, totalSteps)
-    const url = pitchId
-      ? `/dashboard/new/${pitchId}/step/${next}`
-      : `/dashboard/new/step/${next}`
-
-    router.prefetch(url)
-  }, [currentStep, pitchId, totalSteps, router])
-
-  // Sync URL with current step
-  useEffect(() => {
-    const step = currentStep
-    if (pitchId) {
-      router.replace(`/dashboard/new/${pitchId}/step/${step}`)
-    } else {
-      router.replace(`/dashboard/new/step/${step}`)
+    const currentUrl = new URL(window.location.href)
+    const currentStepParam = currentUrl.searchParams.get('step')
+    
+    // Only update URL if step has actually changed
+    if (parseInt(currentStepParam || '1') !== currentStep) {
+      currentUrl.searchParams.set('step', currentStep.toString())
+      
+      // Use replaceState to avoid server round-trips
+      window.history.replaceState({}, '', currentUrl.toString())
     }
-  }, [currentStep, pitchId, router])
+  }, [currentStep])
 
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
