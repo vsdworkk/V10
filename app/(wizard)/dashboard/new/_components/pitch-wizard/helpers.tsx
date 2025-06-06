@@ -73,7 +73,7 @@ export function mapExistingDataToDefaults(
       relevantExperience: "",
       albertGuidance: "",
       starExamples: [createEmptyStarExample()],
-      starExamplesCount: "1",
+      starExamplesCount: "2",
       starExampleDescriptions: [],
       pitchContent: "",
       agentExecutionId: ""
@@ -97,13 +97,13 @@ export function mapExistingDataToDefaults(
 
   const sc = pitchData.starExamplesCount
     ? String(pitchData.starExamplesCount)
-    : "1"
+    : "2"
 
   // Define valid star counts and derive the enum type
-  const validStarCounts = ["1", "2", "3", "4"] as const
+  const validStarCounts = ["2", "3", "4"] as const
   type StarCountEnum = (typeof validStarCounts)[number]
 
-  const safeStarCount = validStarCounts.includes(sc as any) ? sc : "1"
+  const safeStarCount = validStarCounts.includes(sc as any) ? sc : "2"
 
   return {
     userId: pitchData.userId,

@@ -239,7 +239,8 @@ export default function RoleStep() {
                       {...field}
                       type="number"
                       min={400}
-                      placeholder="Minimum 400 words"
+                      max={1000}
+                      placeholder="Enter between 400 and 1000 words"
                       className="h-12 w-full rounded-lg border border-gray-200 bg-white px-4 text-base transition-all duration-200 lg:h-12 lg:text-sm"
                       style={
                         {

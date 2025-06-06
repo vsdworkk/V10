@@ -59,7 +59,7 @@ export const updatePitchSchema = z
     userId: z.string().optional(),
     roleName: z.string().min(10).max(150).optional(),
     roleLevel: z.string().nonempty().optional(),
-    pitchWordLimit: z.number().min(400).max(1250).optional(),
+    pitchWordLimit: z.number().min(400).max(1000).optional(),
     roleDescription: z.string().optional().nullable(),
     relevantExperience: z.string().min(1000).max(10000).optional(),
 
@@ -72,8 +72,8 @@ export const updatePitchSchema = z
     // Add agentExecutionId for PromptLayer integration
     agentExecutionId: z.string().optional().nullable(),
 
-    // starExamplesCount can be 1..10
-    starExamplesCount: z.number().min(1).max(4).optional(),
+    // starExamplesCount can be 2..4
+    starExamplesCount: z.number().min(2).max(4).optional(),
 
     // starExampleDescriptions for short descriptions of each STAR example
     starExampleDescriptions: z.array(z.string().min(10).max(100)).optional(),

@@ -23,12 +23,12 @@ function PitchWizardSkeleton() {
   )
 }
 
-async function PitchWizardFetcher({ 
-  pitchId, 
-  stepNumber 
-}: { 
+async function PitchWizardFetcher({
+  pitchId,
+  stepNumber
+}: {
   pitchId: string
-  stepNumber: number 
+  stepNumber: number
 }) {
   const { userId } = await auth()
 
@@ -46,8 +46,8 @@ async function PitchWizardFetcher({
 
   // Pass the pitch data to the PitchWizard component
   return (
-    <PitchWizard 
-      userId={userId} 
+    <PitchWizard
+      userId={userId}
       pitchData={pitchResult.data}
       initialStep={stepNumber}
     />
@@ -61,7 +61,7 @@ export default async function ResumePitchWithStepPage({
 }) {
   const { pitchId, step } = await params
   const stepNumber = parseInt(step, 10)
-  
+
   // Validate step number
   if (isNaN(stepNumber) || stepNumber < 1 || stepNumber > 50) {
     redirect(`/dashboard/new/${pitchId}/step/1`)
@@ -74,4 +74,4 @@ export default async function ResumePitchWithStepPage({
       </Suspense>
     </div>
   )
-} 
+}

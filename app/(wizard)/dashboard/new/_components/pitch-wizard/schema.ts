@@ -61,7 +61,7 @@ export const pitchWizardSchema = z.object({
   roleName: z.string().min(10).max(150),
   organisationName: z.string().min(10).max(150),
   roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
-  pitchWordLimit: z.number().min(400).max(1250),
+  pitchWordLimit: z.number().min(400).max(1000),
   roleDescription: z
     .string()
     .min(1000, "Role description must be at least 1,000 characters")
@@ -69,7 +69,7 @@ export const pitchWizardSchema = z.object({
   relevantExperience: z.string().min(1000).max(10000),
   albertGuidance: z.string().min(1),
 
-  starExamplesCount: z.enum(["1", "2", "3", "4"]).default("1"),
+  starExamplesCount: z.enum(["2", "3", "4"]).default("2"),
   starExampleDescriptions: z.array(z.string().min(10).max(100)).optional(),
   starExamples: z.array(starExampleSchema).min(1, "At least one STAR example"),
 

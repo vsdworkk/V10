@@ -57,7 +57,7 @@ export function useWizard({
   })
 
   // Watch for starExamplesCount
-  const starCount = parseInt(methods.watch("starExamplesCount") || "1", 10)
+  const starCount = parseInt(methods.watch("starExamplesCount") || "2", 10)
   const totalSteps = 4 + starCount * 4 + 1
 
   // Get current section and header
