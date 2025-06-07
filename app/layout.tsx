@@ -16,8 +16,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Receipt AI",
-  description: "A full-stack web app template."
+  title: "APSPitchPro",
+  description: "3X Your Interview Chances With AI-Powered Pitches"
 }
 
 export default async function RootLayout({
