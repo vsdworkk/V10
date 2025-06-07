@@ -16,8 +16,7 @@ const ease = [0.16, 1, 0.3, 1]
 
 function HeroPill() {
   return (
-    <motion.a
-      href="/features"
+    <motion.div
       className="bg-primary/20 ring-accent flex w-auto items-center space-x-2 whitespace-pre rounded-full px-2 py-1 ring-1"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -42,7 +41,7 @@ function HeroPill() {
           fill="hsl(var(--primary))"
         />
       </svg>
-    </motion.a>
+    </motion.div>
   )
 }
 
