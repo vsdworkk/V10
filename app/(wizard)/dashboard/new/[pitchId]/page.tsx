@@ -42,7 +42,7 @@ export default async function ResumePitchPage({
 
   const { pitchId } = await params
   const { step } = await searchParams
-  
+
   // Fetch the pitch by ID
   const pitchResult = await getPitchByIdAction(pitchId, userId)
 
@@ -51,10 +51,15 @@ export default async function ResumePitchPage({
     redirect("/dashboard")
   }
 
-  const initialStep = step ? parseInt(step, 10) : pitchResult.data.currentStep || 1
+  const initialStep = step
+    ? parseInt(step, 10)
+    : pitchResult.data.currentStep || 1
 
   // Validate step number
-  const validStep = !isNaN(initialStep) && initialStep > 0 && initialStep <= 50 ? initialStep : 1
+  const validStep =
+    !isNaN(initialStep) && initialStep > 0 && initialStep <= 50
+      ? initialStep
+      : 1
 
   return (
     <div className="size-full">

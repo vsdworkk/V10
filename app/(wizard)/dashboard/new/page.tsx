@@ -40,7 +40,10 @@ export default async function CreateNewPitchPage({
   const initialStep = step ? parseInt(step, 10) : 1
 
   // Validate step number
-  const validStep = !isNaN(initialStep) && initialStep > 0 && initialStep <= 50 ? initialStep : 1
+  const validStep =
+    !isNaN(initialStep) && initialStep > 0 && initialStep <= 50
+      ? initialStep
+      : 1
 
   return (
     <div className="size-full">

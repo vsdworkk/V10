@@ -35,11 +35,11 @@ export function useWizard({
     if (initialStep && Number.isInteger(initialStep) && initialStep > 0) {
       return initialStep
     }
-    
+
     // Check URL search params for step
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search)
-      const stepParam = urlParams.get('step')
+      const stepParam = urlParams.get("step")
       if (stepParam) {
         const stepFromUrl = parseInt(stepParam, 10)
         if (!isNaN(stepFromUrl) && stepFromUrl > 0) {
@@ -47,7 +47,7 @@ export function useWizard({
         }
       }
     }
-    
+
     return pitchData?.currentStep || 1
   })
   const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
@@ -196,14 +196,14 @@ export function useWizard({
   // Sync URL with current step - USE SEARCH PARAMS INSTEAD OF ROUTE CHANGES
   useEffect(() => {
     const currentUrl = new URL(window.location.href)
-    const currentStepParam = currentUrl.searchParams.get('step')
-    
+    const currentStepParam = currentUrl.searchParams.get("step")
+
     // Only update URL if step has actually changed
-    if (parseInt(currentStepParam || '1') !== currentStep) {
-      currentUrl.searchParams.set('step', currentStep.toString())
-      
+    if (parseInt(currentStepParam || "1") !== currentStep) {
+      currentUrl.searchParams.set("step", currentStep.toString())
+
       // Use replaceState to avoid server round-trips
-      window.history.replaceState({}, '', currentUrl.toString())
+      window.history.replaceState({}, "", currentUrl.toString())
     }
   }, [currentStep])
 

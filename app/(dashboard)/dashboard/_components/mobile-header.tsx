@@ -22,7 +22,7 @@ export default function MobileHeader() {
         </Button>
         <h1 className="text-lg font-semibold text-gray-800">Pitch Manager</h1>
       </div>
-      
+
       <div className="flex items-center">
         <UserButton
           appearance={{
