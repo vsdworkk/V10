@@ -52,39 +52,37 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                     How did this outcome benefit your team, stakeholders, or
                     organisation?
                   </FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Describe how these results impacted your organization or project..."
-                        className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
-                        style={
-                          {
-                            "--focus-ring-color": "#444ec1",
-                            "--focus-border-color": "#444ec1"
-                          } as React.CSSProperties
-                        }
-                        onFocus={e => {
-                          e.target.style.borderColor = "#444ec1"
-                          e.target.style.boxShadow =
-                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
-                        }}
-                        onBlur={e => {
-                          e.target.style.borderColor = "#e5e7eb"
-                          e.target.style.boxShadow = "none"
-                        }}
-                      />
-                    </FormControl>
-                    <WordCountIndicator
-                      schema={
-                        starExampleSchema.shape.result.shape[
-                          "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-                        ]
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Describe how these results impacted your organization or project..."
+                      className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                      style={
+                        {
+                          "--focus-ring-color": "#444ec1",
+                          "--focus-border-color": "#444ec1"
+                        } as React.CSSProperties
                       }
-                      text={benefitToTeam}
+                      onFocus={e => {
+                        e.target.style.borderColor = "#444ec1"
+                        e.target.style.boxShadow =
+                          "0 0 0 1px rgba(68, 78, 193, 0.1)"
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = "#e5e7eb"
+                        e.target.style.boxShadow = "none"
+                      }}
                     />
-                    <FormMessage />
-                  </div>
+                  </FormControl>
+                  <WordCountIndicator
+                    schema={
+                      starExampleSchema.shape.result.shape[
+                        "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
+                      ]
+                    }
+                    text={benefitToTeam}
+                    fieldName={`starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`}
+                  />
                 </FormItem>
               )}
             />

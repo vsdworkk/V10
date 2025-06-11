@@ -67,38 +67,37 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                   <FormLabel className="mb-2 block font-medium text-gray-700">
                     What was your responsibility in addressing this issue?
                   </FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Describe your specific responsibility and what you needed to accomplish..."
-                        className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
-                        style={
-                          {
-                            "--focus-ring-color": "#444ec1",
-                            "--focus-border-color": "#444ec1"
-                          } as React.CSSProperties
-                        }
-                        onFocus={e => {
-                          e.target.style.borderColor = "#444ec1"
-                          e.target.style.boxShadow =
-                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
-                        }}
-                        onBlur={e => {
-                          e.target.style.borderColor = "#e5e7eb"
-                          e.target.style.boxShadow = "none"
-                        }}
-                      />
-                    </FormControl>
-                    <WordCountIndicator
-                      schema={
-                        starExampleSchema.shape.task.shape[
-                          "what-was-your-responsibility-in-addressing-this-issue"
-                        ]
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Describe your specific responsibility and what you needed to accomplish..."
+                      className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                      style={
+                        {
+                          "--focus-ring-color": "#444ec1",
+                          "--focus-border-color": "#444ec1"
+                        } as React.CSSProperties
                       }
-                      text={responsibility}
+                      onFocus={e => {
+                        e.target.style.borderColor = "#444ec1"
+                        e.target.style.boxShadow =
+                          "0 0 0 1px rgba(68, 78, 193, 0.1)"
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = "#e5e7eb"
+                        e.target.style.boxShadow = "none"
+                      }}
                     />
-                  </div>
+                  </FormControl>
+                  <WordCountIndicator
+                    schema={
+                      starExampleSchema.shape.task.shape[
+                        "what-was-your-responsibility-in-addressing-this-issue"
+                      ]
+                    }
+                    text={responsibility}
+                    fieldName={`starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`}
+                  />
                 </FormItem>
               )}
             />
@@ -114,38 +113,37 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                     What constraints or requirements did you need to consider?
                     <span className="text-gray-500"> (optional)</span>
                   </FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Describe any constraints, requirements, or challenges you had to consider..."
-                        className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
-                        style={
-                          {
-                            "--focus-ring-color": "#444ec1",
-                            "--focus-border-color": "#444ec1"
-                          } as React.CSSProperties
-                        }
-                        onFocus={e => {
-                          e.target.style.borderColor = "#444ec1"
-                          e.target.style.boxShadow =
-                            "0 0 0 1px rgba(68, 78, 193, 0.1)"
-                        }}
-                        onBlur={e => {
-                          e.target.style.borderColor = "#e5e7eb"
-                          e.target.style.boxShadow = "none"
-                        }}
-                      />
-                    </FormControl>
-                    <WordCountIndicator
-                      schema={
-                        starExampleSchema.shape.task.shape[
-                          "what-constraints-or-requirements-did-you-need-to-consider"
-                        ]
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Describe any constraints, requirements, or challenges you had to consider..."
+                      className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                      style={
+                        {
+                          "--focus-ring-color": "#444ec1",
+                          "--focus-border-color": "#444ec1"
+                        } as React.CSSProperties
                       }
-                      text={constraints}
+                      onFocus={e => {
+                        e.target.style.borderColor = "#444ec1"
+                        e.target.style.boxShadow =
+                          "0 0 0 1px rgba(68, 78, 193, 0.1)"
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = "#e5e7eb"
+                        e.target.style.boxShadow = "none"
+                      }}
                     />
-                  </div>
+                  </FormControl>
+                  <WordCountIndicator
+                    schema={
+                      starExampleSchema.shape.task.shape[
+                        "what-constraints-or-requirements-did-you-need-to-consider"
+                      ]
+                    }
+                    text={constraints}
+                    fieldName={`starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`}
+                  />
                 </FormItem>
               )}
             />

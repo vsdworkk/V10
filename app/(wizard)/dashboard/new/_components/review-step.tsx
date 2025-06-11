@@ -366,7 +366,7 @@ export default function ReviewStep({
 
         <div className="text-muted-foreground ml-auto text-xs">
           {editor.storage.characterCount
-            ? `Characters: ${editor.storage.characterCount.characters() ?? 0}`
+            ? `Words: ${editor.storage.characterCount.words() ?? 0}`
             : null}
         </div>
       </div>
