@@ -82,7 +82,7 @@ export default async function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header - Only visible on mobile */}
           <MobileHeader />
-          
+
           {/* Desktop Header - Only visible on desktop */}
           <DesktopHeader />
 

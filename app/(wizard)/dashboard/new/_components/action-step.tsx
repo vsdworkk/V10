@@ -2,7 +2,12 @@
 
 // Handles the Action step where users list what they did in each STAR example
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import {
+  PitchWizardFormData,
+  starExampleSchema,
+  actionStepSchema
+} from "./pitch-wizard/schema"
+import WordCountIndicator from "./word-count-indicator"
 import { useState, useEffect } from "react"
 import { v4 as uuidv4 } from "uuid"
 import {
@@ -30,11 +35,6 @@ import {
 } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
 import type { ActionStep as ActionStepType } from "@/types/action-steps-types"
-
-// Add word count helper
-function countWords(text: string) {
-  return text.trim().split(/\s+/).filter(Boolean).length
-}
 
 interface ActionStepProps {
   /**
@@ -356,20 +356,16 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
   const outcomeError = (
     errors.starExamples?.[exampleIndex]?.action?.steps as any
   )?.[stepIndex]?.["what-was-the-outcome-of-this-step-optional"]
-  const [what, setWhat] = useState(
-    step["what-did-you-specifically-do-in-this-step"]
+  const [what, setWhat] = useState<string>(
+    step["what-did-you-specifically-do-in-this-step"] || ""
   )
-  const [outcome, setOutcome] = useState(
-    step["what-was-the-outcome-of-this-step-optional"]
+  const [outcome, setOutcome] = useState<string>(
+    step["what-was-the-outcome-of-this-step-optional"] || ""
   )
-
-  // Word counts
-  const whatWords = countWords(what || "")
-  const outcomeWords = countWords(outcome || "")
 
   useEffect(() => {
-    setWhat(step["what-did-you-specifically-do-in-this-step"])
-    setOutcome(step["what-was-the-outcome-of-this-step-optional"])
+    setWhat(step["what-did-you-specifically-do-in-this-step"] || "")
+    setOutcome(step["what-was-the-outcome-of-this-step-optional"] || "")
   }, [step])
 
   const handleSave = () => {
@@ -452,9 +448,14 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
                   e.target.style.boxShadow = "none"
                 }}
               />
-              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                {whatWords}
-              </div>
+              <WordCountIndicator
+                schema={
+                  actionStepSchema.shape[
+                    "what-did-you-specifically-do-in-this-step"
+                  ]
+                }
+                text={what}
+              />
               {whatError && (
                 <p className="mt-1 text-sm text-red-500">
                   {whatError.message as string}
@@ -493,9 +494,14 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
                   e.target.style.boxShadow = "none"
                 }}
               />
-              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                {outcomeWords}
-              </div>
+              <WordCountIndicator
+                schema={
+                  actionStepSchema.shape[
+                    "what-was-the-outcome-of-this-step-optional"
+                  ]
+                }
+                text={outcome}
+              />
               {outcomeError && (
                 <p className="mt-1 text-sm text-red-500">
                   {outcomeError.message as string}

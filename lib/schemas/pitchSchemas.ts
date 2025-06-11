@@ -9,10 +9,13 @@ function countWords(text: string) {
 }
 
 function wordRange(min: number, max: number) {
-  return z.string().refine(val => {
-    const words = countWords(val)
-    return words >= min && words <= max
-  }, `Must be between ${min} and ${max} words`)
+  return z
+    .string()
+    .describe(JSON.stringify({ minWords: min, maxWords: max }))
+    .refine(val => {
+      const words = countWords(val)
+      return words >= min && words <= max
+    }, `Must be between ${min} and ${max} words`)
 }
 
 /**

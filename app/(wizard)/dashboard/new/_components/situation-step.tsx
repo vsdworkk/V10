@@ -1,8 +1,10 @@
 "use client"
 
+// Collects information about the Situation portion of a STAR example
 import { useFormContext } from "react-hook-form"
 import { useMemo } from "react"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData, starExampleSchema } from "./pitch-wizard/schema"
+import WordCountIndicator from "./word-count-indicator"
 import {
   FormField,
   FormItem,
@@ -115,11 +117,15 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                         }}
                       />
                     </FormControl>
+                    <WordCountIndicator
+                      schema={
+                        starExampleSchema.shape.situation.shape[
+                          "where-and-when-did-this-experience-occur"
+                        ]
+                      }
+                      text={whereAndWhen}
+                    />
                     <FormMessage />
-                    {/* Word count in bottom-right */}
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {whereAndWhenWords}
-                    </div>
                   </div>
                 </FormItem>
               )}
@@ -159,11 +165,15 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
                         }}
                       />
                     </FormControl>
+                    <WordCountIndicator
+                      schema={
+                        starExampleSchema.shape.situation.shape[
+                          "briefly-describe-the-situation-or-challenge-you-faced"
+                        ]
+                      }
+                      text={situationOrChallenge}
+                    />
                     <FormMessage />
-                    {/* Word count in bottom-right */}
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {situationOrChallengeWords}
-                    </div>
                   </div>
                 </FormItem>
               )}

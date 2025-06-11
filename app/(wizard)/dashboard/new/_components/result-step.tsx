@@ -4,7 +4,8 @@
 
 import { useFormContext } from "react-hook-form"
 import { useMemo } from "react"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData, starExampleSchema } from "./pitch-wizard/schema"
+import WordCountIndicator from "./word-count-indicator"
 import {
   FormField,
   FormItem,
@@ -13,11 +14,6 @@ import {
   FormMessage
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-
-// Add word count helper
-function countWords(text: string) {
-  return text.trim().split(/\s+/).filter(Boolean).length
-}
 
 interface ResultStepProps {
   /**
@@ -39,8 +35,6 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
     watch(
       `starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`
     ) || ""
-
-  const benefitToTeamWords = countWords(benefitToTeam)
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
@@ -81,10 +75,15 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                         }}
                       />
                     </FormControl>
+                    <WordCountIndicator
+                      schema={
+                        starExampleSchema.shape.result.shape[
+                          "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
+                        ]
+                      }
+                      text={benefitToTeam}
+                    />
                     <FormMessage />
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {benefitToTeamWords}
-                    </div>
                   </div>
                 </FormItem>
               )}

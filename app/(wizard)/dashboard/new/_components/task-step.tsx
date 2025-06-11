@@ -4,7 +4,8 @@
 
 import { useFormContext } from "react-hook-form"
 import { useMemo } from "react"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData, starExampleSchema } from "./pitch-wizard/schema"
+import WordCountIndicator from "./word-count-indicator"
 import {
   FormField,
   FormItem,
@@ -89,9 +90,14 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                         }}
                       />
                     </FormControl>
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {responsibilityWords}
-                    </div>
+                    <WordCountIndicator
+                      schema={
+                        starExampleSchema.shape.task.shape[
+                          "what-was-your-responsibility-in-addressing-this-issue"
+                        ]
+                      }
+                      text={responsibility}
+                    />
                   </div>
                 </FormItem>
               )}
@@ -131,9 +137,14 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
                         }}
                       />
                     </FormControl>
-                    <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                      {constraintsWords}
-                    </div>
+                    <WordCountIndicator
+                      schema={
+                        starExampleSchema.shape.task.shape[
+                          "what-constraints-or-requirements-did-you-need-to-consider"
+                        ]
+                      }
+                      text={constraints}
+                    />
                   </div>
                 </FormItem>
               )}

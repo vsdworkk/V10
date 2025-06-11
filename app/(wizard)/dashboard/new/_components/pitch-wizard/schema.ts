@@ -17,25 +17,28 @@ function countWords(text: string) {
  * Validate that a string has a word count within a specified range.
  */
 function wordRange(min: number, max: number) {
-  return z.string().refine(
-    val => {
-      const words = countWords(val)
-      return words >= min && words <= max
-    },
-    {
-      message: `Must be between ${min} and ${max} words`
-    }
-  )
+  return z
+    .string()
+    .describe(JSON.stringify({ minWords: min, maxWords: max }))
+    .refine(
+      val => {
+        const words = countWords(val)
+        return words >= min && words <= max
+      },
+      {
+        message: `Must be between ${min} and ${max} words`
+      }
+    )
 }
 
 // Zod schema for the wizard
-const actionStepSchema = z.object({
+export const actionStepSchema = z.object({
   stepNumber: z.number(),
   "what-did-you-specifically-do-in-this-step": wordRange(20, 150),
   "what-was-the-outcome-of-this-step-optional": wordRange(10, 150)
 })
 
-const starExampleSchema = z.object({
+export const starExampleSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": wordRange(15, 150),
     "briefly-describe-the-situation-or-challenge-you-faced": wordRange(20, 150)
