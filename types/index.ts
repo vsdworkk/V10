@@ -8,3 +8,4 @@ export * from "./star-types"
 // html2pdf-types.ts is a declaration file and doesn't need to be exported
 export * from "./wizard-types"
 export * from "./landing-types"
+export * from "./blog-types"

@@ -12,6 +12,7 @@ import { StepsSection } from "@/components/landing/steps-section"
 import { SocialProofSection } from "@/components/landing/social-proof-section"
 import NewPricingSection from "@/components/landing/new-pricing-section"
 import { FAQSection } from "@/components/landing/faq-section"
+import BlogSection from "@/components/landing/blog-section"
 
 export default async function HomePage() {
   const { userId } = await auth()
@@ -25,6 +26,7 @@ export default async function HomePage() {
       <SocialProofSection />
       <NewPricingSection userId={userId} />
       <FAQSection />
+      <BlogSection />
     </div>
   )
 }
