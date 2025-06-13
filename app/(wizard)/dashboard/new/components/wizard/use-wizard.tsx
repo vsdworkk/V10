@@ -290,7 +290,7 @@ export function useWizard({
           toast,
           setIsPitchLoading,
           setFinalPitchError,
-          currentStep
+          lastStarStep + 1
         )
       } catch (err) {
         // Error handling is done in the triggerFinalPitch function
@@ -331,10 +331,7 @@ export function useWizard({
         return
       }
 
-      // STEP 2: Advance UI immediately since validation passed
-      setCurrentStep(nextStep)
-
-      // STEP 3: Handle special case for moving to pitch generation
+      // STEP 2: Handle special case for moving to pitch generation BEFORE advancing UI
       const lastStarStep = 4 + starCount * 4
       if (currentStep === lastStarStep) {
         // Store the form data for pitch generation confirmation
@@ -343,7 +340,7 @@ export function useWizard({
 
         // Save data in background before showing confirmation dialog
         setIsSavingInBackground(true)
-        savePitchData(formData, pitchId, setPitchId, toast, nextStep)
+        savePitchData(formData, pitchId, setPitchId, toast, currentStep)
           .catch(error => {
             console.error("Failed to save before pitch generation:", error)
             // Don't show error toast here - the auto-save will handle retry
@@ -352,10 +349,13 @@ export function useWizard({
             setIsSavingInBackground(false)
           })
 
-        // Show the confirmation dialog
+        // Show the confirmation dialog WITHOUT advancing the UI yet
         setShowConfirmDialog(true)
         return
       }
+
+      // STEP 3: Advance UI for all other steps (not the last STAR step)
+      setCurrentStep(nextStep)
 
       // STEP 4: Save data to database in background (non-blocking)
       const formData = methods.getValues()
