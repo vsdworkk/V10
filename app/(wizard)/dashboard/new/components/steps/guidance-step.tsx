@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
 import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
+import { debugLog } from "@/lib/debug"
 import { PitchWizardFormData } from "../wizard/schema"
 import { useParams } from "next/navigation"
 import {
@@ -58,7 +59,7 @@ export default function GuidanceStep({
 
   // Initialize - request guidance if needed
   useEffect(() => {
-    console.log(
+    debugLog(
       "[GuidanceStep] Initial guidance check - albertGuidance:",
       albertGuidance ? "present" : "not present",
       "isLoading:",
@@ -76,7 +77,7 @@ export default function GuidanceStep({
       userId &&
       definitivePitchId
     ) {
-      console.log(
+      debugLog(
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
       fetchGuidance(
@@ -86,7 +87,7 @@ export default function GuidanceStep({
         definitivePitchId // Use the definitivePitchId
       )
     } else if (albertGuidance) {
-      console.log(
+      debugLog(
         "[GuidanceStep] Not fetching guidance as it already exists in form state"
       )
     }
@@ -103,7 +104,7 @@ export default function GuidanceStep({
 
   // Update form when guidance is received
   useEffect(() => {
-    console.log(
+    debugLog(
       "[GuidanceStep] useEffect for guidance update triggered. Hook guidance:",
       guidance,
       "isLoading:",
@@ -112,13 +113,10 @@ export default function GuidanceStep({
 
     // When guidance exists, update the form and ensure loading is stopped
     if (guidance) {
-      console.log(
-        "[GuidanceStep] Setting albertGuidance in form with:",
-        guidance
-      )
+      debugLog("[GuidanceStep] Setting albertGuidance in form with:", guidance)
       setValue("albertGuidance", guidance, { shouldDirty: true })
       if (requestId) {
-        console.log(
+        debugLog(
           "[GuidanceStep] Setting agentExecutionId in form with:",
           requestId
         )
@@ -169,7 +167,7 @@ export default function GuidanceStep({
   const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
 
   // Log form state of albertGuidance before rendering
-  console.log(
+  debugLog(
     "[GuidanceStep] Rendering with albertGuidance (from form watch):",
     albertGuidance
   )

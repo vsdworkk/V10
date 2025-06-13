@@ -1,3 +1,4 @@
+// Simple contact form example component
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { debugLog } from "@/lib/debug"
 import * as z from "zod"
 
 const formSchema = z.object({
@@ -30,7 +32,7 @@ export default function ContactForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // In a real app, you would handle the form submission here
     // For example, sending the data to your API route
-    console.log(values)
+    debugLog(values)
   }
 
   return (

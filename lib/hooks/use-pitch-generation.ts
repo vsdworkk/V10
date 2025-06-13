@@ -6,6 +6,7 @@ import {
   requestPitchGeneration,
   checkPitchGenerationStatus
 } from "@/lib/services/pitch-generation-service"
+import { debugLog } from "@/lib/debug"
 import type { StarJsonbSchema } from "@/db/schema/pitches-schema"
 
 export function usePitchGeneration() {
@@ -28,7 +29,7 @@ export function usePitchGeneration() {
     starExamplesCount: number
     pitchId: string // The pitch ID that will be used as the execution ID
   }) => {
-    console.log(
+    debugLog(
       "[usePitchGeneration] generatePitch called - setting isLoading to true"
     )
     setIsLoading(true)
@@ -38,7 +39,7 @@ export function usePitchGeneration() {
       const result = await requestPitchGeneration(pitchData)
 
       if (!result.isSuccess) {
-        console.log(
+        debugLog(
           "[usePitchGeneration] generatePitch received error:",
           result.message
         )
@@ -46,7 +47,7 @@ export function usePitchGeneration() {
       }
 
       // Store the pitch ID as the requestId - following the same pattern as guidance
-      console.log(
+      debugLog(
         "[usePitchGeneration] generatePitch succeeded, setting requestId:",
         result.data
       )
@@ -54,18 +55,18 @@ export function usePitchGeneration() {
 
       // Immediately check if we already have a pitch in the database
       setTimeout(() => {
-        console.log("[usePitchGeneration] Immediate check for existing pitch")
+        debugLog("[usePitchGeneration] Immediate check for existing pitch")
         checkPitchGenerationStatus(result.data)
           .then(statusResult => {
             if (statusResult.isSuccess && statusResult.data) {
-              console.log(
+              debugLog(
                 "[usePitchGeneration] Found pitch immediately:",
                 statusResult.data.substring(0, 20) + "..."
               )
               setPitchContent(statusResult.data)
               setIsLoading(false)
             } else {
-              console.log(
+              debugLog(
                 "[usePitchGeneration] No immediate pitch found, will poll"
               )
             }
@@ -124,13 +125,13 @@ export function usePitchGeneration() {
         const result = await checkPitchGenerationStatus(requestId)
 
         if (result.isSuccess && result.data) {
-          console.log(
+          debugLog(
             "[usePitchGeneration] Received successful pitch data from service"
           )
           if (isPolling) {
             // Check flag before updating state
             setPitchContent(result.data)
-            console.log("[usePitchGeneration] Setting isLoading to false")
+            debugLog("[usePitchGeneration] Setting isLoading to false")
             setIsLoading(false)
             isPolling = false // Stop polling
           }
@@ -139,11 +140,11 @@ export function usePitchGeneration() {
 
         // Continue polling if not complete
         attempts++
-        console.log(
+        debugLog(
           `[usePitchGeneration] Poll attempt ${attempts}/${maxAttempts}, continuing polling`
         )
         if (attempts >= maxAttempts) {
-          console.log(
+          debugLog(
             "[usePitchGeneration] Reached max attempts, setting error and stopping polling"
           )
           if (isPolling) {
@@ -187,9 +188,7 @@ export function usePitchGeneration() {
 
     // Cleanup
     return () => {
-      console.log(
-        "[usePitchGeneration] Cleanup function called, stopping polling"
-      )
+      debugLog("[usePitchGeneration] Cleanup function called, stopping polling")
       isPolling = false // Signal to stop polling on unmount
       attempts = maxAttempts // Force stop on unmount (legacy approach)
     }

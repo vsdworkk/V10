@@ -1,8 +1,10 @@
+// React hook for fetching AI guidance and polling for updates.
 import { useState, useEffect } from "react"
 import {
   requestGuidance,
   checkGuidanceStatus
 } from "@/lib/services/ai-guidance-service"
+import { debugLog } from "@/lib/debug"
 
 export function useAiGuidance() {
   const [isLoading, setIsLoading] = useState(false)
@@ -17,9 +19,7 @@ export function useAiGuidance() {
     userId: string,
     pitchId?: string
   ) => {
-    console.log(
-      "[useAiGuidance] fetchGuidance called - setting isLoading to true"
-    )
+    debugLog("[useAiGuidance] fetchGuidance called - setting isLoading to true")
     setIsLoading(true)
     setError(null)
 
@@ -32,14 +32,14 @@ export function useAiGuidance() {
       })
 
       if (!result.isSuccess) {
-        console.log(
+        debugLog(
           "[useAiGuidance] fetchGuidance received error:",
           result.message
         )
         throw new Error(result.message)
       }
 
-      console.log(
+      debugLog(
         "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
         result.data
       )
@@ -48,20 +48,18 @@ export function useAiGuidance() {
       // If we already have guidance in the database (e.g., from a previous request),
       // immediately check if it's available
       setTimeout(() => {
-        console.log("[useAiGuidance] Immediate check for existing guidance")
+        debugLog("[useAiGuidance] Immediate check for existing guidance")
         checkGuidanceStatus(result.data)
           .then(statusResult => {
             if (statusResult.isSuccess && statusResult.data) {
-              console.log(
+              debugLog(
                 "[useAiGuidance] Found guidance immediately:",
                 statusResult.data.substring(0, 20) + "..."
               )
               setGuidance(statusResult.data)
               setIsLoading(false)
             } else {
-              console.log(
-                "[useAiGuidance] No immediate guidance found, will poll"
-              )
+              debugLog("[useAiGuidance] No immediate guidance found, will poll")
             }
           })
           .catch(err =>
@@ -96,16 +94,16 @@ export function useAiGuidance() {
         const result = await checkGuidanceStatus(requestId)
 
         if (result.isSuccess && result.data) {
-          console.log(
+          debugLog(
             "[useAiGuidance] Received successful guidance data from service:",
             result.data
           )
           if (isPolling) {
             // Check flag before updating state
             setGuidance(result.data)
-            console.log("[useAiGuidance] Setting isLoading to false")
+            debugLog("[useAiGuidance] Setting isLoading to false")
             setIsLoading(false)
-            console.log(
+            debugLog(
               "[useAiGuidance] Current states - isLoading:",
               false,
               "guidance:",
@@ -118,11 +116,11 @@ export function useAiGuidance() {
 
         // Continue polling if not complete
         attempts++
-        console.log(
+        debugLog(
           `[useAiGuidance] Poll attempt ${attempts}/${maxAttempts}, continuing polling`
         )
         if (attempts >= maxAttempts) {
-          console.log(
+          debugLog(
             "[useAiGuidance] Reached max attempts, setting error and stopping polling"
           )
           if (isPolling) {
@@ -166,7 +164,7 @@ export function useAiGuidance() {
 
     // Cleanup
     return () => {
-      console.log("[useAiGuidance] Cleanup function called, stopping polling")
+      debugLog("[useAiGuidance] Cleanup function called, stopping polling")
       isPolling = false // Signal to stop polling on unmount
       attempts = maxAttempts // Force stop on unmount (legacy approach)
     }

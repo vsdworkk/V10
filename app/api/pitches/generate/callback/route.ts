@@ -1,6 +1,7 @@
 // Callback endpoint for PromptLayer pitch generation workflow
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Update the database using updatePitchByExecutionId which can find the record
     // using either the agentExecutionId field or the id field (the pitch ID)
     // This is the exact same pattern used by the guidance system
-    console.log(
+    debugLog(
       `Updating pitch with execution ID ${uniqueId} and pitch content (${htmlPitchContent.length} chars)`
     )
     const updateResult = await updatePitchByExecutionId(uniqueId, {
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: updateResult.message }, { status: 500 })
     }
 
-    console.log("Pitch saved successfully")
+    debugLog("Pitch saved successfully")
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("Error in pitch callback:", error)

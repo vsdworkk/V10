@@ -1,5 +1,7 @@
+// Callback endpoint for AI guidance workflow
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update the database
-    console.log(
+    debugLog(
       `Updating pitch with execution ID ${uniqueId} and guidance text (${albertGuidance.length} chars)`
     )
     const updateResult = await updatePitchByExecutionId(uniqueId, {
@@ -56,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: updateResult.message }, { status: 500 })
     }
 
-    console.log("Guidance saved successfully")
+    debugLog("Guidance saved successfully")
     return NextResponse.json({
       success: true,
       message: "Guidance saved successfully"

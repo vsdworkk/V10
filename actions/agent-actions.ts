@@ -9,6 +9,7 @@
 
 import { ActionState } from "@/types"
 import { StarSchema } from "@/db/schema/pitches-schema"
+import { debugLog } from "@/lib/debug"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -93,7 +94,7 @@ export async function generateAgentPitchAction(
     )
 
     const starComponents = JSON.stringify({ starExamples: starExamplesArray })
-    console.log("Formatted star components:", starComponents);
+    debugLog("Formatted star components:", starComponents);
 
     /* -------------------------------------------------------------- */
     /* 2.5 Generate a unique 6‑digit identifier                        */

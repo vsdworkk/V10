@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
 import { spendCreditsAction } from "@/actions/db/profiles-actions"
+import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      console.log(`Successfully updated pitch with execution ID: ${requestId}`)
+      debugLog(`Successfully updated pitch with execution ID: ${requestId}`)
     } catch (error) {
       console.error(`Error updating pitch with execution ID: ${error}`)
       return NextResponse.json(

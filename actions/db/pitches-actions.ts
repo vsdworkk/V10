@@ -18,6 +18,7 @@ import {
   SelectPitch,
   pitchesTable
 } from "@/db/schema/pitches-schema"
+import { debugLog } from "@/lib/debug"
 import { eq, and, desc, or } from "drizzle-orm"
 import { ActionState } from "@/types"
 
@@ -79,7 +80,7 @@ export async function getPitchByExecutionIdAction(
 
     // If not found, try finding by pitch ID
     if (!pitch) {
-      console.log(`[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`)
+      debugLog(`[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`)
       ;[pitch] = await db
         .select()
         .from(pitchesTable)
@@ -146,8 +147,8 @@ export async function updatePitchByExecutionId(
   execId: string,
   updatedData: Partial<InsertPitch>
 ): Promise<ActionState<SelectPitch>> {
-  console.log(`[updatePitchByExecutionId] Starting with execId: ${execId}`)
-  console.log(`[updatePitchByExecutionId] Updating with data size:`, 
+  debugLog(`[updatePitchByExecutionId] Starting with execId: ${execId}`)
+  debugLog(`[updatePitchByExecutionId] Updating with data size:`, 
     updatedData.pitchContent ? updatedData.pitchContent.length + " chars" : "No content")
   
   try {
@@ -161,7 +162,7 @@ export async function updatePitchByExecutionId(
     // If not found by agentExecutionId, try finding by pitch ID 
     // (this supports our new approach where pitch ID = execution ID)
     if (existing.length === 0) {
-      console.log(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`)
+      debugLog(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`)
       existing = await db
         .select({ id: pitchesTable.id })
         .from(pitchesTable)
@@ -174,7 +175,7 @@ export async function updatePitchByExecutionId(
       return { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
     }
     
-    console.log(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
+    debugLog(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
     
     // Update by either agentExecutionId or id, depending on which one is more likely to match
     const [updated] = await db
@@ -194,7 +195,7 @@ export async function updatePitchByExecutionId(
       return { isSuccess: false, message: "Update operation failed" }
     }
     
-    console.log(`[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`)
+    debugLog(`[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`)
     return { isSuccess: true, message: "Pitch updated", data: updated }
   } catch (err) {
     console.error(`[updatePitchByExecutionId] Error:`, err)
