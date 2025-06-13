@@ -49,10 +49,16 @@ interface DashboardSidebarProps {
 
 /**
  * @function DashboardSidebar
- * @returns JSX element rendering a vertical sidebar with placeholder nav links
+ * @description
+ * Server component that provides navigation for the dashboard.
+ * Displays user credits and main action buttons.
+ *
+ * @param {DashboardSidebarProps} props - The userId for the current user
+ * @returns JSX Element for the dashboard sidebar
+ *
  * @notes
- * - We'll rely on Clerk for user info if we need to conditionally display items.
- * - For now, we just show a static list of links for pitch management.
+ * - OPTIMIZATION: Efficient profile data fetching
+ * - Credits display updates when user performs credit-consuming actions
  */
 export default async function DashboardSidebar({
   userId

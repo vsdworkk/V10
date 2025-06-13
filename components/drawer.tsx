@@ -17,6 +17,7 @@ import { siteConfig } from "@/lib/config"
 import { cn } from "@/lib/utils"
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { IoMenuSharp } from "react-icons/io5"
 
 // Type guard functions
@@ -29,6 +30,12 @@ function isLinkItem(item: any): item is { href: string; label: string } {
 }
 
 export default function MobileDrawer() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <Drawer>
       <DrawerTrigger>
@@ -59,47 +66,53 @@ export default function MobileDrawer() {
                   ) : null}
                 </li>
               ))}
-              <SignedIn>
-                <li className="my-3">
-                  <Link href="/dashboard" className="font-semibold">
-                    Dashboard
-                  </Link>
-                </li>
-              </SignedIn>
+              {mounted && (
+                <SignedIn>
+                  <li className="my-3">
+                    <Link href="/dashboard" className="font-semibold">
+                      Dashboard
+                    </Link>
+                  </li>
+                </SignedIn>
+              )}
             </ul>
           </nav>
         </DrawerHeader>
         <DrawerFooter>
-          <SignedOut>
-            <Link
-              href="/login"
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className={cn(
-                buttonVariants({ variant: "default" }),
-                "text-background flex w-full gap-2 sm:w-auto"
-              )}
-            >
-              <Icons.logo className="size-6" />
-              Get Started For Free
-            </Link>
-          </SignedOut>
-          <SignedIn>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">Signed in</span>
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "w-8 h-8"
-                  }
-                }}
-              />
-            </div>
-          </SignedIn>
+          {mounted && (
+            <>
+              <SignedOut>
+                <Link
+                  href="/login"
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "text-background flex w-full gap-2 sm:w-auto"
+                  )}
+                >
+                  <Icons.logo className="size-6" />
+                  Get Started For Free
+                </Link>
+              </SignedOut>
+              <SignedIn>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-sm">Signed in</span>
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-8 h-8"
+                      }
+                    }}
+                  />
+                </div>
+              </SignedIn>
+            </>
+          )}
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

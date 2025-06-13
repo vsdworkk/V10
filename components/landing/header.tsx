@@ -17,8 +17,11 @@ import { useEffect, useState } from "react"
 
 export default function Header() {
   const [addBorder, setAddBorder] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setAddBorder(true)
@@ -33,6 +36,41 @@ export default function Header() {
       window.removeEventListener("scroll", handleScroll)
     }
   }, [])
+
+  // Prevent hydration mismatch by not rendering auth-dependent content until mounted
+  if (!mounted) {
+    return (
+      <header className="bg-background/60 relative sticky top-0 z-50 py-2 backdrop-blur">
+        <div className="container flex items-center justify-between">
+          <Link
+            href="/"
+            title="brand-logo"
+            className="relative mr-6 flex items-center space-x-2"
+          >
+            <Icons.logo className="h-[40px] w-auto" />
+            <span className="text-xl font-bold">{siteConfig.name}</span>
+          </Link>
+
+          <div className="hidden lg:block">
+            <div className="flex items-center">
+              <nav className="mr-1">
+                <Menu />
+              </nav>
+              {/* Placeholder for auth buttons to maintain layout */}
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-20 animate-pulse rounded bg-gray-200" />
+                <div className="h-10 w-32 animate-pulse rounded bg-gray-200" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-2 block cursor-pointer lg:hidden">
+            <MobileDrawer />
+          </div>
+        </div>
+      </header>
+    )
+  }
 
   return (
     <header
