@@ -54,6 +54,7 @@ export function useWizard({
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [isSavingInBackground, setIsSavingInBackground] = useState(false)
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -181,13 +182,16 @@ export function useWizard({
   useEffect(() => {
     if (!pitchId || currentStep <= 1) return
     const timeout = setTimeout(() => {
+      setIsSavingInBackground(true)
       savePitchData(
         methods.getValues(),
         pitchId,
         setPitchId,
         toast,
         currentStep
-      )
+      ).finally(() => {
+        setIsSavingInBackground(false)
+      })
     }, 1000)
 
     return () => clearTimeout(timeout)
@@ -222,14 +226,29 @@ export function useWizard({
 
       const targetStep = firstStepOfSection(target, starCount)
       if (targetStep <= currentStep) {
-        await savePitchData(
+        // Advance UI immediately for better UX
+        setCurrentStep(targetStep)
+        
+        // Save data to database in background (non-blocking)
+        setIsSavingInBackground(true)
+        savePitchData(
           methods.getValues(),
           pitchId,
           setPitchId,
           toast,
           targetStep
-        )
-        setCurrentStep(targetStep)
+        ).catch(error => {
+          console.error("Section navigation save failed:", error)
+          
+          // Show user-friendly error without blocking navigation
+          toast({
+            title: "Save Warning",
+            description: "Your progress will be saved automatically.",
+            variant: "default"
+          })
+        }).finally(() => {
+          setIsSavingInBackground(false)
+        })
       }
     },
     [
@@ -301,28 +320,71 @@ export function useWizard({
     }
 
     setIsNavigating(true)
+    
     try {
-      // Validate current step fields
+      // STEP 1: Fast local validation (blocking) - must pass to proceed
       const isValid = await validateStep(currentStep, starCount, methods)
-      if (!isValid) return
+      if (!isValid) {
+        // Validation failed - do not advance and do not save
+        return
+      }
 
-      // Save current step's data but persist the next step number
-      const formData = methods.getValues()
-      await savePitchData(formData, pitchId, setPitchId, toast, nextStep)
-
-      // Check if we're moving from last STAR step to review
+      // STEP 2: Advance UI immediately since validation passed
+      setCurrentStep(nextStep)
+      
+      // STEP 3: Handle special case for moving to pitch generation
       const lastStarStep = 4 + starCount * 4
       if (currentStep === lastStarStep) {
-        // Store the form data for later use
+        // Store the form data for pitch generation confirmation
+        const formData = methods.getValues()
         pendingFormDataRef.current = formData
+        
+        // Save data in background before showing confirmation dialog
+        setIsSavingInBackground(true)
+        savePitchData(formData, pitchId, setPitchId, toast, nextStep)
+          .catch(error => {
+            console.error("Failed to save before pitch generation:", error)
+            // Don't show error toast here - the auto-save will handle retry
+          })
+          .finally(() => {
+            setIsSavingInBackground(false)
+          })
 
         // Show the confirmation dialog
         setShowConfirmDialog(true)
         return
       }
 
-      // Proceed to next step
-      setCurrentStep(nextStep)
+      // STEP 4: Save data to database in background (non-blocking)
+      const formData = methods.getValues()
+      setIsSavingInBackground(true)
+      savePitchData(formData, pitchId, setPitchId, toast, nextStep)
+        .catch(error => {
+          console.error("Background save failed:", error)
+          
+          // Show user-friendly error without blocking their progress
+          toast({
+            title: "Save Warning",
+            description: "Your progress will be saved automatically. You can continue working.",
+            variant: "default" // Use default instead of destructive to be less alarming
+          })
+          
+          // The auto-save effect will retry the save operation
+        })
+        .finally(() => {
+          setIsSavingInBackground(false)
+        })
+
+    } catch (error) {
+      console.error("Unexpected error in handleNext:", error)
+      
+      // Handle unexpected validation errors gracefully
+      toast({
+        title: "Validation Error",
+        description: "Please check your inputs and try again.",
+        variant: "destructive"
+      })
+      
     } finally {
       setIsNavigating(false)
     }
@@ -332,6 +394,7 @@ export function useWizard({
     totalSteps,
     methods,
     pitchId,
+    setPitchId,
     toast,
     isNavigating
   ])
@@ -388,6 +451,7 @@ export function useWizard({
     isPitchLoading,
     finalPitchError,
     isNavigating,
+    isSavingInBackground,
     // Confirmation dialog state
     showConfirmDialog,
     setShowConfirmDialog,
