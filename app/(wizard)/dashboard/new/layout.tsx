@@ -1,7 +1,7 @@
 // app/(wizard)/dashboard/new/layout.tsx
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useLayoutEffect, useState, useRef } from "react"
 import SectionProgressSidebar from "./components/progress/section-progress-bar"
 import MobileProgressHeader from "./components/progress/mobile-progress-header"
 import { Section } from "@/types"
@@ -48,7 +48,7 @@ export default function PitchWizardLayout({
   }
 
   // Listen for section changes from the wizard
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleSectionChange = (e: any) => {
       if (e.detail && e.detail.section) {
         const newSection = e.detail.section
