@@ -2,8 +2,8 @@
 
 // Task step collects responsibility and optional constraints for each STAR example
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData, starExampleSchema } from "./pitch-wizard/schema"
-import StarFieldComponent from "./star-field-component"
+import { PitchWizardFormData, starExampleSchema } from "../wizard/schema"
+import StarFieldComponent from "../utilities/star-field-component"
 
 interface TaskStepProps {
   /**

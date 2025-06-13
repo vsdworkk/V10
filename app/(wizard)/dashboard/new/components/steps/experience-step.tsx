@@ -18,7 +18,7 @@ actual file upload if a file is present.
 */
 "use client"
 import { useFormContext } from "react-hook-form"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData } from "../wizard/schema"
 import {
   FormField,
   FormItem,

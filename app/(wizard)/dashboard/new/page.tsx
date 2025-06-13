@@ -21,8 +21,8 @@
 
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import PitchWizard from "./_components/pitch-wizard"
-import CheckStoredPitch from "./_components/check-stored-pitch"
+import PitchWizard from "./components/wizard"
+import CheckStoredPitch from "./components/utilities/check-stored-pitch"
 
 interface CreateNewPitchPageProps {
   searchParams: Promise<{ step?: string }>

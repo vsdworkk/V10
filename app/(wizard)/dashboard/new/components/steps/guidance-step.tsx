@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
 import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData } from "../wizard/schema"
 import { useParams } from "next/navigation"
 import {
   Accordion,

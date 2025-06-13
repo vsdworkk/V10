@@ -2,8 +2,8 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import SectionProgressSidebar from "./_components/section-progress-bar"
-import MobileProgressHeader from "./_components/mobile-progress-header"
+import SectionProgressSidebar from "./components/progress/section-progress-bar"
+import MobileProgressHeader from "./components/progress/mobile-progress-header"
 import { Section } from "@/types"
 import { useRouter } from "next/navigation"
 

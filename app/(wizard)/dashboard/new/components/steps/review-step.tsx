@@ -16,7 +16,7 @@ import React, { useEffect, useRef } from "react"
 import { useFormContext } from "react-hook-form"
 import { useToast } from "@/lib/hooks/use-toast"
 import { usePitchGeneration } from "@/lib/hooks/use-pitch-generation"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData } from "../wizard/schema"
 import {
   Bold,
   Italic,
@@ -39,7 +39,7 @@ import OrderedListExtension from "@tiptap/extension-ordered-list"
 import ListItemExtension from "@tiptap/extension-list-item"
 import CharacterCountExtension from "@tiptap/extension-character-count"
 import { Button } from "@/components/ui/button"
-import AIThinkingLoader from "./ai-thinking-loader"
+import AIThinkingLoader from "../utilities/ai-thinking-loader"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ReviewStepProps {
