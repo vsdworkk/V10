@@ -24,7 +24,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
-import PitchWizard from "@/app/(wizard)/dashboard/new/_components/pitch-wizard"
+import PitchWizard from "@/app/(wizard)/dashboard/new/components/wizard"
 
 interface ResumePitchPageProps {
   params: Promise<{ pitchId: string }>

@@ -3,7 +3,7 @@
 
 import { useFormContext } from "react-hook-form"
 import { ZodTypeAny } from "zod"
-import { PitchWizardFormData } from "./pitch-wizard/schema"
+import { PitchWizardFormData } from "../wizard/schema"
 import WordCountIndicator from "./word-count-indicator"
 import {
   FormField,
