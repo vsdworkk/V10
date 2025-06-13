@@ -15,7 +15,7 @@ interface BlogListingClientProps {
 export default function BlogListingClient({
   initialPosts,
   categories,
-  tags,
+  tags
 }: BlogListingClientProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
@@ -51,20 +51,20 @@ export default function BlogListingClient({
       />
 
       <div className="mb-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Showing {filteredPosts.length} of {initialPosts.length} posts
         </p>
       </div>
 
       {filteredPosts.length === 0 ? (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <div className="text-muted-foreground">
-            <h3 className="text-lg font-semibold mb-2">No posts found</h3>
+            <h3 className="mb-2 text-lg font-semibold">No posts found</h3>
             <p>Try adjusting your search or filter criteria.</p>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {filteredPosts.map((post, idx) => (
             <BlogCard key={post.slug} data={post} priority={idx <= 2} />
           ))}
@@ -72,4 +72,4 @@ export default function BlogListingClient({
       )}
     </div>
   )
-} 
+}

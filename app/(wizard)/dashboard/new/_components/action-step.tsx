@@ -350,14 +350,18 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     formState: { errors }
   } = useFormContext<PitchWizardFormData>()
   const stepIndex = step.position - 1
-  
+
   // Helper function to get word count limits from schema
   const getWordLimits = (fieldSchema: any) => {
     try {
-      const desc = fieldSchema._def?.schema?.description || fieldSchema.description
+      const desc =
+        fieldSchema._def?.schema?.description || fieldSchema.description
       if (desc) {
         const data = JSON.parse(desc)
-        if (typeof data.minWords === "number" && typeof data.maxWords === "number") {
+        if (
+          typeof data.minWords === "number" &&
+          typeof data.maxWords === "number"
+        ) {
           return { min: data.minWords, max: data.maxWords }
         }
       }
@@ -366,10 +370,14 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     }
     return { min: 20, max: 150 } // Default fallback
   }
-  
-  const whatLimits = getWordLimits(actionStepSchema.shape["what-did-you-specifically-do-in-this-step"])
-  const outcomeLimits = getWordLimits(actionStepSchema.shape["what-was-the-outcome-of-this-step-optional"])
-  
+
+  const whatLimits = getWordLimits(
+    actionStepSchema.shape["what-did-you-specifically-do-in-this-step"]
+  )
+  const outcomeLimits = getWordLimits(
+    actionStepSchema.shape["what-was-the-outcome-of-this-step-optional"]
+  )
+
   const [what, setWhat] = useState<string>(
     step["what-did-you-specifically-do-in-this-step"] || ""
   )
@@ -386,17 +394,20 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
   const isValidStep = () => {
     const whatWords = what.trim().split(/\s+/).filter(Boolean).length
     const outcomeWords = outcome.trim().split(/\s+/).filter(Boolean).length
-    
+
     // "What" field is required and must meet schema requirements
     if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
       return false
     }
-    
+
     // "Outcome" field is optional, but if filled, must meet schema requirements
-    if (outcome.trim() && (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)) {
+    if (
+      outcome.trim() &&
+      (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)
+    ) {
       return false
     }
-    
+
     return true
   }
 
@@ -406,27 +417,36 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     // Validate word counts before saving
     const whatWords = what.trim().split(/\s+/).filter(Boolean).length
     const outcomeWords = outcome.trim().split(/\s+/).filter(Boolean).length
-    
+
     const failedFields: string[] = []
-    
+
     // Validate "what" field (required)
     if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
-      failedFields.push(`starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`)
+      failedFields.push(
+        `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`
+      )
     }
-    
+
     // Validate "outcome" field (optional, but if filled, must meet requirements)
-    if (outcome.trim() && (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)) {
-      failedFields.push(`starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`)
+    if (
+      outcome.trim() &&
+      (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)
+    ) {
+      failedFields.push(
+        `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`
+      )
     }
-    
+
     // If validation failed, trigger shake animation and don't save
     if (failedFields.length > 0) {
-      window.dispatchEvent(new CustomEvent('wordCountShake', {
-        detail: { fieldNames: failedFields }
-      }))
+      window.dispatchEvent(
+        new CustomEvent("wordCountShake", {
+          detail: { fieldNames: failedFields }
+        })
+      )
       return // Don't save if validation fails
     }
-    
+
     // Only save if validation passes
     onSave(step.id, what ?? "", outcome ?? "")
   }
@@ -564,14 +584,16 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
           <Button
             type="button"
             className={`mt-2 rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 ${
-              canSave 
-                ? "hover:brightness-110 cursor-pointer" 
-                : "opacity-50 cursor-not-allowed"
+              canSave
+                ? "cursor-pointer hover:brightness-110"
+                : "cursor-not-allowed opacity-50"
             }`}
             style={{ backgroundColor: canSave ? "#444ec1" : "#9ca3af" }}
             onClick={handleSave}
             disabled={!canSave}
-            title={canSave ? "" : "Please meet word count requirements before saving"}
+            title={
+              canSave ? "" : "Please meet word count requirements before saving"
+            }
           >
             Save Step {step.position}
           </Button>

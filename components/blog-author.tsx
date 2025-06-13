@@ -17,7 +17,7 @@ export default function Author({
   image,
   twitterUsername,
   updatedAt,
-  imageOnly,
+  imageOnly
 }: AuthorProps) {
   if (imageOnly) {
     return (
@@ -74,4 +74,4 @@ export default function Author({
       </div>
     </Link>
   )
-} 
+}
