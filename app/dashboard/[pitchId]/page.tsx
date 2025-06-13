@@ -11,17 +11,16 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
-import dynamic from "next/dynamic"
 import PitchEditor from "./_components/pitch-editor"
 
 interface PitchDetailPageProps {
-  params: Promise<{ pitchId: string }>
+  params: { pitchId: string }
 }
 
 export default async function PitchDetailPage({
   params
 }: PitchDetailPageProps) {
-  const { pitchId } = await params
+  const { pitchId } = params
 
   const { userId } = await auth()
   if (!userId) {

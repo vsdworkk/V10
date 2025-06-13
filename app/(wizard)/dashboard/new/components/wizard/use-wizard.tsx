@@ -418,9 +418,11 @@ export function useWizard({
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
   // Handler for "Save & Close" button
-  const handleSaveAndClose = useCallback(async () => {
+  const handleSaveAndClose = useCallback(() => {
     const data = methods.getValues()
-    await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+    // Fire-and-forget save operation
+    savePitchData(data, pitchId, setPitchId, toast, currentStep)
+    // Navigate immediately for optimistic UI
     router.push("/dashboard")
   }, [methods, pitchId, currentStep, toast, router])
 
