@@ -16,22 +16,25 @@ export default async function BlogSection() {
 
   return (
     <Section title="Blog" subtitle="Latest Articles">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {articles.map((data, idx) => (
           <BlogCard key={data.slug} data={data} priority={idx <= 1} />
         ))}
       </div>
-      
+
       {allPosts.length > 3 && (
         <div className="text-center">
           <Link href="/blog">
-            <Button variant="outline" className="inline-flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="inline-flex items-center gap-2"
+            >
               View All Posts
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="size-4" />
             </Button>
           </Link>
         </div>
       )}
     </Section>
   )
-} 
+}

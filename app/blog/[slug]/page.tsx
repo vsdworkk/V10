@@ -20,11 +20,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <article className="container mx-auto max-w-4xl px-4 py-16">
         <header className="mb-8">
           {post.categories && post.categories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {post.categories.map((category) => (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {post.categories.map(category => (
                 <span
                   key={category}
-                  className="px-3 py-1 text-sm font-medium bg-primary/10 text-primary rounded-full"
+                  className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium"
                 >
                   {category}
                 </span>
@@ -32,11 +32,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           )}
 
-          <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-          
-          <div className="flex items-center justify-between mb-6">
+          <h1 className="mb-4 text-4xl font-bold">{post.title}</h1>
+
+          <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <time 
+              <time
                 dateTime={post.publishedAt}
                 className="text-muted-foreground"
               >
@@ -47,24 +47,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
 
             {post.readingTime && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="mr-1 h-4 w-4" />
+              <div className="text-muted-foreground flex items-center text-sm">
+                <Clock className="mr-1 size-4" />
                 {post.readingTime} min read
               </div>
             )}
           </div>
 
           {post.summary && (
-            <p className="text-xl text-muted-foreground mb-8">{post.summary}</p>
+            <p className="text-muted-foreground mb-8 text-xl">{post.summary}</p>
           )}
 
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-8 pb-8 border-b">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              {post.tags.map((tag) => (
+            <div className="mb-8 flex flex-wrap items-center gap-2 border-b pb-8">
+              <Tag className="text-muted-foreground size-4" />
+              {post.tags.map(tag => (
                 <span
                   key={tag}
-                  className="px-2 py-1 text-sm text-muted-foreground bg-muted rounded"
+                  className="text-muted-foreground bg-muted rounded px-2 py-1 text-sm"
                 >
                   #{tag}
                 </span>
@@ -73,7 +73,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           )}
         </header>
 
-        <div 
+        <div
           className="prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: post.source }}
         />
@@ -88,11 +88,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 export async function generateStaticParams() {
   try {
     const posts = await getBlogPosts()
-    return posts.map((post) => ({
-      slug: post.slug,
+    return posts.map(post => ({
+      slug: post.slug
     }))
   } catch (error) {
     console.error("Error generating static params:", error)
     return []
   }
-} 
+}

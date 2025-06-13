@@ -18,4 +18,4 @@ export interface BlogSearchParams {
   search?: string
   category?: string
   tag?: string
-} 
+}

@@ -9,7 +9,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select"
 
 interface BlogSearchProps {
@@ -31,7 +31,7 @@ export default function BlogSearch({
   tags,
   searchTerm,
   selectedCategory,
-  selectedTag,
+  selectedTag
 }: BlogSearchProps) {
   const [localSearch, setLocalSearch] = useState(searchTerm)
 
@@ -58,16 +58,16 @@ export default function BlogSearch({
   const hasActiveFilters = searchTerm || selectedCategory || selectedTag
 
   return (
-    <div className="bg-background border rounded-lg p-6 mb-8">
+    <div className="bg-background mb-8 rounded-lg border p-6">
       <form onSubmit={handleSearchSubmit} className="space-y-4">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute left-3 top-3 size-4" />
             <Input
               type="text"
               placeholder="Search blog posts..."
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={e => setLocalSearch(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -75,11 +75,11 @@ export default function BlogSearch({
             Search
           </Button>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4">
+
+        <div className="flex flex-col gap-4 sm:flex-row">
           <div className="flex-1">
-            <Select 
-              value={selectedCategory || "all"} 
+            <Select
+              value={selectedCategory || "all"}
               onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
@@ -87,7 +87,7 @@ export default function BlogSearch({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
+                {categories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>
@@ -95,10 +95,10 @@ export default function BlogSearch({
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex-1">
-            <Select 
-              value={selectedTag || "all"} 
+            <Select
+              value={selectedTag || "all"}
               onValueChange={handleTagChange}
             >
               <SelectTrigger>
@@ -106,7 +106,7 @@ export default function BlogSearch({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tags</SelectItem>
-                {tags.map((tag) => (
+                {tags.map(tag => (
                   <SelectItem key={tag} value={tag}>
                     #{tag}
                   </SelectItem>
@@ -114,36 +114,36 @@ export default function BlogSearch({
               </SelectContent>
             </Select>
           </div>
-          
+
           {hasActiveFilters && (
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={clearFilters}
               className="flex items-center gap-2"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
               Clear
             </Button>
           )}
         </div>
       </form>
-      
+
       {hasActiveFilters && (
-        <div className="mt-4 pt-4 border-t">
+        <div className="mt-4 border-t pt-4">
           <div className="flex flex-wrap gap-2">
             {searchTerm && (
-              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+              <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800">
                 Search: "{searchTerm}"
               </span>
             )}
             {selectedCategory && (
-              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+              <span className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">
                 Category: {selectedCategory}
               </span>
             )}
             {selectedTag && (
-              <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+              <span className="rounded-full bg-purple-100 px-2 py-1 text-xs text-purple-800">
                 Tag: #{selectedTag}
               </span>
             )}
@@ -152,4 +152,4 @@ export default function BlogSearch({
       )}
     </div>
   )
-} 
+}

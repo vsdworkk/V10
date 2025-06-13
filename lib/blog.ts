@@ -23,18 +23,20 @@ function parseFrontmatter(fileContent: string) {
   let frontMatterLines = frontMatterBlock.trim().split("\n")
   let metadata: any = {}
 
-  frontMatterLines.forEach((line) => {
+  frontMatterLines.forEach(line => {
     let [key, ...valueArr] = line.split(": ")
     let value = valueArr.join(": ").trim()
     value = value.replace(/^['"](.*)['"]$/, "$1") // Remove quotes
-    
+
     // Handle arrays for categories and tags
     if (key.trim() === "categories" || key.trim() === "tags") {
       if (value.startsWith("[") && value.endsWith("]")) {
         // Parse array format: ["item1", "item2"]
-        const arrayValue = value.slice(1, -1).split(",").map(item => 
-          item.trim().replace(/^['"](.*)['"]$/, "$1")
-        ).filter(item => item.length > 0)
+        const arrayValue = value
+          .slice(1, -1)
+          .split(",")
+          .map(item => item.trim().replace(/^['"](.*)['"]$/, "$1"))
+          .filter(item => item.length > 0)
         metadata[key.trim()] = arrayValue
       } else {
         // Single value, convert to array
@@ -49,7 +51,7 @@ function parseFrontmatter(fileContent: string) {
 }
 
 function getMDXFiles(dir: string) {
-  return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx")
+  return fs.readdirSync(dir).filter(file => path.extname(file) === ".mdx")
 }
 
 export async function markdownToHTML(markdown: string) {
@@ -60,9 +62,9 @@ export async function markdownToHTML(markdown: string) {
     .use(rehypePrettyCode, {
       theme: {
         light: "min-light",
-        dark: "min-dark",
+        dark: "min-dark"
       },
-      keepBackground: false,
+      keepBackground: false
     })
     .use(rehypeStringify)
     .process(markdown)
@@ -77,20 +79,20 @@ export async function getPost(slug: string): Promise<BlogPostData> {
   const content = await markdownToHTML(rawContent)
   const defaultImage = `/og?title=${encodeURIComponent(metadata.title)}`
   const readingTime = calculateReadingTime(rawContent)
-  
+
   return {
     source: content,
     ...metadata,
     image: metadata.image || defaultImage,
     readingTime,
-    slug,
+    slug
   } as BlogPostData
 }
 
 async function getAllPosts(dir: string): Promise<BlogPostData[]> {
   const mdxFiles = getMDXFiles(dir)
   return Promise.all(
-    mdxFiles.map(async (file) => {
+    mdxFiles.map(async file => {
       const slug = path.basename(file, path.extname(file))
       return await getPost(slug)
     })
@@ -129,4 +131,4 @@ export async function getUniqueCategoriesAndTags(): Promise<{
     console.error("Error getting categories and tags:", error)
     return { categories: [], tags: [] }
   }
-} 
+}

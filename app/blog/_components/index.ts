@@ -1,1 +1,1 @@
-export { default as BlogListingClient } from './blog-listing-client' 
+export { default as BlogListingClient } from "./blog-listing-client"

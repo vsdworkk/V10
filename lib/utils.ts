@@ -24,7 +24,7 @@ export function formatDate(date: string) {
   let fullDate = new Date(date).toLocaleString("en-us", {
     month: "long",
     day: "numeric",
-    year: "numeric",
+    year: "numeric"
   })
 
   if (daysAgo < 1) {

@@ -14,9 +14,9 @@ function getLimits(schema: ZodTypeAny) {
   if ((schema as any)._def?.schema) {
     actualSchema = (schema as any)._def.schema
   }
-  
+
   const desc = (actualSchema as any).description
-  
+
   if (!desc) {
     return null
   }
@@ -53,11 +53,11 @@ export default function WordCountIndicator({
   useEffect(() => {
     const handleShakeEvent = (event: CustomEvent) => {
       const { fieldNames } = event.detail
-      
+
       // If no fieldName provided or this field is in the target list, shake
       if (!fieldName || fieldNames.includes(fieldName)) {
         setIsShaking(true)
-        
+
         // Reset shake after animation completes
         setTimeout(() => {
           setIsShaking(false)
@@ -65,10 +65,13 @@ export default function WordCountIndicator({
       }
     }
 
-    window.addEventListener('wordCountShake', handleShakeEvent as EventListener)
-    
+    window.addEventListener("wordCountShake", handleShakeEvent as EventListener)
+
     return () => {
-      window.removeEventListener('wordCountShake', handleShakeEvent as EventListener)
+      window.removeEventListener(
+        "wordCountShake",
+        handleShakeEvent as EventListener
+      )
     }
   }, [fieldName])
 
@@ -105,9 +108,9 @@ export default function WordCountIndicator({
   }
 
   return (
-    <div 
+    <div
       className={`mt-2 flex items-center justify-between text-xs transition-all duration-150 ${
-        isShaking ? 'animate-shake' : ''
+        isShaking ? "animate-shake" : ""
       }`}
     >
       <div className="flex items-center space-x-2 text-gray-500">
