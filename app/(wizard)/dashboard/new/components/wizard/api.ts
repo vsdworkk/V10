@@ -1,6 +1,7 @@
 import { UseFormReturn } from "react-hook-form"
 import { PitchWizardFormData } from "./schema"
 import { createPitchPayload } from "./helpers"
+import { debugLog } from "@/lib/debug"
 
 type ToastFunction = (props: {
   title: string
@@ -19,25 +20,23 @@ export async function savePitchData(
   currentStep: number = 1
 ) {
   const payload = createPitchPayload(data, pitchId, currentStep)
-  console.log(`[savePitchData] Starting save for step ${currentStep}`)
-  console.log(`[savePitchData] Saving pitch data for step ${currentStep}`, {
+  debugLog(`[savePitchData] Starting save for step ${currentStep}`)
+  debugLog(`[savePitchData] Saving pitch data for step ${currentStep}`, {
     pitchId,
     payloadKeys: Object.keys(payload),
     hasStarExamples: !!payload.starExamples?.length
   })
-  console.log("[savePitchData] Payload being sent:", payload)
+  debugLog("[savePitchData] Payload being sent:", payload)
 
   try {
-    console.log(`[savePitchData] Sending request to /api/pitches`)
+    debugLog(`[savePitchData] Sending request to /api/pitches`)
     const res = await fetch("/api/pitches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
 
-    console.log(
-      `[savePitchData] Response status: ${res.status} ${res.statusText}`
-    )
+    debugLog(`[savePitchData] Response status: ${res.status} ${res.statusText}`)
     if (!res.ok) {
       const errorText = await res.text()
       console.error(
@@ -48,17 +47,17 @@ export async function savePitchData(
     }
 
     const json = await res.json()
-    console.log("[savePitchData] Full API Response JSON:", json)
-    console.log(`[savePitchData] Response data (parsed):`, {
+    debugLog("[savePitchData] Full API Response JSON:", json)
+    debugLog(`[savePitchData] Response data (parsed):`, {
       success: !!json.data,
       id: json.data?.id,
       message: json.message
     })
 
-    console.log(`[savePitchData] Step ${currentStep} saved successfully`)
+    debugLog(`[savePitchData] Step ${currentStep} saved successfully`)
 
     if (json.data?.id) {
-      console.log(`[savePitchData] Setting pitch ID: ${json.data.id}`)
+      debugLog(`[savePitchData] Setting pitch ID: ${json.data.id}`)
       setPitchId(json.data.id)
     }
 

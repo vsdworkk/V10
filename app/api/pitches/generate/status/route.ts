@@ -1,6 +1,7 @@
 // Poll for pitch generation completion by execution ID
 import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
+import { debugLog } from "@/lib/debug"
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     // getPitchByExecutionIdAction is designed to look up by BOTH agentExecutionId and id fields
     // This is the exact same pattern used by the guidance system
     const result = await getPitchByExecutionIdAction(requestId)
-    console.log(
+    debugLog(
       `Pitch status check for requestId ${requestId}: ${result.isSuccess ? "found" : "not found"}`
     )
 

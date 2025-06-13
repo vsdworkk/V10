@@ -1,6 +1,7 @@
 // Validation helpers for the pitch wizard steps
 import { UseFormReturn } from "react-hook-form"
 import { PitchWizardFormData } from "./schema"
+import { debugLog } from "@/lib/debug"
 
 /**
  * Validates fields for a specific step in the wizard
@@ -226,6 +227,6 @@ export async function validateStep(
     }
   }
 
-  console.log(`Step ${step} validation result:`, result)
+  debugLog(`Step ${step} validation result:`, result)
   return result
 }

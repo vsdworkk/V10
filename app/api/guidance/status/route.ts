@@ -1,5 +1,7 @@
+// API route to poll for AI guidance completion by execution ID
 import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
+import { debugLog } from "@/lib/debug"
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     const result = await getPitchByExecutionIdAction(requestId)
-    console.log(
+    debugLog(
       `Status check for requestId ${requestId}: ${result.isSuccess ? "found" : "not found"}`
     )
 
