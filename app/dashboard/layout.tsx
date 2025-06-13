@@ -25,10 +25,10 @@
 
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import DashboardSidebar from "./dashboard/_components/dashboard-sidebar"
+import DashboardSidebar from "./_components/dashboard-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import MobileHeader from "./dashboard/_components/mobile-header"
-import DesktopHeader from "./dashboard/_components/desktop-header"
+import MobileHeader from "./_components/mobile-header"
+import DesktopHeader from "./_components/desktop-header"
 
 /**
  * @interface DashboardLayoutProps
