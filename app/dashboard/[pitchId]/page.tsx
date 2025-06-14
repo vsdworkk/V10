@@ -14,13 +14,13 @@ import { getPitchByIdAction } from "@/actions/db/pitches-actions"
 import PitchEditor from "./_components/pitch-editor"
 
 interface PitchDetailPageProps {
-  params: { pitchId: string }
+  params: Promise<{ pitchId: string }>
 }
 
 export default async function PitchDetailPage({
   params
 }: PitchDetailPageProps) {
-  const { pitchId } = params
+  const { pitchId } = await params
 
   const { userId } = await auth()
   if (!userId) {
