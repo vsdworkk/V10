@@ -267,7 +267,7 @@ export default function Features({
               </Accordion.Root>
             </div>
             <div
-              className={`h-[350px] min-h-[200px] w-auto  ${
+              className={`h-[400px] min-h-[300px] w-auto  ${
                 ltr && "lg:order-1"
               }`}
             >
@@ -276,7 +276,7 @@ export default function Features({
                   key={currentIndex}
                   src={data[currentIndex].image}
                   alt="feature"
-                  className="aspect-auto size-full rounded-xl border border-neutral-300/50 object-cover object-left-top p-1 shadow-lg"
+                  className="aspect-auto size-full rounded-xl border border-neutral-300/50 object-contain p-1 shadow-lg"
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
