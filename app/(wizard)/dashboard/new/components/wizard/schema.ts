@@ -63,7 +63,10 @@ export const pitchWizardSchema = z.object({
   userId: z.string().optional(),
   roleName: z.string().min(10).max(150),
   organisationName: z.string().min(10).max(150),
-  roleLevel: z.enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"]),
+  roleLevel: z
+    .enum(["APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"])
+    .optional()
+    .refine(val => val !== undefined, { message: "Role level is required" }),
   pitchWordLimit: z.number().min(400).max(1000),
   roleDescription: z
     .string()

@@ -67,7 +67,7 @@ export function mapExistingDataToDefaults(
       userId,
       roleName: "",
       organisationName: "",
-      roleLevel: "APS4",
+      roleLevel: undefined,
       pitchWordLimit: 650,
       roleDescription: "",
       relevantExperience: "",
@@ -89,11 +89,9 @@ export function mapExistingDataToDefaults(
     "APS6",
     "EL1"
   ] as const
-  type RoleLevelEnum = (typeof validLevels)[number] // Derive the enum type
-
-  const determinedLevel = validLevels.includes(pitchData.roleLevel as any) // Check if DB value is valid
-    ? pitchData.roleLevel
-    : "APS4" // Use default if not
+  const determinedLevel = validLevels.includes(pitchData.roleLevel as any)
+    ? (pitchData.roleLevel as PitchWizardFormData["roleLevel"])
+    : undefined
 
   const sc = pitchData.starExamplesCount
     ? String(pitchData.starExamplesCount)
@@ -109,7 +107,8 @@ export function mapExistingDataToDefaults(
     userId: pitchData.userId,
     roleName: pitchData.roleName ?? "",
     organisationName: pitchData.organisationName ?? "",
-    roleLevel: determinedLevel as RoleLevelEnum, // Assert the type here
+    // cast due to optional default value when creating new pitch
+    roleLevel: determinedLevel as any,
     pitchWordLimit: pitchData.pitchWordLimit || 650,
     roleDescription: pitchData.roleDescription ?? "",
     relevantExperience: pitchData.relevantExperience ?? "",
