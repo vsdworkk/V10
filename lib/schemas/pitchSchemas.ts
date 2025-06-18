@@ -24,7 +24,7 @@ function wordRange(min: number, max: number) {
 export const actionStepSchema = z.object({
   stepNumber: z.number(),
   "what-did-you-specifically-do-in-this-step": wordRange(20, 150),
-  "what-was-the-outcome-of-this-step-optional": wordRange(10, 150)
+  "what-was-the-outcome-of-this-step-optional": wordRange(10, 150).optional()
 })
 
 /**
@@ -41,7 +41,7 @@ export const starSchema = z.object({
     "what-constraints-or-requirements-did-you-need-to-consider": wordRange(
       20,
       150
-    )
+    ).optional()
   }),
   action: z.object({
     steps: z.array(actionStepSchema).min(1).optional()

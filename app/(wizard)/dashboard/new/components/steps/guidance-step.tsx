@@ -45,7 +45,6 @@ export default function GuidanceStep({
   const roleDescription = watch("roleDescription")
   const albertGuidance = watch("albertGuidance") // existing guidance
   const starExamplesCount = watch("starExamplesCount")
-  const starExampleDescriptions = watch("starExampleDescriptions") || []
   const pitchWordLimit = watch("pitchWordLimit")
 
   // Determine the definitive pitch ID to use
@@ -134,28 +133,6 @@ export default function GuidanceStep({
         shouldDirty: true
       }
     )
-
-    // Keep starExampleDescriptions array in sync
-    const currentDescriptions = getValues("starExampleDescriptions") || []
-    const newCount = parseInt(value, 10)
-    const newArr = [...currentDescriptions]
-    while (newArr.length < newCount) {
-      newArr.push("")
-    }
-    // slice any extras
-    const finalArr = newArr.slice(0, newCount)
-    setValue("starExampleDescriptions", finalArr, { shouldDirty: true })
-
-    // Values will be persisted when the user moves away from this step
-  }
-
-  // Handle STAR example description change
-  const handleDescriptionChange = (index: number, value: string) => {
-    const updatedDescriptions = [...starExampleDescriptions]
-    updatedDescriptions[index] = value
-    setValue("starExampleDescriptions", updatedDescriptions, {
-      shouldDirty: true
-    })
 
     // Values will be persisted when the user moves away from this step
   }
@@ -292,44 +269,6 @@ export default function GuidanceStep({
             </p>
           )}
         </div>
-
-        {/* STAR example descriptions */}
-        {parseInt(starCount, 10) > 0 && (
-          <div className="space-y-4">
-            <p className="font-medium text-gray-700">
-              In one sentence describe each STAR example you'll include:
-            </p>
-            <div className="space-y-4">
-              {Array.from({ length: parseInt(starCount, 10) }).map(
-                (_, index) => (
-                  <div key={index} className="space-y-2">
-                    <Label htmlFor={`star-example-${index}`}>
-                      STAR Example {index + 1}
-                    </Label>
-                    <Input
-                      id={`star-example-${index}`}
-                      placeholder={`Brief description of STAR example ${index + 1}`}
-                      value={starExampleDescriptions[index] || ""}
-                      onChange={e =>
-                        handleDescriptionChange(index, e.target.value)
-                      }
-                      className="bg-white/80 backdrop-blur-sm"
-                    />
-                    {Array.isArray(errors.starExampleDescriptions) &&
-                      errors.starExampleDescriptions[index] && (
-                        <p className="text-sm text-red-500">
-                          {
-                            errors.starExampleDescriptions[index]
-                              ?.message as string
-                          }
-                        </p>
-                      )}
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
