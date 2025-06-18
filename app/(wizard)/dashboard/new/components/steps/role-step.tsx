@@ -238,6 +238,7 @@ export default function RoleStep() {
                     <Input
                       {...field}
                       type="number"
+                      onChange={e => field.onChange(e.target.valueAsNumber)}
                       min={400}
                       max={1000}
                       placeholder="Enter between 400 and 1000 words"
@@ -269,11 +270,10 @@ export default function RoleStep() {
             </motion.div>
           </div>
 
-          {/* Role Description (Optional) */}
+          {/* Role Description */}
           <motion.div variants={itemVariants} className="space-y-2">
             <FormLabel className="text-sm font-medium text-gray-700">
               Role Description
-              <span className="ml-1 font-normal text-gray-400">(Optional)</span>
             </FormLabel>
             <FormField
               control={control}

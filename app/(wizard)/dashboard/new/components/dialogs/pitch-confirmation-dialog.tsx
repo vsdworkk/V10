@@ -31,7 +31,10 @@ export default function PitchConfirmationDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Generate Final Pitch</AlertDialogTitle>
           <AlertDialogDescription>
-            We're ready to generate your pitch using the details you've provided. Once you press Continue, the generation process will start, and you won't be able to edit your previous inputs. Click Continue to proceed.
+            We're ready to generate your pitch using the details you've
+            provided. Once you press Continue, the generation process will
+            start, and you won't be able to edit your previous inputs. Click
+            Continue to proceed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
