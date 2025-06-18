@@ -52,7 +52,7 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
           <div className="mb-2">
             <StarFieldComponent
               name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
-              label="Briefly describe the situation or challenge you faced."
+              label="What was the problem faced by your team or workplace?"
               placeholder="Provide additional context or background information..."
               schema={
                 starExampleSchema.shape.situation.shape[

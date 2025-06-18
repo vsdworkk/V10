@@ -30,19 +30,10 @@ export async function validateStep(
     result = await methods.trigger(["relevantExperience"])
   } else if (step === 4) {
     // Guidance step - validate guidance and STAR selections
-    result = await methods.trigger([
-      "albertGuidance",
-      "starExamplesCount",
-      "starExampleDescriptions"
-    ])
+    result = await methods.trigger(["albertGuidance", "starExamplesCount"])
 
     if (result) {
-      const count = parseInt(methods.getValues("starExamplesCount") || "0", 10)
-      const descriptions = methods.getValues("starExampleDescriptions") || []
-      const descValid =
-        descriptions.length === count &&
-        descriptions.every(d => d.trim().length >= 10 && d.trim().length <= 100)
-      result = descValid && !!methods.getValues("albertGuidance")
+      result = !!methods.getValues("albertGuidance")
     }
   }
 
@@ -100,10 +91,9 @@ export async function validateStep(
           )
         }
       } else if (subStepIndex === 1) {
-        // Task step (constraints required)
+        // Task step
         result = await methods.trigger([
-          `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`,
-          `starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`
+          `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`
         ])
 
         // If validation failed, trigger shake animation for invalid fields
@@ -112,7 +102,6 @@ export async function validateStep(
           const failedFields: string[] = []
 
           const responsibilityFieldName = `starExamples.${exampleIndex}.task.what-was-your-responsibility-in-addressing-this-issue`
-          const constraintsFieldName = `starExamples.${exampleIndex}.task.what-constraints-or-requirements-did-you-need-to-consider`
 
           // Check which specific fields have errors
           if (
@@ -122,17 +111,10 @@ export async function validateStep(
           ) {
             failedFields.push(responsibilityFieldName)
           }
-          if (
-            errors.starExamples?.[exampleIndex]?.task?.[
-              "what-constraints-or-requirements-did-you-need-to-consider"
-            ]
-          ) {
-            failedFields.push(constraintsFieldName)
-          }
 
           // If we couldn't determine specific fields, shake all task fields
           if (failedFields.length === 0) {
-            failedFields.push(responsibilityFieldName, constraintsFieldName)
+            failedFields.push(responsibilityFieldName)
           }
 
           // Dispatch shake event
@@ -162,11 +144,6 @@ export async function validateStep(
                   `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`
                 )
               }
-              if (stepError?.["what-was-the-outcome-of-this-step-optional"]) {
-                failedFields.push(
-                  `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`
-                )
-              }
             })
           }
 
@@ -178,9 +155,6 @@ export async function validateStep(
             currentSteps.forEach((_, stepIndex) => {
               failedFields.push(
                 `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`
-              )
-              failedFields.push(
-                `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`
               )
             })
           }

@@ -79,16 +79,12 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
           position: index + 1,
           "what-did-you-specifically-do-in-this-step":
             step["what-did-you-specifically-do-in-this-step"] || "",
-          "what-was-the-outcome-of-this-step-optional":
-            step["what-was-the-outcome-of-this-step-optional"] || "",
           isCompleted: Boolean(
             step["what-did-you-specifically-do-in-this-step"]
           ),
           // Set fixed title for display
           title: `Step ${index + 1}`,
-          description: step["what-was-the-outcome-of-this-step-optional"]
-            ? `Outcome: ${step["what-was-the-outcome-of-this-step-optional"]}`
-            : ""
+          description: ""
         })
       )
       if (parsedSteps.length > 0) {
@@ -103,7 +99,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 1,
         "what-did-you-specifically-do-in-this-step": "",
-        "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 1",
         description: ""
@@ -112,7 +107,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 2,
         "what-did-you-specifically-do-in-this-step": "",
-        "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 2",
         description: ""
@@ -121,7 +115,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
         id: uuidv4(),
         position: 3,
         "what-did-you-specifically-do-in-this-step": "",
-        "what-was-the-outcome-of-this-step-optional": "",
         isCompleted: false,
         title: "Step 3",
         description: ""
@@ -138,9 +131,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       .map(step => ({
         stepNumber: step.position,
         "what-did-you-specifically-do-in-this-step":
-          step["what-did-you-specifically-do-in-this-step"] || "",
-        "what-was-the-outcome-of-this-step-optional":
-          step["what-was-the-outcome-of-this-step-optional"] || ""
+          step["what-did-you-specifically-do-in-this-step"] || ""
       }))
 
     // Update the form field starExamples[exampleIndex].action.steps
@@ -152,17 +143,16 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   // Save step changes
-  const handleSaveStep = (stepId: string, what: string, outcome: string) => {
+  const handleSaveStep = (stepId: string, what: string) => {
     const updatedSteps = steps.map(step => {
       if (step.id === stepId) {
         return {
           ...step,
           "what-did-you-specifically-do-in-this-step": what,
-          "what-was-the-outcome-of-this-step-optional": outcome,
           isCompleted: Boolean(what.trim()),
           // Keep title as Step N instead of setting it to the 'what' value
           title: `Step ${step.position}`,
-          description: outcome ? `Outcome: ${outcome}` : ""
+          description: ""
         }
       }
       return step
@@ -182,7 +172,6 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       id: uuidv4(),
       position: steps.length + 1,
       "what-did-you-specifically-do-in-this-step": "",
-      "what-was-the-outcome-of-this-step-optional": "",
       isCompleted: false,
       title: `Step ${steps.length + 1}`,
       description: ""
@@ -338,7 +327,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
 interface StepItemProps {
   step: ActionStepType
-  onSave: (stepId: string, what: string, outcome: string) => void
+  onSave: (stepId: string, what: string) => void
   exampleIndex: number
 }
 
@@ -374,37 +363,21 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
   const whatLimits = getWordLimits(
     actionStepSchema.shape["what-did-you-specifically-do-in-this-step"]
   )
-  const outcomeLimits = getWordLimits(
-    actionStepSchema.shape["what-was-the-outcome-of-this-step-optional"]
-  )
 
   const [what, setWhat] = useState<string>(
     step["what-did-you-specifically-do-in-this-step"] || ""
   )
-  const [outcome, setOutcome] = useState<string>(
-    step["what-was-the-outcome-of-this-step-optional"] || ""
-  )
 
   useEffect(() => {
     setWhat(step["what-did-you-specifically-do-in-this-step"] || "")
-    setOutcome(step["what-was-the-outcome-of-this-step-optional"] || "")
   }, [step])
 
   // Check if current values meet validation requirements
   const isValidStep = () => {
     const whatWords = what.trim().split(/\s+/).filter(Boolean).length
-    const outcomeWords = outcome.trim().split(/\s+/).filter(Boolean).length
 
     // "What" field is required and must meet schema requirements
     if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
-      return false
-    }
-
-    // "Outcome" field is optional, but if filled, must meet schema requirements
-    if (
-      outcome.trim() &&
-      (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)
-    ) {
       return false
     }
 
@@ -416,7 +389,6 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
   const handleSave = () => {
     // Validate word counts before saving
     const whatWords = what.trim().split(/\s+/).filter(Boolean).length
-    const outcomeWords = outcome.trim().split(/\s+/).filter(Boolean).length
 
     const failedFields: string[] = []
 
@@ -424,16 +396,6 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
       failedFields.push(
         `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`
-      )
-    }
-
-    // Validate "outcome" field (optional, but if filled, must meet requirements)
-    if (
-      outcome.trim() &&
-      (outcomeWords < outcomeLimits.min || outcomeWords > outcomeLimits.max)
-    ) {
-      failedFields.push(
-        `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`
       )
     }
 
@@ -448,7 +410,7 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     }
 
     // Only save if validation passes
-    onSave(step.id, what ?? "", outcome ?? "")
+    onSave(step.id, what ?? "")
   }
 
   return (
@@ -535,48 +497,6 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
                 }
                 text={what}
                 fieldName={`starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`}
-              />
-            </div>
-          </div>
-
-          {/* OUTCOME (optional) */}
-          <div className="space-y-2">
-            <FormLabel
-              htmlFor={`step-${step.id}-outcome`}
-              className="block font-medium text-gray-700"
-            >
-              What was the outcome of this step? (optional)
-            </FormLabel>
-            <div className="relative">
-              <Textarea
-                id={`step-${step.id}-outcome`}
-                value={outcome}
-                onChange={e => setOutcome(e.target.value)}
-                placeholder="Highlight the key skills, tools, or resources you utilized..."
-                className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
-                style={
-                  {
-                    "--focus-ring-color": "#444ec1",
-                    "--focus-border-color": "#444ec1"
-                  } as React.CSSProperties
-                }
-                onFocus={e => {
-                  e.target.style.borderColor = "#444ec1"
-                  e.target.style.boxShadow = "0 0 0 1px rgba(68, 78, 193, 0.1)"
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = "#e5e7eb"
-                  e.target.style.boxShadow = "none"
-                }}
-              />
-              <WordCountIndicator
-                schema={
-                  actionStepSchema.shape[
-                    "what-was-the-outcome-of-this-step-optional"
-                  ]
-                }
-                text={outcome}
-                fieldName={`starExamples.${exampleIndex}.action.steps.${stepIndex}.what-was-the-outcome-of-this-step-optional`}
               />
             </div>
           </div>

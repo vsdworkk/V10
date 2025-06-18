@@ -21,7 +21,7 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true)
-    
+
     const handleScroll = () => {
       if (window.scrollY > 20) {
         setAddBorder(true)
@@ -63,7 +63,7 @@ export default function Header() {
               </div>
             </div>
           </div>
-          
+
           <div className="mt-2 block cursor-pointer lg:hidden">
             <MobileDrawer />
           </div>

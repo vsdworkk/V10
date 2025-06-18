@@ -101,7 +101,9 @@ export default function MobileDrawer() {
               </SignedOut>
               <SignedIn>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Signed in</span>
+                  <span className="text-muted-foreground text-sm">
+                    Signed in
+                  </span>
                   <UserButton
                     appearance={{
                       elements: {

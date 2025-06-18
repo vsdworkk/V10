@@ -131,10 +131,6 @@ export function mapExistingDataToDefaults(
               "what-was-your-responsibility-in-addressing-this-issue":
                 ex.task?.[
                   "what-was-your-responsibility-in-addressing-this-issue"
-                ] ?? "",
-              "what-constraints-or-requirements-did-you-need-to-consider":
-                ex.task?.[
-                  "what-constraints-or-requirements-did-you-need-to-consider"
                 ] ?? ""
             },
             action: {
