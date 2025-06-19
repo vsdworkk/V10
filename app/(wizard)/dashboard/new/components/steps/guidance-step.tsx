@@ -7,9 +7,8 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
 import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
 import { debugLog } from "@/lib/debug"
@@ -21,8 +20,6 @@ import {
   AccordionTrigger,
   AccordionContent
 } from "@/components/ui/accordion"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 interface GuidanceStepProps {
   pitchId?: string // Accept pitchId as an optional prop
@@ -57,47 +54,44 @@ export default function GuidanceStep({
     useAiGuidance()
 
   // Initialize - request guidance if needed
+  const hasRequestedRef = useRef(false)
+
   useEffect(() => {
     debugLog(
       "[GuidanceStep] Initial guidance check - albertGuidance:",
       albertGuidance ? "present" : "not present",
-      "isLoading:",
-      isLoading,
       "definitivePitchId:",
       definitivePitchId
     )
 
-    // Ensure definitivePitchId is available before fetching
     if (
       !albertGuidance &&
       roleDescription &&
       relevantExperience &&
-      !isLoading &&
       userId &&
-      definitivePitchId
+      definitivePitchId &&
+      !hasRequestedRef.current
     ) {
       debugLog(
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
+      hasRequestedRef.current = true
       fetchGuidance(
         roleDescription,
         relevantExperience,
         userId,
-        definitivePitchId // Use the definitivePitchId
+        definitivePitchId
       )
     } else if (albertGuidance) {
       debugLog(
         "[GuidanceStep] Not fetching guidance as it already exists in form state"
       )
     }
-    // Add definitivePitchId to dependency array if it can change and trigger re-fetch
   }, [
     albertGuidance,
     roleDescription,
     relevantExperience,
-    isLoading,
     userId,
-    fetchGuidance,
     definitivePitchId
   ])
 
