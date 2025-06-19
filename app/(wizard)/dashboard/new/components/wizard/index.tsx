@@ -230,7 +230,7 @@ export default function PitchWizard({
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
                   <>
-                    Next
+                    {currentStep === 1 ? "Begin" : "Next"}
                     <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
                   </>
                 )}
@@ -297,7 +297,7 @@ export default function PitchWizard({
                   <Loader2 className="size-5 animate-spin" />
                 ) : (
                   <>
-                    Next
+                    {currentStep === 1 ? "Begin" : "Next"}
                     <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
                   </>
                 )}
