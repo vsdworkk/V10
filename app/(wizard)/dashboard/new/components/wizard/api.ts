@@ -135,18 +135,6 @@ export async function triggerFinalPitch(
       currentStep
     )
 
-    // poll for final content
-    await pollForPitchContent(
-      result.requestId,
-      methods,
-      pitchId,
-      setPitchId,
-      toast,
-      setIsPitchLoading,
-      setFinalPitchError,
-      currentStep
-    )
-
     return result.requestId
   } catch (err: any) {
     console.error("triggerFinalPitch error:", err)
@@ -159,63 +147,6 @@ export async function triggerFinalPitch(
     setIsPitchLoading(false)
     throw err
   }
-}
-
-/**
- * Poll the DB for pitchContent after generation.
- */
-export async function pollForPitchContent(
-  execId: string,
-  methods: UseFormReturn<PitchWizardFormData>,
-  pitchId: string | undefined,
-  setPitchId: (id: string) => void,
-  toast: ToastFunction,
-  setIsPitchLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
-  currentStep: number = 999 // Use a large number as default to represent the final step
-) {
-  const pollIntervalMs = 3000
-  const maxAttempts = 40
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await new Promise(res => setTimeout(res, pollIntervalMs))
-
-    try {
-      const pollRes = await fetch(
-        `/api/pitches/generate/status?requestId=${execId}`
-      )
-      if (!pollRes.ok) continue
-
-      const pollJson = await pollRes.json()
-      if (pollJson.status === "completed" && pollJson.pitchContent) {
-        methods.setValue("pitchContent", pollJson.pitchContent, {
-          shouldDirty: true
-        })
-        setIsPitchLoading(false)
-        await savePitchData(
-          methods.getValues(),
-          pitchId,
-          setPitchId,
-          toast,
-          currentStep
-        )
-        return pollJson.pitchContent
-      }
-    } catch (err) {
-      console.error("Poll error:", err)
-      // Continue polling despite errors
-    }
-  }
-
-  const errorMessage =
-    "Timed out waiting for generated pitch. You can continue editing or try again later."
-  setFinalPitchError(errorMessage)
-  toast({
-    title: "Generation Delay",
-    description: errorMessage,
-    variant: "destructive"
-  })
-  throw new Error(errorMessage)
 }
 
 /**
