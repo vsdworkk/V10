@@ -7,7 +7,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Lightbulb } from "lucide-react"
@@ -56,6 +56,9 @@ export default function GuidanceStep({
   const { isLoading, guidance, error, requestId, fetchGuidance } =
     useAiGuidance()
 
+  // Ref to ensure we only request guidance once per step visit
+  const hasRequestedRef = useRef(false)
+
   // Initialize - request guidance if needed
   useEffect(() => {
     debugLog(
@@ -74,11 +77,13 @@ export default function GuidanceStep({
       relevantExperience &&
       !isLoading &&
       userId &&
-      definitivePitchId
+      definitivePitchId &&
+      !hasRequestedRef.current
     ) {
       debugLog(
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
+      hasRequestedRef.current = true
       fetchGuidance(
         roleDescription,
         relevantExperience,
