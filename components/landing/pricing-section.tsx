@@ -2,8 +2,6 @@
 Pricing section component with Stripe integration and authentication handling.
 */
 
-"use server"
-
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
 import Link from "next/link"
@@ -19,7 +17,7 @@ interface PricingSectionProps {
   userId: string | null
 }
 
-export async function PricingSection({ userId }: PricingSectionProps) {
+export default function PricingSection({ userId }: PricingSectionProps) {
   return (
     <div className="relative py-16 md:py-32">
       <div className="mx-auto max-w-5xl px-6">

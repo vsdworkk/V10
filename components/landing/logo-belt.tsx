@@ -2,9 +2,7 @@
 Logo belt section component showing trusted company logos.
 */
 
-"use server"
-
-export async function LogoBeltSection() {
+export default function LogoBeltSection() {
   return (
     <section className="py-12">
       <div className="mx-auto max-w-5xl px-6">

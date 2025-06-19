@@ -2,8 +2,6 @@
 Problem section component highlighting the key challenges users face when applying for APS positions.
 */
 
-"use server"
-
 import BlurFade from "@/components/ui/blur-fade"
 import Section from "@/components/utilities/section"
 import { Card, CardContent } from "@/components/ui/card"
@@ -31,7 +29,7 @@ const problems: ProblemItem[] = [
   }
 ]
 
-export async function ProblemSection() {
+export default function ProblemSection() {
   return (
     <Section
       title="The Challenge"

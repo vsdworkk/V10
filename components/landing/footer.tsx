@@ -5,7 +5,7 @@ This server component provides the footer for the app.
 import { Github, Twitter } from "lucide-react"
 import Link from "next/link"
 
-export async function Footer() {
+export default function Footer() {
   return (
     <footer className="border-t">
       <div className="container mx-auto max-w-7xl px-4 py-12 md:px-6">

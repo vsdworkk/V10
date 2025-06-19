@@ -1,5 +1,3 @@
-"use server"
-
 import BlogCard from "@/components/blog-card"
 import Section from "@/components/section"
 import { getBlogPosts } from "@/lib/blog"
