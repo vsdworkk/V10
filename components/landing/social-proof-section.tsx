@@ -3,7 +3,8 @@ Social proof section component with testimonials and customer reviews.
 */
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import Image from "next/image"
 
 export default function SocialProofSection() {
   return (
@@ -31,12 +32,12 @@ export default function SocialProofSection() {
 
                 <div className="grid grid-cols-[auto_1fr] items-center gap-3">
                   <Avatar className="size-12">
-                    <AvatarImage
+                    <Image
                       src="https://tailus.io/images/reviews/shekinah.webp"
                       alt="Malith G"
-                      height="400"
-                      width="400"
-                      loading="lazy"
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
                     />
                     <AvatarFallback>MG</AvatarFallback>
                   </Avatar>
@@ -61,12 +62,12 @@ export default function SocialProofSection() {
 
                 <div className="grid grid-cols-[auto_1fr] items-center gap-3">
                   <Avatar className="size-12">
-                    <AvatarImage
+                    <Image
                       src="https://tailus.io/images/reviews/jonathan.webp"
                       alt="Jonathan Yombo"
-                      height="400"
-                      width="400"
-                      loading="lazy"
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
                     />
                     <AvatarFallback>JY</AvatarFallback>
                   </Avatar>
@@ -90,12 +91,12 @@ export default function SocialProofSection() {
 
                 <div className="grid items-center gap-3 [grid-template-columns:auto_1fr]">
                   <Avatar className="size-12">
-                    <AvatarImage
+                    <Image
                       src="https://tailus.io/images/reviews/yucel.webp"
                       alt="Yucel Faruksahan"
-                      height="400"
-                      width="400"
-                      loading="lazy"
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
                     />
                     <AvatarFallback>YF</AvatarFallback>
                   </Avatar>
@@ -121,12 +122,12 @@ export default function SocialProofSection() {
 
                 <div className="grid grid-cols-[auto_1fr] gap-3">
                   <Avatar className="size-12">
-                    <AvatarImage
+                    <Image
                       src="https://tailus.io/images/reviews/rodrigo.webp"
                       alt="Rodrigo Aguilar"
-                      height="400"
-                      width="400"
-                      loading="lazy"
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover"
                     />
                     <AvatarFallback>YF</AvatarFallback>
                   </Avatar>

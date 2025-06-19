@@ -1,4 +1,9 @@
+/*
+Safari style image wrapper component using Next.js Image for optimization.
+*/
+
 import { ImgHTMLAttributes } from "react"
+import Image from "next/image"
 
 export interface SafariProps
   extends Omit<
@@ -18,13 +23,14 @@ export default function Safari({
   width = 1203,
   height = 753,
   className,
+  alt = "",
   ...props
 }: SafariProps) {
   return (
     <div className={className}>
-      <img
-        src={src}
-        alt=""
+      <Image
+        src={src || ""}
+        alt={alt}
         width={width}
         height={height}
         className="size-full rounded-lg object-cover"

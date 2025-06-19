@@ -2,6 +2,8 @@
 Logo belt section component showing trusted company logos.
 */
 
+import Image from "next/image"
+
 export default function LogoBeltSection() {
   return (
     <section className="py-12">
@@ -10,33 +12,33 @@ export default function LogoBeltSection() {
           Trusted by professionals at leading organizations
         </p>
         <div className="flex items-center justify-center gap-8 opacity-60 md:gap-12">
-          <img
+          <Image
             className="h-6 w-auto grayscale transition-all hover:grayscale-0"
             src="https://html.tailus.io/blocks/customers/nvidia.svg"
             alt="Nvidia"
-            height="24"
-            width="auto"
+            width={100}
+            height={24}
           />
-          <img
+          <Image
             className="h-5 w-auto grayscale transition-all hover:grayscale-0"
             src="https://html.tailus.io/blocks/customers/column.svg"
             alt="Column"
-            height="20"
-            width="auto"
+            width={100}
+            height={20}
           />
-          <img
+          <Image
             className="h-5 w-auto grayscale transition-all hover:grayscale-0"
             src="https://html.tailus.io/blocks/customers/github.svg"
             alt="GitHub"
-            height="20"
-            width="auto"
+            width={100}
+            height={20}
           />
-          <img
+          <Image
             className="h-6 w-auto grayscale transition-all hover:grayscale-0"
             src="https://html.tailus.io/blocks/customers/nike.svg"
             alt="Nike"
-            height="24"
-            width="auto"
+            width={100}
+            height={24}
           />
         </div>
       </div>

@@ -1,3 +1,7 @@
+/*
+Solution section component showcasing product features with animations.
+*/
+
 "use client"
 
 import FlickeringGrid from "@/components/magicui/flickering-grid"
