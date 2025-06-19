@@ -1,5 +1,3 @@
-"use server"
-
 import { Suspense } from "react"
 import { getBlogPosts, getUniqueCategoriesAndTags } from "@/lib/blog"
 import { BlogListingClient } from "./_components"

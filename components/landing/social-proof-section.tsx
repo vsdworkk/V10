@@ -2,12 +2,10 @@
 Social proof section component with testimonials and customer reviews.
 */
 
-"use server"
-
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export async function SocialProofSection() {
+export default function SocialProofSection() {
   return (
     <section className="pb-16 pt-4 md:pb-32 md:pt-8">
       <div className="mx-auto max-w-6xl space-y-8 px-6 md:space-y-16">

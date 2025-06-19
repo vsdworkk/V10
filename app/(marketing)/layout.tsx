@@ -2,11 +2,9 @@
 This server layout provides a shared header and basic structure for (marketing) routes.
 */
 
-"use server"
-
 import Header from "@/components/landing/header"
 
-export default async function MarketingLayout({
+export default function MarketingLayout({
   children
 }: {
   children: React.ReactNode

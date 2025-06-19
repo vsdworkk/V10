@@ -2,11 +2,9 @@
 Features section component showcasing the main product features.
 */
 
-"use server"
-
 import { Rocket, Target, Users } from "lucide-react"
 
-export async function FeaturesSection() {
+export default function FeaturesSection() {
   return (
     <section className="py-16 md:py-32">
       <div className="mx-auto max-w-5xl px-6">
