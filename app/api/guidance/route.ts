@@ -1,6 +1,9 @@
 // API route to request AI guidance generation
 import { NextRequest, NextResponse } from "next/server"
-import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import {
+  updatePitchByExecutionId,
+  getPitchByIdAction
+} from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
@@ -27,6 +30,26 @@ export async function POST(req: NextRequest) {
 
     // Use the pitchId as the requestId for the agent
     const requestId = pitchId
+
+    // Check for existing guidance or in-progress requests
+    const existing = await getPitchByIdAction(pitchId, userId)
+    if (existing.isSuccess && existing.data) {
+      if (existing.data.albertGuidance) {
+        return NextResponse.json({
+          success: true,
+          requestId: existing.data.agentExecutionId || requestId,
+          message: "Guidance already generated",
+          guidance: existing.data.albertGuidance
+        })
+      }
+      if (existing.data.agentExecutionId) {
+        return NextResponse.json({
+          success: true,
+          requestId: existing.data.agentExecutionId,
+          message: "Guidance request already in progress"
+        })
+      }
+    }
 
     // Store the request in database with pending status
     try {

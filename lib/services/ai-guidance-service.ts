@@ -1,5 +1,8 @@
 import type { ActionState } from "@/types"
 
+// Track in-flight requests to avoid duplicate POSTs for the same pitch
+const inFlightRequests = new Set<string>()
+
 interface GuidanceRequest {
   jobDescription: string
   experience: string
@@ -22,6 +25,17 @@ export async function requestGuidance(
     // Use the pitch ID as the request ID
     const requestId = request.pitchId
 
+    // If we already have a request in flight for this pitch, return the same requestId
+    if (inFlightRequests.has(requestId)) {
+      return {
+        isSuccess: true,
+        message: "Guidance request already in progress",
+        data: requestId
+      }
+    }
+
+    inFlightRequests.add(requestId)
+
     const response = await fetch("/api/guidance", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -41,7 +55,7 @@ export async function requestGuidance(
     const data = await response.json()
     return {
       isSuccess: true,
-      message: "Guidance request initiated",
+      message: data.message || "Guidance request initiated",
       data: requestId // Return the pitchId as the requestId
     }
   } catch (error) {
@@ -51,6 +65,8 @@ export async function requestGuidance(
       message:
         error instanceof Error ? error.message : "Failed to request guidance"
     }
+  } finally {
+    if (request.pitchId) inFlightRequests.delete(request.pitchId)
   }
 }
 
