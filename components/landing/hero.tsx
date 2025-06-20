@@ -5,9 +5,9 @@ Hero section component for the landing page with call-to-action.
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 
 import { Icons } from "@/components/icons"
-import HeroVideoDialog from "@/components/magicui/hero-video-dialog"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -84,11 +84,13 @@ function HeroCTA() {
 function HeroImage() {
   return (
     <div className="relative mx-auto flex w-full items-center justify-center">
-      <HeroVideoDialog
-        animationStyle="from-center"
-        videoSrc="/landingpagev.mp4"
-        thumbnailSrc="/hero-placeholder-image.png"
-        thumbnailAlt="Hero Video"
+      <Image
+        src="/hero-placeholder-image.png"
+        alt="APSPitchPro Dashboard"
+        width={1920}
+        height={1080}
+        priority
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
         className="mt-16 max-w-screen-lg rounded-lg border shadow-lg"
       />
     </div>
