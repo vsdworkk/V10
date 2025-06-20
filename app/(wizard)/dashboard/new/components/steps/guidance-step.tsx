@@ -219,6 +219,21 @@ export default function GuidanceStep({
           </Card>
         )}
 
+        {/* Note about guidance being recommendations */}
+        {!isLoading && !error && albertGuidance && (
+          <div 
+            className="rounded-xl border p-4"
+            style={{
+              backgroundColor: "#eef2ff",
+              borderColor: "#c7d2fe"
+            }}
+          >
+            <p className="text-sm" style={{ color: "#444ec1" }}>
+              <strong>Note:</strong> While these suggestions are designed to be helpful, they are merely recommendations. If you have a different, more impactful example in mind that you believe better showcases your skills, you are encouraged to use it.
+            </p>
+          </div>
+        )}
+
         {/* STAR examples count selector */}
         <div className="space-y-4">
           <p className="font-medium text-gray-700">
