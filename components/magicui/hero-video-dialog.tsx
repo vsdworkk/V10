@@ -93,6 +93,8 @@ export default function HeroVideoDialog({
           alt={thumbnailAlt}
           width={1920}
           height={1080}
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
           className="rounded-md border transition-all duration-200 ease-out group-hover:brightness-[0.8]"
         />
         <div className="absolute inset-0 flex scale-[0.9] items-center justify-center rounded-2xl transition-all duration-200 ease-out group-hover:scale-100">
@@ -184,6 +186,8 @@ export function HeroVideoInline({
             alt={thumbnailAlt}
             width={1920}
             height={1080}
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
             className="h-auto w-full transition-all duration-200 ease-out group-hover:brightness-[0.8]"
           />
           <div className="absolute inset-0 flex scale-[0.9] items-center justify-center transition-all duration-200 ease-out group-hover:scale-100">
