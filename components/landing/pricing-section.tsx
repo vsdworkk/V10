@@ -88,6 +88,14 @@ export async function PricingSection({ userId }: PricingSectionProps) {
                             ? `${process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_SINGLEPITCH || "#"}?client_reference_id=${userId}`
                             : `/sign-up?redirect_url=${encodeURIComponent("/pricing")}`
                         }
+                        onClick={() => {
+                          if (!userId) {
+                            localStorage.setItem(
+                              "afterSignUpRedirect",
+                              "/pricing"
+                            )
+                          }
+                        }}
                       >
                         Get Started
                       </Link>
@@ -136,6 +144,14 @@ export async function PricingSection({ userId }: PricingSectionProps) {
                           ? `${process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PROBUNDLE || "#"}?client_reference_id=${userId}`
                           : `/sign-up?redirect_url=${encodeURIComponent("/pricing")}`
                       }
+                      onClick={() => {
+                        if (!userId) {
+                          localStorage.setItem(
+                            "afterSignUpRedirect",
+                            "/pricing"
+                          )
+                        }
+                      }}
                     >
                       Get Started
                     </Link>

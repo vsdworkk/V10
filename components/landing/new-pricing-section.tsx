@@ -182,6 +182,14 @@ function PricingButton({ plan, userId }: PricingButtonProps) {
     >
       <a
         href={finalButtonLink}
+        onClick={() => {
+          if (!userId) {
+            localStorage.setItem(
+              "afterSignUpRedirect",
+              `/checkout?payment_link=${encodeURIComponent(plan.href)}`
+            )
+          }
+        }}
         className={cn(
           "inline-flex items-center justify-center",
           finalButtonLink === "#" && "pointer-events-none opacity-50"
