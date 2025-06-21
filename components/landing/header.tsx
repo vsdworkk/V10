@@ -94,7 +94,7 @@ export default function Header() {
           <MobileDrawer />
         </div>
       </div>
-      
+
       <hr
         className={cn(
           "absolute bottom-0 w-full transition-opacity duration-300 ease-in-out",

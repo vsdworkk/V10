@@ -13,9 +13,9 @@ export default async function MarketingLayout({
 }) {
   return (
     <>
-      <link 
-        rel="preload" 
-        as="image" 
+      <link
+        rel="preload"
+        as="image"
         href="/hero-placeholder-image.png"
         imageSizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
       />

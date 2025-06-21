@@ -189,3 +189,27 @@ export async function spendCreditsAction(
     return { isSuccess: false, message: "Failed to use credits" }
   }
 }
+
+export async function ensureProfileAction(
+  userId: string
+): Promise<ActionState<SelectProfile>> {
+  try {
+    const existingProfile = await getProfileByUserIdAction(userId)
+    if (existingProfile.isSuccess && existingProfile.data) {
+      return existingProfile
+    }
+
+    const created = await createProfileAction({ userId })
+    if (!created.isSuccess) {
+      return { isSuccess: false, message: created.message }
+    }
+    return {
+      isSuccess: true,
+      message: "Profile ensured successfully",
+      data: created.data
+    }
+  } catch (error) {
+    console.error("Error ensuring profile:", error)
+    return { isSuccess: false, message: "Failed to ensure profile" }
+  }
+}
