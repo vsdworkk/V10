@@ -221,7 +221,7 @@ export default function GuidanceStep({
 
         {/* Note about guidance being recommendations */}
         {!isLoading && !error && albertGuidance && (
-          <div 
+          <div
             className="rounded-xl border p-4"
             style={{
               backgroundColor: "#eef2ff",
@@ -229,7 +229,10 @@ export default function GuidanceStep({
             }}
           >
             <p className="text-sm" style={{ color: "#444ec1" }}>
-              <strong>Note:</strong> While these suggestions are designed to be helpful, they are merely recommendations. If you have a different, more impactful example in mind that you believe better showcases your skills, you are encouraged to use it.
+              <strong>Note:</strong> While these suggestions are designed to be
+              helpful, they are merely recommendations. If you have a different,
+              more impactful example in mind that you believe better showcases
+              your skills, you are encouraged to use it.
             </p>
           </div>
         )}

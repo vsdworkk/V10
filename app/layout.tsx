@@ -2,10 +2,7 @@
 The root server layout for the app.
 */
 
-import {
-  createProfileAction,
-  getProfileByUserIdAction
-} from "@/actions/db/profiles-actions"
+import { ensureProfileAction } from "@/actions/db/profiles-actions"
 import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "@/components/utilities/providers"
 import { TailwindIndicator } from "@/components/utilities/tailwind-indicator"
@@ -28,10 +25,7 @@ export default async function RootLayout({
   const { userId } = await auth()
 
   if (userId) {
-    const profileRes = await getProfileByUserIdAction(userId)
-    if (!profileRes.isSuccess) {
-      await createProfileAction({ userId })
-    }
+    await ensureProfileAction(userId)
   }
 
   return (

@@ -7,8 +7,9 @@
 
 import { db } from "@/db/db"
 import { pitchesTable, SelectPitch } from "@/db/schema/pitches-schema"
-import { profilesTable, SelectProfile } from "@/db/schema/profiles-schema"
+import { SelectProfile } from "@/db/schema/profiles-schema"
 import { ActionState } from "@/types"
+import { ensureProfileAction } from "./profiles-actions"
 import { eq, desc } from "drizzle-orm"
 
 export interface DashboardData {
@@ -23,12 +24,9 @@ export async function getDashboardDataAction(
   userId: string
 ): Promise<ActionState<DashboardData>> {
   try {
-    // Execute both queries in parallel for better performance
+    // Ensure the profile exists before fetching other data
     const [profileResult, pitchesResult] = await Promise.all([
-      // Fetch user profile
-      db.query.profiles.findFirst({
-        where: eq(profilesTable.userId, userId)
-      }),
+      ensureProfileAction(userId),
       // Fetch user pitches
       db
         .select()
@@ -37,26 +35,23 @@ export async function getDashboardDataAction(
         .orderBy(desc(pitchesTable.createdAt))
     ])
 
-    if (!profileResult) {
-      return { 
-        isSuccess: false, 
-        message: "Profile not found. Please complete your profile setup." 
-      }
+    if (!profileResult.isSuccess || !profileResult.data) {
+      return { isSuccess: false, message: profileResult.message }
     }
 
     return {
       isSuccess: true,
       message: "Dashboard data retrieved successfully",
       data: {
-        profile: profileResult,
+        profile: profileResult.data,
         pitches: pitchesResult || []
       }
     }
   } catch (error) {
     console.error("Error fetching dashboard data:", error)
-    return { 
-      isSuccess: false, 
-      message: "Failed to load dashboard data" 
+    return {
+      isSuccess: false,
+      message: "Failed to load dashboard data"
     }
   }
-} 
+}
