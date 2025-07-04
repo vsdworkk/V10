@@ -1,4 +1,4 @@
-// API route to start pitch generation using PromptLayer
+// API route to start pitch generation using n8n webhook
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
 import { spendCreditsAction } from "@/actions/db/profiles-actions"
@@ -65,11 +65,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Call PromptLayer with proper error handling and timeout
-    const promptLayerApiKey = process.env.PROMPTLAYER_API_KEY
-    if (!promptLayerApiKey) {
+    // Call n8n webhook with proper error handling and timeout
+    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
+    if (!n8nWebhookUrl) {
       return NextResponse.json(
-        { error: "PromptLayer API key not configured" },
+        { error: "n8n webhook URL not configured" },
         { status: 500 }
       )
     }
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 seconds timeout
 
     try {
-      // Prepare star examples in a format suitable for PromptLayer
+      // Prepare star examples in a format suitable for n8n
       const formattedStarExamples = starExamples.map(
         (ex: any, idx: number) => ({
           id: String(idx + 1),
@@ -126,56 +126,38 @@ export async function POST(req: NextRequest) {
         .filter(Boolean)
         .join("\n")
 
-      // Choose agent version based on number of examples
       const numExamples = starExamplesCount || starExamples.length
-      const getVersion = (n: number) =>
-        (({ 2: "v1.2", 3: "v1.3", 4: "v1.4" }) as const)[n] || "v1.2"
-
-      const workflowLabelName = getVersion(numExamples)
 
       // Calculate word counts
       const introWordCount = Math.round(pitchWordLimit * 0.1)
       const conclusionWordCount = Math.round(pitchWordLimit * 0.1)
       const starWordCount = Math.round((pitchWordLimit * 0.8) / numExamples)
 
-      // Make the PromptLayer API call with the correct workflow and parameters
-      const response = await fetch(
-        "https://api.promptlayer.com/workflows/Master_Agent_V1/run",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-KEY": promptLayerApiKey
-          },
-          body: JSON.stringify({
-            workflow_label_name: workflowLabelName,
-            input_variables: {
-              job_description: jobDescription,
-              star_components: JSON.stringify({
-                starExamples: formattedStarExamples
-              }),
-              Star_Word_Count: starWordCount.toString(),
-              User_Experience: relevantExperience,
-              Intro_Word_Count: introWordCount.toString(),
-              Conclusion_Word_Count: conclusionWordCount.toString(),
-              ILS: "Isssdsd", // This appears to be a constant in the original code
-              id_unique: requestId // The pitch ID is passed as id_unique to PromptLayer
-            },
-            metadata: {
-              source: "webapp",
-              callback_url: callbackUrl
-            },
-            return_all_outputs: true
-          }),
-          signal: controller.signal
-        }
-      )
+      // Make the n8n webhook call
+      const response = await fetch(n8nWebhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          pitch_id: requestId,
+          callback_url: callbackUrl,
+          job_description: jobDescription,
+          star_examples: formattedStarExamples,
+          user_experience: relevantExperience,
+          intro_word_count: introWordCount,
+          conclusion_word_count: conclusionWordCount,
+          star_word_count: starWordCount,
+          total_word_limit: pitchWordLimit
+        }),
+        signal: controller.signal
+      })
 
       clearTimeout(timeoutId)
 
       if (!response.ok) {
         const errorText = await response.text()
-        throw new Error(`PromptLayer error: ${errorText}`)
+        throw new Error(`n8n webhook error: ${errorText}`)
       }
 
       const data = await response.json()
@@ -183,7 +165,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         requestId, // Return the pitch ID as the requestId
-        message: `Agent version ${workflowLabelName} launched.`
+        message: `Pitch generation workflow launched.`
       })
     } catch (error: any) {
       if (error.name === "AbortError") {
