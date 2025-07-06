@@ -6,4 +6,5 @@
 export * from "./db/pitches-actions"
 export * from "./db/profiles-actions"
 export * from "./agent-actions"
-export * from "./storage/resume-storage-actions" 
+export * from "./storage/resume-storage-actions"
+export * from "./guidance-actions"
