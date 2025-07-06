@@ -1,3 +1,7 @@
+// Server actions for CRUD operations on the `pitches` table along with helpers
+// used by the Albert guidance workflow. Functions like
+// `getPitchByExecutionIdAction` and `updatePitchByExecutionId` allow the AI
+// guidance service and callback endpoint to persist guidance results.
 "use server"
 
 /**
@@ -80,7 +84,9 @@ export async function getPitchByExecutionIdAction(
 
     // If not found, try finding by pitch ID
     if (!pitch) {
-      debugLog(`[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`)
+      debugLog(
+        `[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`
+      )
       ;[pitch] = await db
         .select()
         .from(pitchesTable)
@@ -90,7 +96,10 @@ export async function getPitchByExecutionIdAction(
 
     return pitch
       ? { isSuccess: true, message: "Pitch found", data: pitch }
-      : { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
+      : {
+          isSuccess: false,
+          message: "No pitch with that execution‑ID or pitch ID"
+        }
   } catch (err) {
     console.error("getPitchByExecutionIdAction:", err)
     return { isSuccess: false, message: "Failed to fetch pitch" }
@@ -148,9 +157,13 @@ export async function updatePitchByExecutionId(
   updatedData: Partial<InsertPitch>
 ): Promise<ActionState<SelectPitch>> {
   debugLog(`[updatePitchByExecutionId] Starting with execId: ${execId}`)
-  debugLog(`[updatePitchByExecutionId] Updating with data size:`, 
-    updatedData.pitchContent ? updatedData.pitchContent.length + " chars" : "No content")
-  
+  debugLog(
+    `[updatePitchByExecutionId] Updating with data size:`,
+    updatedData.pitchContent
+      ? updatedData.pitchContent.length + " chars"
+      : "No content"
+  )
+
   try {
     // First check if the pitch exists by agentExecutionId
     let existing = await db
@@ -158,25 +171,34 @@ export async function updatePitchByExecutionId(
       .from(pitchesTable)
       .where(eq(pitchesTable.agentExecutionId, execId))
       .limit(1)
-    
-    // If not found by agentExecutionId, try finding by pitch ID 
+
+    // If not found by agentExecutionId, try finding by pitch ID
     // (this supports our new approach where pitch ID = execution ID)
     if (existing.length === 0) {
-      debugLog(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`)
+      debugLog(
+        `[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`
+      )
       existing = await db
         .select({ id: pitchesTable.id })
         .from(pitchesTable)
         .where(eq(pitchesTable.id, execId))
         .limit(1)
     }
-    
+
     if (existing.length === 0) {
-      console.error(`[updatePitchByExecutionId] No record found with agentExecutionId or id: ${execId}`)
-      return { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
+      console.error(
+        `[updatePitchByExecutionId] No record found with agentExecutionId or id: ${execId}`
+      )
+      return {
+        isSuccess: false,
+        message: "No pitch with that execution‑ID or pitch ID"
+      }
     }
-    
-    debugLog(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
-    
+
+    debugLog(
+      `[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`
+    )
+
     // Update by either agentExecutionId or id, depending on which one is more likely to match
     const [updated] = await db
       .update(pitchesTable)
@@ -191,11 +213,15 @@ export async function updatePitchByExecutionId(
       .returning()
 
     if (!updated) {
-      console.error(`[updatePitchByExecutionId] Update operation returned no records`)
+      console.error(
+        `[updatePitchByExecutionId] Update operation returned no records`
+      )
       return { isSuccess: false, message: "Update operation failed" }
     }
-    
-    debugLog(`[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`)
+
+    debugLog(
+      `[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`
+    )
     return { isSuccess: true, message: "Pitch updated", data: updated }
   } catch (err) {
     console.error(`[updatePitchByExecutionId] Error:`, err)

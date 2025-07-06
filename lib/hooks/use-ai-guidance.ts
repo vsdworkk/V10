@@ -1,4 +1,5 @@
-// React hook for fetching AI guidance and polling for updates.
+// React hook that orchestrates requesting Albert guidance and polling for the result.
+// Exposes loading state, generated guidance, any errors and a reset helper.
 import { useState, useEffect } from "react"
 import {
   requestGuidance,
