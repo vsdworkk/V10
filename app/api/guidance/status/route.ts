@@ -1,4 +1,5 @@
-// API route to poll for AI guidance completion by execution ID
+// GET endpoint used by the client to poll for Albert guidance completion.
+// Returns the guidance once available or a pending status while processing.
 import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"

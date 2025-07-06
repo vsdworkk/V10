@@ -1,4 +1,5 @@
-// Callback endpoint for AI guidance workflow
+// Handles webhook callbacks from PromptLayer containing the generated guidance.
+// Extracts the execution ID and updates the matching pitch with the guidance text.
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"

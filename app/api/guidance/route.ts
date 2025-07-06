@@ -1,4 +1,6 @@
-// API route to request AI guidance generation
+// POST endpoint that triggers the PromptLayer workflow to generate Albert guidance
+// for a pitch. Validates input, stores the execution ID on the pitch and forwards
+// the request to PromptLayer.
 import { NextRequest, NextResponse } from "next/server"
 import {
   updatePitchByExecutionId,

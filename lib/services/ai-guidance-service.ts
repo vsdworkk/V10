@@ -1,3 +1,5 @@
+// Client-side service functions for requesting and polling Albert guidance.
+// Wraps the API endpoints and prevents duplicate requests.
 import type { ActionState } from "@/types"
 
 // Track in-flight requests to avoid duplicate POSTs for the same pitch
