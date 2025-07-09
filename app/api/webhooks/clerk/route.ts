@@ -177,5 +177,4 @@ async function handleUserDeleted(evt: WebhookEvent) {
   } catch (error) {
     console.error(`Failed to delete profile for user ${userId}:`, error)
     throw error
-  }
-}
+  }}

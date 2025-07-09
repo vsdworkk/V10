@@ -3,11 +3,6 @@ Contains types for the action steps feature.
 Updated to match new schema with kebab-case question fields.
 */
 
-/**
- * Interface representing a single step in the action section.
- * Each step has a number, ID for UI management, and captures
- * what you did and the outcome.
- */
 export interface ActionStep {
   // UI-specific properties
   id: string
@@ -23,7 +18,9 @@ export interface ActionStep {
   description?: string
 }
 
-export type ActionStepFormData = Omit<
-  ActionStep,
-  "id" | "position" | "isCompleted"
->
+export interface ActionStepFormData {
+  "what-did-you-specifically-do-in-this-step": string
+  "what-was-the-outcome-of-this-step-optional"?: string
+  title?: string
+  description?: string
+}
