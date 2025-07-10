@@ -2,7 +2,7 @@
 Utility functions for STAR data type conversions and validations.
 */
 
-import { StarSchema } from "@/db/schema"
+import { StarSchema } from "@/types/pitches-types"
 
 export function isString(value: unknown): value is string {
   return typeof value === "string"

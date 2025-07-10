@@ -1,9 +1,6 @@
-/**
- * db/schema/pitches-schema.ts
- *
- * + Added agentExecutionId column (nullable) so we can match
- *   PromptLayer callbacks back to the correct pitch record.
- */
+/*
+Defines the database schema for pitches with agent execution tracking.
+*/
 
 import {
   pgEnum,
@@ -15,10 +12,7 @@ import {
   jsonb
 } from "drizzle-orm/pg-core"
 import { profilesTable } from "@/db/schema/profiles-schema"
-
-/* ------------------------------------------------------------------ */
-/*  enums & interfaces (unchanged)                                    */
-/* ------------------------------------------------------------------ */
+import { ActionStep, StarSchema, StarJsonbSchema } from "@/types/pitches-types"
 
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
@@ -26,63 +20,31 @@ export const pitchStatusEnum = pgEnum("pitch_status", [
   "submitted"
 ])
 
-export interface ActionStep {
-  stepNumber: number
-  "what-did-you-specifically-do-in-this-step": string
-  "what-was-the-outcome-of-this-step-optional"?: string
-}
-
-export interface StarSchema {
-  situation: {
-    "where-and-when-did-this-experience-occur"?: string
-    "briefly-describe-the-situation-or-challenge-you-faced"?: string
-  }
-  task: {
-    "what-was-your-responsibility-in-addressing-this-issue"?: string
-    "what-constraints-or-requirements-did-you-need-to-consider"?: string
-  }
-  action: {
-    steps: ActionStep[]
-  }
-  result: {
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"?: string
-  }
-}
-
-export type StarJsonbSchema = StarSchema[]
-
-/* ------------------------------------------------------------------ */
-/*  pitches table                                                     */
-/* ------------------------------------------------------------------ */
+/* pitches table */
 
 export const pitchesTable = pgTable("pitches", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
 
-  /* user relationship */
   userId: text("user_id")
     .references(() => profilesTable.userId, { onDelete: "cascade" })
     .notNull(),
 
-  /* role information */
   roleName: text("role_name").notNull(),
   organisationName: text("organisation_name"),
   roleLevel: text("role_level").notNull(),
   pitchWordLimit: integer("pitch_word_limit").default(650).notNull(),
   roleDescription: text("role_description"),
 
-  /* experience & STAR examples */
   relevantExperience: text("relevant_experience").notNull(),
   starExamples: jsonb("star_examples").$type<StarJsonbSchema>(),
   starExampleDescriptions: text("star_example_descriptions").array(),
 
-  /* AI‑related fields */
   albertGuidance: text("albert_guidance"),
   pitchContent: text("pitch_content"),
 
   /** NEW — PromptLayer workflow execution id */
   agentExecutionId: text("agent_execution_id"),
 
-  /* bookkeeping */
   status: pitchStatusEnum("status").default("draft").notNull(),
   starExamplesCount: integer("star_examples_count").default(2).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
@@ -93,6 +55,5 @@ export const pitchesTable = pgTable("pitches", {
     .$onUpdate(() => new Date())
 })
 
-/* inferred types */
 export type InsertPitch = typeof pitchesTable.$inferInsert
 export type SelectPitch = typeof pitchesTable.$inferSelect

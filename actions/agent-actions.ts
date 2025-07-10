@@ -8,7 +8,7 @@
  */
 
 import { ActionState } from "@/types"
-import { StarSchema } from "@/db/schema/pitches-schema"
+import { StarSchema } from "@/types/pitches-types"
 import { debugLog } from "@/lib/debug"
 
 /* ------------------------------------------------------------------ */

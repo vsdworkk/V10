@@ -1,5 +1,5 @@
 import type { ActionState } from "@/types"
-import type { StarJsonbSchema } from "@/db/schema/pitches-schema"
+import type { StarJsonbSchema } from "@/types/pitches-types"
 
 interface PitchGenerationRequest {
   userId: string

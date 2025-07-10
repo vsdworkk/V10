@@ -7,7 +7,7 @@ import {
   checkPitchGenerationStatus
 } from "@/lib/services/pitch-generation-service"
 import { debugLog } from "@/lib/debug"
-import type { StarJsonbSchema } from "@/db/schema/pitches-schema"
+import type { StarJsonbSchema } from "@/types/pitches-types"
 
 export function usePitchGeneration() {
   const [isLoading, setIsLoading] = useState(false)
