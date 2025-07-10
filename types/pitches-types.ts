@@ -2,7 +2,7 @@
 Type definitions for pitch-related data structures.
 */
 
-export interface ActionStep {
+export interface StarActionStep {
   stepNumber: number
   "what-did-you-specifically-do-in-this-step": string
   "what-was-the-outcome-of-this-step-optional"?: string
@@ -18,7 +18,7 @@ export interface StarSchema {
     "what-constraints-or-requirements-did-you-need-to-consider"?: string
   }
   action: {
-    steps: ActionStep[]
+    steps: StarActionStep[]
   }
   result: {
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"?: string

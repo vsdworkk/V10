@@ -12,7 +12,7 @@ import {
   jsonb
 } from "drizzle-orm/pg-core"
 import { profilesTable } from "@/db/schema/profiles-schema"
-import { ActionStep, StarSchema, StarJsonbSchema } from "@/types/pitches-types"
+import { StarSchema, StarJsonbSchema } from "@/types/pitches-types"
 
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
