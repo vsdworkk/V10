@@ -3,5 +3,6 @@ Type definitions for STAR components that handle both the new nested structure w
 */
 
 // This file should now only contain type definitions, no implementation
+import { StarSchema } from "@/types/pitches-types"
 
 export {}
