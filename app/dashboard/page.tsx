@@ -20,8 +20,6 @@
  * - OPTIMIZATION: Uses combined dashboard action for single database round trip
  */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import { getDashboardDataAction } from "@/actions/db/dashboard-actions"
 import { Suspense } from "react"

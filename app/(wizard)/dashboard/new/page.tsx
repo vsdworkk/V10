@@ -17,8 +17,6 @@
  * - No more server round-trips for step changes
  */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import PitchWizard from "./components/wizard"

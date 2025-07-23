@@ -1,5 +1,3 @@
-"use server"
-
 import ManageBilling from "./manage-billing"
 
 interface SettingsInterfaceProps {

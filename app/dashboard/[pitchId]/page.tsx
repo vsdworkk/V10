@@ -1,4 +1,3 @@
-"use server"
 /**
  * @description
  * This server page displays details of a specific pitch identified by [pitchId].

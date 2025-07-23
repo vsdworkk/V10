@@ -1,8 +1,6 @@
 /*
-This server layout provides a centered layout for (auth) pages.
+This layout provides a centered layout for (auth) pages.
 */
-
-"use server"
 
 interface AuthLayoutProps {
   children: React.ReactNode

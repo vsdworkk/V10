@@ -374,7 +374,7 @@ export default function ReviewStep({
       {/* The Editor Content */}
       <ScrollArea className="h-[50vh] w-full overflow-hidden rounded-xl border border-white/30 bg-white/50 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
         <div
-          className="prose prose-slate prose-neutral dark:prose-invert max-w-none p-6 text-neutral-900"
+          className="prose prose-neutral dark:prose-invert max-w-none p-6 text-neutral-900"
           style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
         >
           <EditorContent editor={editor} />
