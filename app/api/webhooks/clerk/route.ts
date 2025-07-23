@@ -1,18 +1,11 @@
-/*
-Clerk webhook handler for automatic profile creation when users sign up.
-This eliminates race conditions by creating profiles immediately after Clerk user creation.
-*/
-
-import { Webhook } from "svix"
-import { headers } from "next/headers"
 import { WebhookEvent } from "@clerk/nextjs/server"
-import { db } from "@/db/db"
 import { profilesTable } from "@/db/schema"
 import { NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
+import { Webhook } from "svix"
+import { db } from "@/db/db"
 
 export async function POST(req: Request) {
-  // Get the webhook secret from environment variables
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
 
   if (!WEBHOOK_SECRET) {
@@ -20,30 +13,19 @@ export async function POST(req: Request) {
     return new NextResponse("Internal server error", { status: 500 })
   }
 
-  // Get the headers
-  const headerPayload = await headers()
-  const svix_id = headerPayload.get("svix-id")
-  const svix_timestamp = headerPayload.get("svix-timestamp")
-  const svix_signature = headerPayload.get("svix-signature")
+  const svix_id = req.headers.get("svix-id")
+  const svix_timestamp = req.headers.get("svix-timestamp")
+  const svix_signature = req.headers.get("svix-signature")
 
-  // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
-    console.error("Missing required svix headers")
-    return new NextResponse("Error occurred -- no svix headers", {
-      status: 400
-    })
+    console.warn("Missing required Svix headers")
+    return new NextResponse("Missing Svix headers", { status: 400 })
   }
 
-  // Get the body
   const payload = await req.text()
-  const body = JSON.parse(payload)
-
-  // Create a new Svix instance with your webhook secret
   const wh = new Webhook(WEBHOOK_SECRET)
-
   let evt: WebhookEvent
 
-  // Verify the payload with the headers
   try {
     evt = wh.verify(payload, {
       "svix-id": svix_id,
@@ -51,31 +33,33 @@ export async function POST(req: Request) {
       "svix-signature": svix_signature
     }) as WebhookEvent
   } catch (err) {
-    console.error("Error verifying webhook:", err)
-    return new NextResponse("Error occurred -- verification failed", {
-      status: 400
-    })
+    console.error("Webhook verification failed:", err)
+    return new NextResponse("Webhook verification failed", { status: 400 })
   }
 
-  // Handle the webhook event
-  const { id } = evt.data
+  const { id: userId } = evt.data ?? {}
   const eventType = evt.type
 
-  console.log(`Received webhook: ${eventType} for user: ${id}`)
+  if (!userId) {
+    console.warn("No user ID in webhook payload")
+    return new NextResponse("No user ID in payload", { status: 400 })
+  }
+
+  console.log(`Received webhook: ${eventType} for user: ${userId}`)
 
   try {
     switch (eventType) {
       case "user.created":
-        await handleUserCreated(evt)
+        await handleUserCreated(userId)
         break
       case "user.updated":
-        await handleUserUpdated(evt)
+        await handleUserUpdated(userId)
         break
       case "user.deleted":
-        await handleUserDeleted(evt)
+        await handleUserDeleted(userId)
         break
       default:
-        console.log(`Unhandled webhook event type: ${eventType}`)
+        console.info(`Unhandled webhook event type: ${eventType}`)
     }
 
     return new NextResponse("Webhook processed successfully", { status: 200 })
@@ -85,97 +69,51 @@ export async function POST(req: Request) {
   }
 }
 
-/**
- * Handle user creation - create profile in Supabase
- */
-async function handleUserCreated(evt: WebhookEvent) {
-  const { id: userId } = evt.data
+async function handleUserCreated(userId: string) {
+  const existingProfile = await db.query.profiles.findFirst({
+    where: (profiles, { eq }) => eq(profiles.userId, userId)
+  })
 
-  if (!userId) {
-    throw new Error("No user ID found in webhook data")
+  if (existingProfile) {
+    console.info(`Profile already exists for user: ${userId}`)
+    return
   }
 
-  try {
-    // Check if profile already exists (idempotency check)
-    const existingProfile = await db.query.profiles.findFirst({
-      where: (profiles, { eq }) => eq(profiles.userId, userId)
+  const [newProfile] = await db
+    .insert(profilesTable)
+    .values({
+      userId,
+      membership: "free",
+      credits: 2,
+      creditsUsed: 0
     })
+    .returning()
 
-    if (existingProfile) {
-      console.log(`Profile already exists for user: ${userId}`)
-      return
-    }
-
-    // Create new profile with default values
-    const newProfile = await db
-      .insert(profilesTable)
-      .values({
-        userId: userId,
-        membership: "free",
-        credits: 2,
-        creditsUsed: 0
-      })
-      .returning()
-
-    console.log(`Successfully created profile for user: ${userId}`, {
-      profileId: newProfile[0].userId,
-      membership: newProfile[0].membership,
-      credits: newProfile[0].credits
-    })
-  } catch (error) {
-    console.error(`Failed to create profile for user ${userId}:`, error)
-    throw error
-  }
+  console.log("Profile created:", {
+    userId: newProfile.userId,
+    membership: newProfile.membership,
+    credits: newProfile.credits
+  })
 }
 
-/**
- * Handle user updates - sync any relevant changes
- */
-async function handleUserUpdated(evt: WebhookEvent) {
-  const { id: userId } = evt.data
+async function handleUserUpdated(userId: string) {
+  await db
+    .update(profilesTable)
+    .set({ updatedAt: new Date() })
+    .where(eq(profilesTable.userId, userId))
 
-  if (!userId) {
-    throw new Error("No user ID found in webhook data")
-  }
-
-  try {
-    await db
-      .update(profilesTable)
-      .set({
-        updatedAt: new Date()
-      })
-      .where(eq(profilesTable.userId, userId))
-
-    console.log(`Successfully updated profile sync for user: ${userId}`)
-  } catch (error) {
-    console.error(`Failed to update profile for user ${userId}:`, error)
-    throw error
-  }
+  console.log(`Profile updated for user: ${userId}`)
 }
 
-/**
- * Handle user deletion - clean up profile data
- */
-async function handleUserDeleted(evt: WebhookEvent) {
-  const { id: userId } = evt.data
+async function handleUserDeleted(userId: string) {
+  const deleted = await db
+    .delete(profilesTable)
+    .where(eq(profilesTable.userId, userId))
+    .returning()
 
-  if (!userId) {
-    throw new Error("No user ID found in webhook data")
-  }
-
-  try {
-    const deletedProfile = await db
-      .delete(profilesTable)
-      .where(eq(profilesTable.userId, userId))
-      .returning()
-
-    if (deletedProfile.length > 0) {
-      console.log(`Successfully deleted profile for user: ${userId}`)
-    } else {
-      console.log(`No profile found to delete for user: ${userId}`)
-    }
-  } catch (error) {
-    console.error(`Failed to delete profile for user ${userId}:`, error)
-    throw error
+  if (deleted.length > 0) {
+    console.log(`Deleted profile for user: ${userId}`)
+  } else {
+    console.info(`No profile found for deletion: ${userId}`)
   }
 }
