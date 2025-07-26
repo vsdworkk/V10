@@ -2,7 +2,7 @@
 
 /**
  * @description
- * PATCH /api/pitches/[pitchId]
+ * PATCH /api/pitches/[pitchId]
  * Update an existing pitch. Checks ownership via Clerk.
  */
 
@@ -10,42 +10,46 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { updatePitchAction } from "@/actions/db/pitches-actions"
 import { updatePitchSchema } from "@/lib/schemas/pitchSchemas"
+import { z } from "zod"
+
+// UUID v4 validation
+const uuidSchema = z.string().uuid()
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ pitchId: string }> }
+  { params }: { params: { pitchId: string } }
 ) {
   try {
-    /* ------------------------------------------------------------------ */
-    /* 0.  Auth                                                           */
-    /* ------------------------------------------------------------------ */
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { pitchId } = await params
-    const body = await request.json()
+    const { pitchId } = params
 
-    /* ------------------------------------------------------------------ */
-    /* 1.  Attach owner & validate                                         */
-    /* ------------------------------------------------------------------ */
-    body.userId = userId // enforce correct owner
-
-    try {
-      updatePitchSchema.parse(body) // zod validation (includes agentExecutionId)
-    } catch (err) {
-      console.error("Pitch validation error:", err)
+    const parsedPitchId = uuidSchema.safeParse(pitchId)
+    if (!parsedPitchId.success) {
       return NextResponse.json(
-        { error: "Invalid request body" },
+        { error: "Invalid pitch ID (must be a valid UUID)" },
         { status: 400 }
       )
     }
 
-    /* ------------------------------------------------------------------ */
-    /* 2.  Update                                                          */
-    /* ------------------------------------------------------------------ */
-    const result = await updatePitchAction(pitchId, body, userId)
+    const body = await request.json()
+    body.userId = userId // enforce correct owner
+
+    const parsedBody = updatePitchSchema.safeParse(body)
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid request body",
+          details: parsedBody.error.flatten()
+        },
+        { status: 400 }
+      )
+    }
+
+    const result = await updatePitchAction(pitchId, parsedBody.data, userId)
     if (!result.isSuccess) {
       return NextResponse.json({ error: result.message }, { status: 500 })
     }
@@ -60,7 +64,7 @@ export async function PATCH(
   } catch (error: any) {
     console.error("Error in PATCH /api/pitches/[pitchId]:", error)
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Internal server error", details: error?.message },
       { status: 500 }
     )
   }

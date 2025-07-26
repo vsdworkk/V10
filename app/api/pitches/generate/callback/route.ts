@@ -1,78 +1,66 @@
 // Callback endpoint for PromptLayer pitch generation workflow
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import sanitizeHtml from "sanitize-html"
 import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json()
 
-    // Extract the unique ID (which is the pitch ID) from the callback data
-    let uniqueId = ""
-
-    // Check common locations for the ID - same approach as guidance system
-    if (data.input_variables?.id_unique) {
-      uniqueId = data.input_variables.id_unique
-    } else if (data.output?.data?.id_unique) {
-      uniqueId = data.output.data.id_unique
-    } else if (data.id_unique) {
-      uniqueId = data.id_unique
-    } else if (data.data?.id_unique) {
-      uniqueId = data.data.id_unique
-    }
-
+    const uniqueId = extractUniqueId(data)
     if (!uniqueId) {
-      console.error("No unique ID found in callback data", data)
+      console.error("Callback Error: Missing unique ID")
       return NextResponse.json(
         { error: "No unique ID provided in callback" },
         { status: 400 }
       )
     }
 
-    // Extract the pitch content. The agent may return "Integration Prompt"
-    // containing JSON or the legacy "Final Pitch" field.
-    let pitchContent: any = ""
-    if (data.output?.data?.["Integration Prompt"]) {
-      pitchContent = data.output.data["Integration Prompt"]
-    } else if (data.data?.["Integration Prompt"]) {
-      pitchContent = data.data["Integration Prompt"]
-    } else if (data.output?.data?.["Final Pitch"]) {
-      pitchContent = data.output.data["Final Pitch"]
-    } else if (data.data?.["Final Pitch"]) {
-      pitchContent = data.data["Final Pitch"]
-    }
-
+    const pitchContent = extractPitchContent(data)
     if (!pitchContent) {
-      console.error("No pitch content found in callback data", data)
+      console.error("Callback Error: No pitch content found")
       return NextResponse.json(
         { error: "No pitch content found in callback" },
         { status: 400 }
       )
     }
 
-    // Format the pitch content as HTML if needed
-    const htmlPitchContent = formatPitchAsHtml(pitchContent)
+    const htmlPitchContent = sanitizeHtml(formatPitchAsHtml(pitchContent), {
+      allowedTags: [
+        "p",
+        "br",
+        "h1",
+        "h2",
+        "h3",
+        "strong",
+        "em",
+        "ul",
+        "li",
+        "ol"
+      ],
+      allowedAttributes: {},
+      disallowedTagsMode: "discard"
+    })
 
-    // Update the database using updatePitchByExecutionId which can find the record
-    // using either the agentExecutionId field or the id field (the pitch ID)
-    // This is the exact same pattern used by the guidance system
     debugLog(
-      `Updating pitch with execution ID ${uniqueId} and pitch content (${htmlPitchContent.length} chars)`
+      `Updating pitch with execution ID ${uniqueId}. Sanitized content length: ${htmlPitchContent.length}`
     )
+
     const updateResult = await updatePitchByExecutionId(uniqueId, {
       pitchContent: htmlPitchContent,
       status: "final"
     })
 
     if (!updateResult.isSuccess) {
-      console.error(`Failed to update pitch: ${updateResult.message}`)
+      console.error(`Database update failed: ${updateResult.message}`)
       return NextResponse.json({ error: updateResult.message }, { status: 500 })
     }
 
-    debugLog("Pitch saved successfully")
+    debugLog("Pitch saved successfully.")
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error in pitch callback:", error)
+    console.error("Callback Handler Error:", error)
     return NextResponse.json(
       { error: error.message || "Internal server error" },
       { status: 500 }
@@ -80,22 +68,41 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * Format plain text pitch as HTML for the rich text editor
- */
+// === Helpers ===
+
+function extractUniqueId(data: any): string | null {
+  return (
+    data?.input_variables?.id_unique ||
+    data?.output?.data?.id_unique ||
+    data?.data?.id_unique ||
+    data?.id_unique ||
+    null
+  )
+}
+
+function extractPitchContent(data: any): string | object | null {
+  return (
+    data?.output?.data?.["Integration Prompt"] ||
+    data?.data?.["Integration Prompt"] ||
+    data?.output?.data?.["Final Pitch"] ||
+    data?.data?.["Final Pitch"] ||
+    null
+  )
+}
+
 function formatPitchAsHtml(text: any): string {
   if (!text) return ""
 
   const escape = (str: string) =>
     str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
-  // Attempt to parse JSON structure
+  // Try structured formatting
   let json: any = null
   if (typeof text === "string") {
     try {
       json = JSON.parse(text)
     } catch {
-      // not JSON
+      // Not JSON
     }
   } else if (typeof text === "object") {
     json = text
@@ -103,41 +110,26 @@ function formatPitchAsHtml(text: any): string {
 
   if (json && (json.introduction || json.starExamples || json.conclusion)) {
     let html = ""
-    if (json.introduction) {
-      html += `<p>${escape(json.introduction)}</p>`
-    }
+    if (json.introduction) html += `<p>${escape(json.introduction)}</p>`
     if (Array.isArray(json.starExamples)) {
       for (const ex of json.starExamples) {
-        if (ex?.content) {
-          html += `<p>${escape(ex.content)}</p>`
-        }
+        if (ex?.content) html += `<p>${escape(ex.content)}</p>`
       }
     }
-    if (json.conclusion) {
-      html += `<p>${escape(json.conclusion)}</p>`
-    }
+    if (json.conclusion) html += `<p>${escape(json.conclusion)}</p>`
     return html
   }
 
+  // Otherwise, fallback to paragraph formatting
   const plain = typeof text === "string" ? text : JSON.stringify(text)
-  let html = ""
-  const paragraphs = plain.split(/\n\s*\n/)
-  for (const para of paragraphs) {
-    if (!para.trim()) continue
-    if (para.startsWith("# ")) {
-      const headingText = para.substring(2).trim()
-      html += `<h1>${escape(headingText)}</h1>`
-    } else if (para.startsWith("## ")) {
-      const headingText = para.substring(3).trim()
-      html += `<h2>${escape(headingText)}</h2>`
-    } else if (para.startsWith("### ")) {
-      const headingText = para.substring(4).trim()
-      html += `<h3>${escape(headingText)}</h3>`
-    } else {
-      const lines = para.split("\n")
-      const processed = lines.map(l => escape(l)).join("<br>")
-      html += `<p>${processed}</p>`
-    }
-  }
-  return html
+  return plain
+    .split(/\n\s*\n/)
+    .filter(p => p.trim())
+    .map(para => {
+      if (para.startsWith("### ")) return `<h3>${escape(para.slice(4))}</h3>`
+      if (para.startsWith("## ")) return `<h2>${escape(para.slice(3))}</h2>`
+      if (para.startsWith("# ")) return `<h1>${escape(para.slice(2))}</h1>`
+      return `<p>${escape(para.replace(/\n/g, "<br>"))}</p>`
+    })
+    .join("")
 }
