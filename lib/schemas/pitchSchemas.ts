@@ -70,3 +70,17 @@ export const updatePitchSchema = z
   })
   .partial()
   .strict()
+
+export const PitchRequestSchema = z.object({
+  userId: z.string(),
+  pitchId: z.string(),
+  roleName: z.string(),
+  organisationName: z.string().optional(),
+  roleLevel: z.string(),
+  pitchWordLimit: z.number(),
+  roleDescription: z.string().optional(),
+  relevantExperience: z.string().optional(),
+  albertGuidance: z.string().optional(),
+  starExamples: z.array(z.any()),
+  starExamplesCount: z.number().optional()
+})
