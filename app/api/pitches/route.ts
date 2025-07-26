@@ -4,89 +4,92 @@
  * Create or update a pitch record when `id` is present in the body.
  */
 
-import { NextResponse } from "next/server"
 import {
   createPitchAction,
   updatePitchAction
 } from "@/actions/db/pitches-actions"
+import { updatePitchSchema } from "@/lib/schemas/pitchSchemas"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
     /* ------------------------------------------------------------------ */
-    /* 1.  Basic guard‑rails                                              */
+    /* 1. Validate input against schema                                   */
     /* ------------------------------------------------------------------ */
-    // When saving draft steps we may only have the userId available.
-    // Other fields are optional until later in the wizard.
-    if (!body.userId) {
+    const result = updatePitchSchema.safeParse(body)
+
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error: "Invalid input",
+          issues: result.error.format()
+        },
         { status: 400 }
       )
     }
 
-    /* ------------------------------------------------------------------ */
-    /* 2.  Build the payload expected by Drizzle actions                  */
-    /* ------------------------------------------------------------------ */
-    const pitchData = {
-      // ownership / foreign‑key
-      userId: body.userId,
+    const data = result.data
 
-      // role information
-      roleName: body.roleName,
-      organisationName: body.organisationName || null,
-      roleLevel: body.roleLevel,
-
-      // misc meta
-      pitchWordLimit: body.pitchWordLimit || 650,
-      roleDescription: body.roleDescription || "",
-      relevantExperience: body.relevantExperience || "",
-
-      // resume upload (optional)
-      resumePath: body.resumePath || null,
-
-      // NEW — store PromptLayer execution‑id so we can link the callback
-      agentExecutionId: body.agentExecutionId || null,
-
-      // STAR data
-      starExamples: body.starExamples || [],
-      starExamplesCount: body.starExamplesCount
-        ? parseInt(body.starExamplesCount, 10)
-        : 2,
-      starExampleDescriptions: body.starExampleDescriptions || [],
-
-      // generated content
-      albertGuidance: body.albertGuidance || "",
-      pitchContent: body.pitchContent || "",
-
-      // wizard bookkeeping
-      status: body.status || "draft",
-      currentStep: body.currentStep || 1
+    if (!data.userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 })
     }
 
     /* ------------------------------------------------------------------ */
-    /* 3.  Persist                                                        */
+    /* 2. Build the payload expected by Drizzle actions                  */
     /* ------------------------------------------------------------------ */
-    const result = body.id
-      ? await updatePitchAction(body.id, pitchData, body.userId)
+    const pitchData = {
+      userId: data.userId,
+
+      // Role info
+      roleName: data.roleName ?? "",
+      organisationName: data.organisationName ?? null,
+      roleLevel: data.roleLevel ?? "",
+
+      // Meta
+      pitchWordLimit: data.pitchWordLimit ?? 650,
+      roleDescription: data.roleDescription ?? "",
+      relevantExperience: data.relevantExperience ?? "",
+      resumePath: data.resumePath ?? null,
+      agentExecutionId: data.agentExecutionId ?? null,
+
+      // STAR data
+      starExamples: data.starExamples ?? [],
+      starExamplesCount: data.starExamplesCount ?? 2,
+      starExampleDescriptions: data.starExampleDescriptions ?? [],
+
+      // Generated content
+      albertGuidance: data.albertGuidance ?? "",
+      pitchContent: data.pitchContent ?? "",
+
+      // Wizard bookkeeping
+      status: data.status ?? "draft",
+      currentStep: data.currentStep ?? 1
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* 3. Persist to database                                             */
+    /* ------------------------------------------------------------------ */
+    const dbResult = data.id
+      ? await updatePitchAction(data.id, pitchData, data.userId)
       : await createPitchAction(pitchData)
 
-    if (!result.isSuccess) {
-      return NextResponse.json({ error: result.message }, { status: 500 })
+    if (!dbResult.isSuccess) {
+      return NextResponse.json({ error: dbResult.message }, { status: 500 })
     }
 
     return NextResponse.json(
       {
-        message: body.id ? "Pitch updated" : "Pitch created",
-        data: result.data
+        message: data.id ? "Pitch updated" : "Pitch created",
+        data: dbResult.data
       },
       { status: 200 }
     )
   } catch (error: any) {
     console.error("Error in POST /api/pitches:", error)
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

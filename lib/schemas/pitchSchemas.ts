@@ -1,9 +1,6 @@
 import { z } from "zod"
 
-// ---------------------------------------------------------------------------
-// Word count utilities (server side)
-// ---------------------------------------------------------------------------
-
+// Word count utilities
 function countWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
@@ -18,19 +15,14 @@ function wordRange(min: number, max: number) {
     }, `Must be between ${min} and ${max} words`)
 }
 
-/**
- * Zod schema for a single Action step
- */
+// Action Step
 export const actionStepSchema = z.object({
   stepNumber: z.number(),
   "what-did-you-specifically-do-in-this-step": wordRange(20, 150),
-  "what-was-the-outcome-of-this-step-optional": wordRange(10, 150).optional()
+  "what-was-the-outcome-of-this-step-optional": wordRange(10, 150)
 })
 
-/**
- * Zod schema for a single STAR Example
- * Removed the old fields that we no longer collect (why-was-this-a-problem, how-would-completing, what-did-you-learn).
- */
+// STAR Example
 export const starSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": wordRange(15, 150),
@@ -44,7 +36,7 @@ export const starSchema = z.object({
     ).optional()
   }),
   action: z.object({
-    steps: z.array(actionStepSchema).min(1).optional()
+    steps: z.array(actionStepSchema).min(1)
   }),
   result: z.object({
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
@@ -52,37 +44,29 @@ export const starSchema = z.object({
   })
 })
 
-/**
- * Zod schema for the pitch record update.
- * Removed yearsExperience and resumePath.
- */
+// Update schema (PATCH-style)
 export const updatePitchSchema = z
   .object({
-    id: z.string().uuid().optional(),
-    userId: z.string().optional(),
-    roleName: z.string().min(10).max(150).optional(),
-    roleLevel: z.string().nonempty().optional(),
-    pitchWordLimit: z.number().min(400).max(1000).optional(),
-    roleDescription: z.string().optional().nullable(),
-    relevantExperience: z.string().min(1000).max(10000).optional(),
+    id: z.string().uuid(),
+    userId: z.string(),
+    roleName: z.string().min(10).max(150),
+    roleLevel: z.string().nonempty(),
+    pitchWordLimit: z.number().min(400).max(1000),
+    roleDescription: z.string().nullable(),
+    relevantExperience: z.string().min(1000).max(10000),
+    organisationName: z.string().nullable(),
+    resumePath: z.string().nullable(),
 
-    // The array of star examples, each must match starSchema
-    starExamples: z.array(starSchema).optional(),
+    starExamples: z.array(starSchema),
+    albertGuidance: z.string().min(1).nullable(),
+    pitchContent: z.string().nullable(),
 
-    albertGuidance: z.string().min(1).optional().nullable(),
-    pitchContent: z.string().optional().nullable(),
+    agentExecutionId: z.string().nullable(),
+    starExamplesCount: z.number().min(2).max(4),
+    starExampleDescriptions: z.array(z.string().min(10).max(100)),
 
-    // Add agentExecutionId for PromptLayer integration
-    agentExecutionId: z.string().optional().nullable(),
-
-    // starExamplesCount can be 2..4
-    starExamplesCount: z.number().min(2).max(4).optional(),
-
-    // starExampleDescriptions for short descriptions of each STAR example
-    starExampleDescriptions: z.array(z.string().min(10).max(100)).optional(),
-
-    // Add fields like currentStep or status if needed
-    currentStep: z.number().optional(),
-    status: z.enum(["draft", "final", "submitted"]).optional()
+    currentStep: z.number(),
+    status: z.enum(["draft", "final", "submitted"])
   })
   .partial()
+  .strict()
