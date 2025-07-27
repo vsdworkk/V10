@@ -1,18 +1,19 @@
-/*
-Contains server actions related to profiles in the DB.
-*/
-
 "use server"
 
-import { db } from "@/db/db"
+/**
+ * Server actions related to user profiles.
+ * Handles CRUD operations, credit management, and ensures profile consistency.
+ */
+
 import {
-  InsertProfile,
   profilesTable,
+  InsertProfile,
   SelectProfile
 } from "@/db/schema/profiles-schema"
+import { revalidatePath } from "next/cache"
 import { ActionState } from "@/types"
 import { eq, sql } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
+import { db } from "@/db/db"
 
 export async function createProfileAction(
   data: InsertProfile
@@ -37,6 +38,7 @@ export async function getProfileByUserIdAction(
     const profile = await db.query.profiles.findFirst({
       where: eq(profilesTable.userId, userId)
     })
+
     if (!profile) {
       return { isSuccess: false, message: "Profile not found" }
     }
@@ -47,8 +49,8 @@ export async function getProfileByUserIdAction(
       data: profile
     }
   } catch (error) {
-    console.error("Error getting profile by user id", error)
-    return { isSuccess: false, message: "Failed to get profile" }
+    console.error("Error retrieving profile:", error)
+    return { isSuccess: false, message: "Failed to retrieve profile" }
   }
 }
 
@@ -66,6 +68,8 @@ export async function updateProfileAction(
     if (!updatedProfile) {
       return { isSuccess: false, message: "Profile not found to update" }
     }
+
+    revalidatePath("/dashboard")
 
     return {
       isSuccess: true,
@@ -96,13 +100,15 @@ export async function updateProfileByStripeCustomerIdAction(
       }
     }
 
+    revalidatePath("/dashboard")
+
     return {
       isSuccess: true,
       message: "Profile updated by Stripe customer ID successfully",
       data: updatedProfile
     }
   } catch (error) {
-    console.error("Error updating profile by stripe customer ID:", error)
+    console.error("Error updating profile by Stripe customer ID:", error)
     return {
       isSuccess: false,
       message: "Failed to update profile by Stripe customer ID"
@@ -115,6 +121,7 @@ export async function deleteProfileAction(
 ): Promise<ActionState<void>> {
   try {
     await db.delete(profilesTable).where(eq(profilesTable.userId, userId))
+    revalidatePath("/dashboard")
     return {
       isSuccess: true,
       message: "Profile deleted successfully",
@@ -131,6 +138,13 @@ export async function addCreditsAction(
   amount: number
 ): Promise<ActionState<SelectProfile>> {
   try {
+    if (amount <= 0) {
+      return {
+        isSuccess: false,
+        message: "Credit amount to add must be positive"
+      }
+    }
+
     const [updatedProfile] = await db
       .update(profilesTable)
       .set({ credits: sql`${profilesTable.credits} + ${amount}` })
@@ -141,7 +155,10 @@ export async function addCreditsAction(
       return { isSuccess: false, message: "Profile not found" }
     }
 
-    // Refresh dashboard cache so the UI shows updated credits immediately
+    if (updatedProfile.credits < 0) {
+      return { isSuccess: false, message: "Invalid credit state after update" }
+    }
+
     revalidatePath("/dashboard")
 
     return {
@@ -160,6 +177,13 @@ export async function spendCreditsAction(
   amount: number
 ): Promise<ActionState<SelectProfile>> {
   try {
+    if (amount <= 0) {
+      return {
+        isSuccess: false,
+        message: "Credit amount to spend must be positive"
+      }
+    }
+
     const profileResult = await getProfileByUserIdAction(userId)
     if (!profileResult.isSuccess || !profileResult.data) {
       return { isSuccess: false, message: "Profile not found" }
@@ -179,14 +203,24 @@ export async function spendCreditsAction(
       .where(eq(profilesTable.userId, userId))
       .returning()
 
+    if (!updatedProfile) {
+      return { isSuccess: false, message: "Profile not found to update" }
+    }
+
+    if (updatedProfile.credits < 0) {
+      return { isSuccess: false, message: "Credits cannot be negative" }
+    }
+
+    revalidatePath("/dashboard")
+
     return {
       isSuccess: true,
-      message: "Credits used successfully",
+      message: "Credits spent successfully",
       data: updatedProfile
     }
   } catch (error) {
-    console.error("Error using credits:", error)
-    return { isSuccess: false, message: "Failed to use credits" }
+    console.error("Error spending credits:", error)
+    return { isSuccess: false, message: "Failed to spend credits" }
   }
 }
 
@@ -194,15 +228,16 @@ export async function ensureProfileAction(
   userId: string
 ): Promise<ActionState<SelectProfile>> {
   try {
-    const existingProfile = await getProfileByUserIdAction(userId)
-    if (existingProfile.isSuccess && existingProfile.data) {
-      return existingProfile
+    const existing = await getProfileByUserIdAction(userId)
+    if (existing.isSuccess && existing.data) {
+      return existing
     }
 
     const created = await createProfileAction({ userId })
     if (!created.isSuccess) {
       return { isSuccess: false, message: created.message }
     }
+
     return {
       isSuccess: true,
       message: "Profile ensured successfully",

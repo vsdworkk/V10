@@ -1,17 +1,6 @@
 "use server"
 
-/**
- * CRUD helpers for the `pitches` table (Drizzle + Postgres).
- *
- * NEW (for realtime callback flow)
- * ───────────────────────────────
- * • getPitchByExecutionIdAction
- * • updatePitchByExecutionId
- *
- * Both work on the `agentExecutionId` column that stores the
- * PromptLayer `workflow_version_execution_id`.
- */
-
+import { z } from "zod"
 import { db } from "@/db/db"
 import {
   InsertPitch,
@@ -21,6 +10,18 @@ import {
 import { debugLog } from "@/lib/debug"
 import { eq, and, desc, or } from "drizzle-orm"
 import { ActionState } from "@/types"
+
+/* Zod UUID validator */
+const uuidSchema = z.string().uuid()
+
+function validateUUID(id: string): boolean {
+  try {
+    uuidSchema.parse(id)
+    return true
+  } catch {
+    return false
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /*  Create                                                            */
@@ -34,7 +35,6 @@ export async function createPitchAction(
       .insert(pitchesTable)
       .values(pitchData)
       .returning()
-
     return { isSuccess: true, message: "Pitch created", data: newPitch }
   } catch (err) {
     console.error("createPitchAction:", err)
@@ -50,6 +50,9 @@ export async function getPitchByIdAction(
   id: string,
   userId: string
 ): Promise<ActionState<SelectPitch>> {
+  if (!validateUUID(id)) {
+    return { isSuccess: false, message: "Invalid pitch ID format" }
+  }
   try {
     const [pitch] = await db
       .select()
@@ -70,17 +73,22 @@ export async function getPitchByIdAction(
 export async function getPitchByExecutionIdAction(
   execId: string
 ): Promise<ActionState<SelectPitch>> {
+  if (!execId) {
+    return { isSuccess: false, message: "Execution ID must be provided" }
+  }
+  // Execution ID might not be a UUID, so skipping UUID validation here
+
   try {
-    // First try to find by agentExecutionId
     let [pitch] = await db
       .select()
       .from(pitchesTable)
       .where(eq(pitchesTable.agentExecutionId, execId))
       .limit(1)
 
-    // If not found, try finding by pitch ID
     if (!pitch) {
-      debugLog(`[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`)
+      debugLog(
+        `[getPitchByExecutionIdAction] No pitch found with agentExecutionId: ${execId}, trying pitch ID`
+      )
       ;[pitch] = await db
         .select()
         .from(pitchesTable)
@@ -90,7 +98,10 @@ export async function getPitchByExecutionIdAction(
 
     return pitch
       ? { isSuccess: true, message: "Pitch found", data: pitch }
-      : { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
+      : {
+          isSuccess: false,
+          message: "No pitch with that execution‑ID or pitch ID"
+        }
   } catch (err) {
     console.error("getPitchByExecutionIdAction:", err)
     return { isSuccess: false, message: "Failed to fetch pitch" }
@@ -123,6 +134,13 @@ export async function updatePitchAction(
   updatedData: Partial<InsertPitch>,
   userId: string
 ): Promise<ActionState<SelectPitch>> {
+  if (!validateUUID(id)) {
+    return { isSuccess: false, message: "Invalid pitch ID format" }
+  }
+  if (!updatedData || Object.keys(updatedData).length === 0) {
+    return { isSuccess: false, message: "No update data provided" }
+  }
+
   try {
     const [updated] = await db
       .update(pitchesTable)
@@ -140,66 +158,83 @@ export async function updatePitchAction(
 }
 
 /**
- * Update by `agentExecutionId` – used inside PromptLayer callback where
- * we do **not** know the userId or pitchId, only the execution‑ID.
+ * Update by `agentExecutionId` with transaction for atomicity.
  */
 export async function updatePitchByExecutionId(
   execId: string,
   updatedData: Partial<InsertPitch>
 ): Promise<ActionState<SelectPitch>> {
+  if (!execId) {
+    return { isSuccess: false, message: "Execution ID must be provided" }
+  }
+  if (!updatedData || Object.keys(updatedData).length === 0) {
+    return { isSuccess: false, message: "No update data provided" }
+  }
+
   debugLog(`[updatePitchByExecutionId] Starting with execId: ${execId}`)
-  debugLog(`[updatePitchByExecutionId] Updating with data size:`, 
-    updatedData.pitchContent ? updatedData.pitchContent.length + " chars" : "No content")
-  
+  debugLog(
+    `[updatePitchByExecutionId] Updating with data size:`,
+    updatedData.pitchContent
+      ? updatedData.pitchContent.length + " chars"
+      : "No content"
+  )
+
   try {
-    // First check if the pitch exists by agentExecutionId
-    let existing = await db
-      .select({ id: pitchesTable.id })
-      .from(pitchesTable)
-      .where(eq(pitchesTable.agentExecutionId, execId))
-      .limit(1)
-    
-    // If not found by agentExecutionId, try finding by pitch ID 
-    // (this supports our new approach where pitch ID = execution ID)
-    if (existing.length === 0) {
-      debugLog(`[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`)
-      existing = await db
+    // Use transaction to ensure atomic read + update
+    const result = await db.transaction(async tx => {
+      let existing = await tx
         .select({ id: pitchesTable.id })
         .from(pitchesTable)
-        .where(eq(pitchesTable.id, execId))
+        .where(eq(pitchesTable.agentExecutionId, execId))
         .limit(1)
-    }
-    
-    if (existing.length === 0) {
-      console.error(`[updatePitchByExecutionId] No record found with agentExecutionId or id: ${execId}`)
-      return { isSuccess: false, message: "No pitch with that execution‑ID or pitch ID" }
-    }
-    
-    debugLog(`[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`)
-    
-    // Update by either agentExecutionId or id, depending on which one is more likely to match
-    const [updated] = await db
-      .update(pitchesTable)
-      .set(updatedData)
-      .where(
-        // Try both the agentExecutionId and the id fields
-        or(
-          eq(pitchesTable.agentExecutionId, execId),
-          eq(pitchesTable.id, execId)
-        )
-      )
-      .returning()
 
-    if (!updated) {
-      console.error(`[updatePitchByExecutionId] Update operation returned no records`)
-      return { isSuccess: false, message: "Update operation failed" }
-    }
-    
-    debugLog(`[updatePitchByExecutionId] Successfully updated pitch: ${updated.id}`)
-    return { isSuccess: true, message: "Pitch updated", data: updated }
-  } catch (err) {
+      if (existing.length === 0) {
+        debugLog(
+          `[updatePitchByExecutionId] No record found with agentExecutionId: ${execId}, trying pitch ID`
+        )
+        existing = await tx
+          .select({ id: pitchesTable.id })
+          .from(pitchesTable)
+          .where(eq(pitchesTable.id, execId))
+          .limit(1)
+      }
+
+      if (existing.length === 0) {
+        throw new Error("No pitch with that execution‑ID or pitch ID")
+      }
+
+      debugLog(
+        `[updatePitchByExecutionId] Found matching record with ID: ${existing[0].id}`
+      )
+
+      const [updated] = await tx
+        .update(pitchesTable)
+        .set(updatedData)
+        .where(
+          or(
+            eq(pitchesTable.agentExecutionId, execId),
+            eq(pitchesTable.id, execId)
+          )
+        )
+        .returning()
+
+      if (!updated) {
+        throw new Error("Update operation failed")
+      }
+
+      return updated
+    })
+
+    debugLog(
+      `[updatePitchByExecutionId] Successfully updated pitch: ${result.id}`
+    )
+    return { isSuccess: true, message: "Pitch updated", data: result }
+  } catch (err: any) {
     console.error(`[updatePitchByExecutionId] Error:`, err)
-    return { isSuccess: false, message: `Failed to update pitch: ${err}` }
+    return {
+      isSuccess: false,
+      message: `Failed to update pitch: ${err.message}`
+    }
   }
 }
 
@@ -211,6 +246,10 @@ export async function deletePitchAction(
   id: string,
   userId: string
 ): Promise<ActionState<void>> {
+  if (!validateUUID(id)) {
+    return { isSuccess: false, message: "Invalid pitch ID format" }
+  }
+
   try {
     const res = await db
       .delete(pitchesTable)
@@ -230,16 +269,11 @@ export async function deletePitchAction(
 /*  Custom Update Helpers                                             */
 /* ------------------------------------------------------------------ */
 
-/**
- * Persist edited pitch content only. Intended for use by the rich‑text
- * editor once the pitch is marked as completed/final.
- */
 export async function savePitchContentAction(
   id: string,
   userId: string,
   content: string
 ): Promise<ActionState<SelectPitch>> {
-  // IMPORTANT: never allow editing of a pitch that does not belong to the user
   return await updatePitchAction(
     id,
     { pitchContent: content, updatedAt: new Date() },
