@@ -6,6 +6,7 @@ import SectionProgressSidebar from "./components/progress/section-progress-bar"
 import MobileProgressHeader from "./components/progress/mobile-progress-header"
 import { Section } from "@/types"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface PitchWizardLayoutProps {
   children: React.ReactNode
@@ -99,9 +100,11 @@ export default function PitchWizardLayout({
       <header className="z-10 hidden shrink-0 bg-white shadow-sm lg:block">
         <div className="mx-auto flex w-full max-w-full items-center justify-between p-4 lg:px-12 lg:py-6">
           <div className="flex items-center lg:pl-3">
-            <span className="text-xl font-bold text-black lg:text-2xl">
-              APSPitchPro
-            </span>
+            <Link href="/">
+              <span className="cursor-pointer text-xl font-bold text-black lg:text-2xl">
+                APSPitchPro
+              </span>
+            </Link>
           </div>
         </div>
       </header>
