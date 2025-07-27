@@ -17,7 +17,7 @@ const uuidSchema = z.string().uuid()
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { pitchId: string } }
+  { params }: { params: Promise<{ pitchId: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -25,7 +25,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { pitchId } = params
+    const { pitchId } = await params
 
     const parsedPitchId = uuidSchema.safeParse(pitchId)
     if (!parsedPitchId.success) {

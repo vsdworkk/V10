@@ -53,17 +53,15 @@ const sanitizeContent = (dirty: string) =>
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { pitchId: string } }
+  { params }: { params: Promise<{ pitchId: string }> }
 ) {
-  const params = context.params
-
   try {
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { pitchId } = params
+    const { pitchId } = await params
     const pitchIdCheck = uuidSchema.safeParse(pitchId)
     if (!pitchIdCheck.success) {
       return NextResponse.json(
