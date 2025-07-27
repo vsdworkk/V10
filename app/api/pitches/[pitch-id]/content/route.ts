@@ -53,8 +53,10 @@ const sanitizeContent = (dirty: string) =>
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { pitchId: string } }
+  context: { params: { pitchId: string } }
 ) {
+  const params = context.params
+
   try {
     const { userId } = await auth()
     if (!userId) {
