@@ -9,6 +9,31 @@ type ToastFunction = (props: {
   variant?: "default" | "destructive"
 }) => void
 
+async function postToAPI<T>(
+  endpoint: string,
+  payload: any,
+  errorMessage: string
+): Promise<T> {
+  debugLog(`[API] Sending request to ${endpoint}`, payload)
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+
+  const responseText = await res.text()
+
+  if (!res.ok) {
+    console.error(`[API] ${endpoint} failed:`, responseText)
+    throw new Error(errorMessage)
+  }
+
+  const json = JSON.parse(responseText)
+  debugLog(`[API] Response from ${endpoint}`, json)
+  return json
+}
+
 /**
  * Persists user's partial draft (create/update).
  */
@@ -17,47 +42,24 @@ export async function savePitchData(
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
   toast: ToastFunction,
-  currentStep: number = 1
+  currentStep = 1
 ) {
   const payload = createPitchPayload(data, pitchId, currentStep)
-  debugLog(`[savePitchData] Starting save for step ${currentStep}`)
-  debugLog(`[savePitchData] Saving pitch data for step ${currentStep}`, {
+
+  debugLog(`[savePitchData] Saving step ${currentStep}`, {
     pitchId,
     payloadKeys: Object.keys(payload),
     hasStarExamples: !!payload.starExamples?.length
   })
-  debugLog("[savePitchData] Payload being sent:", payload)
 
   try {
-    debugLog(`[savePitchData] Sending request to /api/pitches`)
-    const res = await fetch("/api/pitches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-
-    debugLog(`[savePitchData] Response status: ${res.status} ${res.statusText}`)
-    if (!res.ok) {
-      const errorText = await res.text()
-      console.error(
-        `[savePitchData] Response not OK. Status: ${res.status}. Body:`,
-        errorText
-      )
-      throw new Error("Failed to save pitch data.")
-    }
-
-    const json = await res.json()
-    debugLog("[savePitchData] Full API Response JSON:", json)
-    debugLog(`[savePitchData] Response data (parsed):`, {
-      success: !!json.data,
-      id: json.data?.id,
-      message: json.message
-    })
-
-    debugLog(`[savePitchData] Step ${currentStep} saved successfully`)
+    const json = await postToAPI<{ data?: { id: string }; message?: string }>(
+      "/api/pitches",
+      payload,
+      "Failed to save pitch data."
+    )
 
     if (json.data?.id) {
-      debugLog(`[savePitchData] Setting pitch ID: ${json.data.id}`)
       setPitchId(json.data.id)
     }
 
@@ -68,7 +70,6 @@ export async function savePitchData(
 
     return json.data
   } catch (err: any) {
-    console.error("[savePitchData] Error:", err)
     toast({
       title: "Error",
       description: err.message || "Failed to save draft",
@@ -91,42 +92,40 @@ export async function triggerFinalPitch(
   setFinalPitchError: React.Dispatch<React.SetStateAction<string | null>>,
   currentStep: number
 ) {
+  const generationPayload = {
+    userId: data.userId,
+    pitchId,
+    roleName: data.roleName,
+    organisationName: data.organisationName,
+    roleLevel: data.roleLevel,
+    pitchWordLimit: data.pitchWordLimit,
+    roleDescription: data.roleDescription || "",
+    relevantExperience: data.relevantExperience,
+    albertGuidance: data.albertGuidance || "",
+    starExamples: data.starExamples,
+    starExamplesCount: parseInt(data.starExamplesCount, 10)
+  }
+
   try {
-    const res = await fetch("/api/pitches/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: data.userId,
-        pitchId,
-        roleName: data.roleName,
-        organisationName: data.organisationName,
-        roleLevel: data.roleLevel,
-        pitchWordLimit: data.pitchWordLimit,
-        roleDescription: data.roleDescription || "",
-        relevantExperience: data.relevantExperience,
-        albertGuidance: data.albertGuidance || "",
-        starExamples: data.starExamples,
-        starExamplesCount: parseInt(data.starExamplesCount, 10)
-      })
-    })
+    const result = await postToAPI<{
+      success: boolean
+      requestId: string
+      error?: string
+    }>(
+      "/api/pitches/generate",
+      generationPayload,
+      "Failed to generate final pitch"
+    )
 
-    if (!res.ok) {
-      const errText = await res.text()
-      throw new Error(errText || "Failed to generate final pitch")
-    }
-
-    const result = await res.json()
     if (!result.success) {
-      throw new Error(result.error || "Failed to generate final pitch")
+      throw new Error(result.error || "Pitch generation failed")
     }
 
-    // got an agentExecutionId (pitch ID)
     methods.setValue("agentExecutionId", result.requestId, {
       shouldDirty: true
     })
     methods.setValue("pitchContent", "", { shouldDirty: true })
 
-    // We want to save the current step when triggering the final pitch
     await savePitchData(
       methods.getValues(),
       pitchId,
@@ -137,7 +136,6 @@ export async function triggerFinalPitch(
 
     return result.requestId
   } catch (err: any) {
-    console.error("triggerFinalPitch error:", err)
     setFinalPitchError(err.message || "An error occurred generating your pitch")
     toast({
       title: "Error",
@@ -162,15 +160,7 @@ export async function submitFinalPitch(
   const payload = createPitchPayload(data, pitchId, 999, "final")
 
   try {
-    const res = await fetch("/api/pitches", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-
-    if (!res.ok) {
-      throw new Error("Failed to submit final pitch.")
-    }
+    await postToAPI("/api/pitches", payload, "Failed to submit final pitch.")
 
     if (typeof window !== "undefined") {
       localStorage.removeItem("currentPitchId")
@@ -184,7 +174,6 @@ export async function submitFinalPitch(
     router.push("/dashboard")
     return true
   } catch (err: any) {
-    console.error("submitFinalPitch error:", err)
     toast({
       title: "Error",
       description: err.message || "Failed to submit pitch",

@@ -18,19 +18,21 @@ export async function POST(request: NextRequest) {
     /* ------------------------------------------------------------------ */
     /* 1. Validate input against schema                                   */
     /* ------------------------------------------------------------------ */
-    const result = updatePitchSchema.safeParse(body)
+    // const result = updatePitchSchema.safeParse(body)
 
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid input",
-          issues: result.error.format()
-        },
-        { status: 400 }
-      )
-    }
+    // if (!result.success) {
+    //   return NextResponse.json(
+    //     {
+    //       error: "Invalid input",
+    //       issues: result.error.format()
+    //     },
+    //     { status: 400 }
+    //   )
+    // }
 
-    const data = result.data
+    // const data = result.data
+
+    const data = body
 
     if (!data.userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 })
