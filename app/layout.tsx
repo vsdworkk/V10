@@ -41,7 +41,7 @@ export default async function RootLayout({
       <html
         lang="en"
         suppressHydrationWarning
-        className={cn(poppins.variable, playfair.variable)}
+        className={cn(poppins.className, playfair.variable)}
       >
         <body
           className={cn(
