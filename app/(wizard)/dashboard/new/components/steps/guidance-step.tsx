@@ -144,7 +144,7 @@ export default function GuidanceStep({
   )
 
   return (
-    <div className="p-6">
+    <div className="p-1 sm:p-6">
       <div className="flex h-[500px] flex-col gap-6 overflow-y-auto pr-2">
         {/* Tips accordion - moved to top */}
         <Accordion

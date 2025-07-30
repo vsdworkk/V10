@@ -10,7 +10,9 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"
+import NavigationButton from "@/components/navigation-button"
 import PitchEditor from "./_components/pitch-editor"
+import Link from "next/link"
 
 interface PitchDetailPageProps {
   params: Promise<{ pitchId: string }>
@@ -49,6 +51,10 @@ export default async function PitchDetailPage({
   return (
     <div className="bg-background flex min-h-screen flex-col">
       <div className="container mx-auto flex max-w-5xl flex-1 flex-col px-4 py-6 sm:px-6">
+        <Link href="/dashboard">
+          <NavigationButton className="mb-1" />
+        </Link>
+
         <h1 className="mb-4 text-2xl font-semibold">Edit Pitch</h1>
         <div className="flex flex-1 flex-col">
           <PitchEditor

@@ -7,6 +7,7 @@ import MobileProgressHeader from "./components/progress/mobile-progress-header"
 import { Section } from "@/types"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import NavigationButton from "@/components/navigation-button"
 
 interface PitchWizardLayoutProps {
   children: React.ReactNode
@@ -114,11 +115,17 @@ export default function PitchWizardLayout({
         {/* Mobile Layout - Stacked */}
         <div className="flex flex-1 flex-col lg:hidden">
           <div className="flex-1 p-4 pb-20">
-            {" "}
             {/* Extra bottom padding for mobile nav */}
             <div className="h-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+              <Link href="/dashboard" className="block px-4 pt-2">
+                <NavigationButton
+                  text="Back to Dashboard"
+                  className="text-[#444ec1]"
+                />
+              </Link>
+
               <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-                <div className="p-4 sm:p-6">{children}</div>
+                <div className="px-4 pb-4 pt-3 sm:p-6">{children}</div>
               </div>
             </div>
           </div>
@@ -140,8 +147,15 @@ export default function PitchWizardLayout({
 
             {/* Desktop Main content */}
             <div className="flex min-w-0 flex-1 flex-col">
+              <Link href="/dashboard" className="ml-10 py-4">
+                <NavigationButton
+                  text="Back to Dashboard"
+                  className="text-[#444ec1]"
+                />
+              </Link>
+
               <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-                <div className="p-8">{children}</div>
+                <div className="px-8 pb-8 pt-5">{children}</div>
               </div>
             </div>
           </div>
