@@ -5,9 +5,11 @@ import {
   getPitchByIdAction
 } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"
+import { auth } from "@clerk/nextjs/server"
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId: currentUserId } = await auth()
     const { jobDescription, experience, userId, pitchId } = await req.json()
 
     if (!jobDescription || !experience || !userId) {
@@ -15,6 +17,10 @@ export async function POST(req: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       )
+    }
+
+    if (currentUserId !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Validate that a pitch ID exists

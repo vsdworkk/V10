@@ -8,8 +8,8 @@ import {
   createPitchAction,
   updatePitchAction
 } from "@/actions/db/pitches-actions"
-import { updatePitchSchema } from "@/lib/schemas/pitchSchemas"
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,10 +32,15 @@ export async function POST(request: NextRequest) {
 
     // const data = result.data
 
+    const { userId } = await auth()
     const data = body
 
     if (!data.userId) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 })
+    }
+
+    if (userId !== data.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     /* ------------------------------------------------------------------ */
