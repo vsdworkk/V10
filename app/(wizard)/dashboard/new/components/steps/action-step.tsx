@@ -192,6 +192,9 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6">
+      {/* Action Header */}
+      <h2 className="text-2xl font-semibold text-gray-900">Action</h2>
+      
       {/* Tips Accordion */}
       <Accordion
         type="single"
@@ -278,7 +281,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                   />
                 </div>
               </div>
-              <span className="text-lg font-medium text-gray-900">Action</span>
+              <span className="text-lg font-medium text-gray-900">Your Steps</span>
             </div>
           </div>
 

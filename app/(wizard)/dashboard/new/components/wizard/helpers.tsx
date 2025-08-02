@@ -13,18 +13,24 @@ export function computeSectionAndHeader(
   if (step === 1) return { section: "INTRO", header: "" }
   if (step === 2) return { section: "ROLE", header: "Role Details" }
   if (step === 3) return { section: "EXP", header: "Your Experience" }
-  if (step === 4) return { section: "GUIDE", header: "AI Guidance" }
+  if (step === 4) return { section: "GUIDE", header: "Identify Key Experiences for Your Pitch" }
 
-  const firstStarStep = 5
-  const lastStarStep = 4 + starCount * 4
-  if (step >= firstStarStep && step <= lastStarStep) {
-    const indexWithinStar = step - firstStarStep
+  // Step 5 is the STAR Examples Introduction (part of STAR section)
+  if (step === 5) return { section: "STAR", header: "" }
+
+  const firstActualStarStep = 6
+  const lastStarStep = 5 + starCount * 4
+  if (step >= firstActualStarStep && step <= lastStarStep) {
+    const indexWithinStar = step - firstActualStarStep
     const exampleIndex = Math.floor(indexWithinStar / 4) + 1 // 1-based
     const subStepIndex = indexWithinStar % 4
     const subStepLabel = ["Situation", "Task", "Action", "Result"][subStepIndex]
+    // Convert numeric index to ordinal text
+    const ordinalLabels = ["First", "Second", "Third", "Fourth"]
+    const ordinalLabel = ordinalLabels[exampleIndex - 1] || `Example ${exampleIndex}`
     return {
       section: "STAR",
-      header: `STAR Example #${exampleIndex} – ${subStepLabel}`
+      header: `${ordinalLabel} Example`
     }
   }
 
@@ -46,10 +52,10 @@ export function firstStepOfSection(section: Section, starCount: number) {
     case "GUIDE":
       return 4
     case "STAR":
-      return 5
+      return 5 // Start with the intro step
     case "FINAL":
     default:
-      return 4 + starCount * 4 + 1
+      return 5 + starCount * 4 + 1 // Adjusted for new intro step
   }
 }
 

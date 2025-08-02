@@ -12,6 +12,7 @@ import WizardIntroStep from "../steps/wizard-intro-step"
 import RoleStep from "../steps/role-step"
 import ExperienceStep from "../steps/experience-step"
 import GuidanceStep from "../steps/guidance-step"
+import StarExamplesIntroStep from "../steps/star-examples-intro-step"
 import SituationStep from "../steps/situation-step"
 import TaskStep from "../steps/task-step"
 import ActionStep from "../steps/action-step"
@@ -67,12 +68,14 @@ export default function PitchWizard({
     if (currentStep === 3) return <ExperienceStep />
     // Step 4 => Guidance
     if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
+    // Step 5 => STAR Examples Introduction
+    if (currentStep === 5) return <StarExamplesIntroStep />
 
-    // Next: starExamples sub-steps
-    const firstStarStep = 5
-    const lastStarStep = 4 + starCount * 4
-    if (currentStep >= firstStarStep && currentStep <= lastStarStep) {
-      const stepInStar = currentStep - firstStarStep
+    // Next: starExamples sub-steps (now starting from step 6)
+    const firstActualStarStep = 6
+    const lastStarStep = 5 + starCount * 4
+    if (currentStep >= firstActualStarStep && currentStep <= lastStarStep) {
+      const stepInStar = currentStep - firstActualStarStep
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
 

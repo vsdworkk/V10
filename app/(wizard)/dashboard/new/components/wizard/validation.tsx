@@ -35,12 +35,15 @@ export async function validateStep(
     if (result) {
       result = !!methods.getValues("albertGuidance")
     }
+  } else if (step === 5) {
+    // STAR Examples Introduction step - no validation needed (informational only)
+    result = true
   }
 
   // STAR steps
   else {
-    const firstStarStep = 5
-    const lastStarStep = 4 + starCount * 4
+    const firstStarStep = 6 // Adjusted for new intro step
+    const lastStarStep = 5 + starCount * 4 // Adjusted for new intro step
 
     if (step >= firstStarStep && step <= lastStarStep) {
       const stepInStar = step - firstStarStep

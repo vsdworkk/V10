@@ -74,7 +74,7 @@ export function useWizard({
 
   // Watch for starExamplesCount
   const starCount = parseInt(methods.watch("starExamplesCount") || "2", 10)
-  const totalSteps = 4 + starCount * 4 + 1
+  const totalSteps = 4 + 1 + starCount * 4 + 1 // Added 1 for the STAR intro step
 
   // Get current section and header
   const { section: currentSection, header: currentHeader } =
@@ -315,8 +315,8 @@ export function useWizard({
 
     const nextStep = Math.min(currentStep + 1, totalSteps)
 
-    // Intro step (step 1) has no validation
-    if (currentStep === 1) {
+    // Intro step (step 1) and STAR Examples Intro step (step 5) have no validation
+    if (currentStep === 1 || currentStep === 5) {
       setCurrentStep(nextStep)
       return
     }
@@ -332,7 +332,7 @@ export function useWizard({
       }
 
       // STEP 2: Handle special case for moving to pitch generation BEFORE advancing UI
-      const lastStarStep = 4 + starCount * 4
+      const lastStarStep = 5 + starCount * 4 // Adjusted for new intro step
       if (currentStep === lastStarStep) {
         // Store the form data for pitch generation confirmation
         const formData = methods.getValues()

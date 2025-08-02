@@ -18,7 +18,7 @@ const STEP_LABELS: Record<Section, string> = {
   ROLE: "Role Details",
   EXP: "Your Experience",
   GUIDE: "AI Guidance",
-  STAR: "STAR Examples",
+  STAR: "Building Your Pitch",
   FINAL: "Review & Edit"
 }
 
