@@ -68,7 +68,7 @@ export function useWizard({
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
     defaultValues: mapExistingDataToDefaults(userId, pitchData),
-    mode: "onTouched",
+    mode: "onChange",
     delayError: 0
   })
 

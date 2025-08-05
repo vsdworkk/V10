@@ -13,7 +13,11 @@ export function computeSectionAndHeader(
   if (step === 1) return { section: "INTRO", header: "" }
   if (step === 2) return { section: "ROLE", header: "Role Details" }
   if (step === 3) return { section: "EXP", header: "Your Experience" }
-  if (step === 4) return { section: "GUIDE", header: "Identify Key Experiences for Your Pitch" }
+  if (step === 4)
+    return {
+      section: "GUIDE",
+      header: "Identify Key Experiences for Your Pitch"
+    }
 
   // Step 5 is the STAR Examples Introduction (part of STAR section)
   if (step === 5) return { section: "STAR", header: "" }
@@ -27,7 +31,8 @@ export function computeSectionAndHeader(
     const subStepLabel = ["Situation", "Task", "Action", "Result"][subStepIndex]
     // Convert numeric index to ordinal text
     const ordinalLabels = ["First", "Second", "Third", "Fourth"]
-    const ordinalLabel = ordinalLabels[exampleIndex - 1] || `Example ${exampleIndex}`
+    const ordinalLabel =
+      ordinalLabels[exampleIndex - 1] || `Example ${exampleIndex}`
     return {
       section: "STAR",
       header: `${ordinalLabel} Example`

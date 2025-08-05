@@ -2,31 +2,14 @@
 
 // Handles the Action step where users list what they did in each STAR example
 import { useFormContext } from "react-hook-form"
-import {
-  PitchWizardFormData,
-  starExampleSchema,
-  actionStepSchema
-} from "../wizard/schema"
+import { PitchWizardFormData, actionStepSchema } from "../wizard/schema"
 import WordCountIndicator from "../utilities/word-count-indicator"
 import { useState, useEffect } from "react"
 import { v4 as uuidv4 } from "uuid"
-import {
-  FormField,
-  FormItem,
-  FormControl,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form"
+import { FormLabel } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import {
-  Plus,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Lightbulb,
-  Target
-} from "lucide-react"
+import { Plus, Check, Lightbulb } from "lucide-react"
 import {
   Accordion,
   AccordionItem,
@@ -194,7 +177,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
     <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6">
       {/* Action Header */}
       <h2 className="text-2xl font-semibold text-gray-900">Action</h2>
-      
+
       {/* Tips Accordion */}
       <Accordion
         type="single"
@@ -281,7 +264,9 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                   />
                 </div>
               </div>
-              <span className="text-lg font-medium text-gray-900">Your Steps</span>
+              <span className="text-lg font-medium text-gray-900">
+                Your Steps
+              </span>
             </div>
           </div>
 

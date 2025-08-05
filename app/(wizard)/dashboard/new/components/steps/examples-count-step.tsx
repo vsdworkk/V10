@@ -69,10 +69,12 @@ export default function ExamplesCountStep() {
             <AccordionContent className="px-4 pb-4 pt-2 text-sm text-gray-700">
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  Choose how many STAR examples you want to include in your pitch.
+                  Choose how many STAR examples you want to include in your
+                  pitch.
                 </li>
                 <li>
-                  Including more examples allows you to showcase more of your relevant skills.
+                  Including more examples allows you to showcase more of your
+                  relevant skills.
                 </li>
                 <li>
                   Consider your word limit when choosing the number of examples.
@@ -129,4 +131,4 @@ export default function ExamplesCountStep() {
       </div>
     </div>
   )
-} 
+}
