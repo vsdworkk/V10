@@ -6,14 +6,14 @@ import { useToast } from "@/lib/hooks/use-toast"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import type { Section } from "@/types"
 
+import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
 import { PitchWizardFormData, pitchWizardSchema } from "./schema"
+import { validateStep } from "./validation"
 import {
   computeSectionAndHeader,
   firstStepOfSection,
   mapExistingDataToDefaults
 } from "./helpers"
-import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
-import { validateStep } from "./validation"
 
 interface UseWizardOptions {
   userId: string
@@ -418,12 +418,21 @@ export function useWizard({
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
   // Handler for "Save & Close" button
-  const handleSaveAndClose = useCallback(() => {
+  const handleSaveAndClose = useCallback(async () => {
     const data = methods.getValues()
-    // Fire-and-forget save operation
-    savePitchData(data, pitchId, setPitchId, toast, currentStep)
-    // Navigate immediately for optimistic UI
-    router.push("/dashboard")
+
+    try {
+      // Await the save to ensure pitchId is set before navigating away
+      await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      router.push("/dashboard")
+    } catch (error) {
+      console.error("Failed to save before navigating:", error)
+      toast({
+        title: "Save Error",
+        description: "We couldn’t save your pitch. Please try again.",
+        variant: "destructive"
+      })
+    }
   }, [methods, pitchId, currentStep, toast, router])
 
   // Handler for "Submit Pitch" button
@@ -437,6 +446,25 @@ export function useWizard({
     setIsPitchLoading(false)
     setFinalPitchError(null)
   }, [])
+
+  // Add event listener for "saveAndExit"
+  useEffect(() => {
+    const handleSaveAndExit = async () => {
+      if (!pitchId || currentStep <= 1) {
+        // No pitchId, or no meaningful data to save
+        router.push("/dashboard")
+        return
+      }
+
+      console.log("[usePitchGeneration] Received saveAndExit event")
+      await handleSaveAndClose()
+    }
+
+    window.addEventListener("saveAndExit", handleSaveAndExit)
+    return () => {
+      window.removeEventListener("saveAndExit", handleSaveAndExit)
+    }
+  }, [handleSaveAndClose])
 
   return {
     // Form state

@@ -14,6 +14,10 @@ export default function NavigationButton({
     <Button
       variant="ghost"
       className={cn("pl-0 transition-all hover:pl-3", className)}
+      onClick={() => {
+        const event = new CustomEvent("saveAndExit")
+        window.dispatchEvent(event)
+      }}
     >
       <ChevronLeft />
       {text}
