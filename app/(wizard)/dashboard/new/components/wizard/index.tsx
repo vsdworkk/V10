@@ -152,13 +152,7 @@ export default function PitchWizard({
         {/* Main content area - Scrollable */}
         <div className="min-h-0 flex-1 lg:mb-6">
           {/* Desktop Content Container */}
-          <div
-            className="hidden h-full overflow-hidden rounded-2xl bg-white lg:block"
-            style={{
-              boxShadow:
-                "0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)"
-            }}
-          >
+          <div className="hidden h-full overflow-hidden lg:block">
             <div className="h-full overflow-y-auto">
               <motion.div
                 key={currentStep}
