@@ -24,7 +24,8 @@ import {
   ListOrdered,
   Undo2,
   Redo2,
-  Heading1
+  Heading1,
+  RefreshCw
 } from "lucide-react"
 
 // TipTap & its extensions
@@ -232,24 +233,37 @@ export default function ReviewStep({
         </div>
 
         {/* Loading animation in the editor area */}
-        <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 p-0 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
-          <AIThinkingLoader
-            visible={true}
-            errorMessage={pitchGenerationError || errorMessage}
-            onCancel={() => {
-              // Set empty content to exit loading state
-              setValue("pitchContent", "<p>Your pitch content...</p>", {
-                shouldDirty: true
-              })
-              onPitchLoaded() // Reset isLoading in parent
-            }}
-            onComplete={() => {
-              // This shouldn't be needed as the content should
-              // be loaded via the hook, but just in case
-              onPitchLoaded()
-            }}
-            className="h-full min-h-[300px]"
-          />
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-white/30 bg-white/50 p-0 px-4 py-6 text-center shadow-inner backdrop-blur-md dark:bg-gray-900/40">
+          {pitchGenerationError || errorMessage ? (
+            <>
+              <p className="mb-4 text-sm text-red-600">
+                {pitchGenerationError || errorMessage}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (execId) startPolling(execId)
+                }}
+              >
+                <RefreshCw className="mr-2 size-4" />
+                Retry
+              </Button>
+            </>
+          ) : (
+            <AIThinkingLoader
+              visible={true}
+              className="h-full min-h-[300px]"
+              onCancel={() => {
+                setValue("pitchContent", "<p>Your pitch content...</p>", {
+                  shouldDirty: true
+                })
+                onPitchLoaded()
+              }}
+              onComplete={() => {
+                onPitchLoaded()
+              }}
+            />
+          )}
         </div>
       </div>
     )

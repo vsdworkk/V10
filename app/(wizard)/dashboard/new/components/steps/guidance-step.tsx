@@ -125,6 +125,18 @@ export default function GuidanceStep({
     // Values will be persisted when the user moves away from this step
   }
 
+  // Refetch guidance
+  const handleRefetchGuidance = () => {
+    if (roleDescription && relevantExperience && userId && definitivePitchId) {
+      fetchGuidance(
+        roleDescription,
+        relevantExperience,
+        userId,
+        definitivePitchId
+      )
+    }
+  }
+
   const possibleStarCounts = ["2", "3", "4"]
   const starCount = starExamplesCount || "2"
   const recommendedCount =
@@ -182,6 +194,14 @@ export default function GuidanceStep({
         {error && !isLoading && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4">
             <p className="mb-3 text-sm text-red-600">{error}</p>
+
+            <button
+              onClick={handleRefetchGuidance}
+              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100"
+            >
+              <RefreshCw className="size-4" />
+              Retry
+            </button>
           </div>
         )}
 
