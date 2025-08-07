@@ -23,7 +23,8 @@ import { profilesTable } from "@/db/schema/profiles-schema"
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
   "final",
-  "submitted"
+  "submitted",
+  "failed"
 ])
 
 export interface ActionStep {

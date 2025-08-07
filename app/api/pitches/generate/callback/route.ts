@@ -18,9 +18,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // handle edge cases
     const pitchContent = extractPitchContent(data)
-    if (!pitchContent) {
+    const hasExplicitFailure =
+      data?.status === "failed" ||
+      data?.error != null ||
+      (typeof pitchContent === "string" && pitchContent.trim().length === 0)
+
+    if (!pitchContent || hasExplicitFailure) {
       console.error("Callback Error: No pitch content found")
+      await updatePitchByExecutionId(uniqueId, { status: "failed" })
       return NextResponse.json(
         { error: "No pitch content found in callback" },
         { status: 400 }

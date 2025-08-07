@@ -125,11 +125,18 @@ export async function POST(req: NextRequest) {
 
     // Check if pitch already exists
     const existingPitch = await getPitchByExecutionIdAction(pitchId)
-    if (existingPitch.isSuccess) {
-      return NextResponse.json(
-        { error: "Pitch already exists or is in progress" },
-        { status: 409 }
-      )
+    if (existingPitch.isSuccess && existingPitch.data) {
+      debugLog(`Existing pitch found: ${pitchId}`)
+
+      const status = existingPitch.data.status
+      if (status !== "failed") {
+        debugLog(`Pitch already in progress or completed: ${pitchId}`)
+
+        return NextResponse.json(
+          { error: "Generation already in progress or completed." },
+          { status: 409 }
+        )
+      }
     }
 
     // Check credit availability
