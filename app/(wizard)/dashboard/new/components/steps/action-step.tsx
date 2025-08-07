@@ -72,6 +72,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       )
       if (parsedSteps.length > 0) {
         setSteps(parsedSteps)
+        updateActionValue(parsedSteps)
         return
       }
     }
