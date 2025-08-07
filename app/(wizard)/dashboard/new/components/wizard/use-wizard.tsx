@@ -266,7 +266,7 @@ export function useWizard({
 
   // Handler for proceeding with pitch generation
   const handleConfirmPitchGeneration = useCallback(async () => {
-    const lastStarStep = 4 + starCount * 4
+    const lastStarStep = 5 + starCount * 4
 
     // Only proceed if we've saved form data and we're at the last STAR step
     if (pendingFormDataRef.current && currentStep === lastStarStep) {

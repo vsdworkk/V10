@@ -129,7 +129,8 @@ export async function POST(req: NextRequest) {
       debugLog(`Existing pitch found: ${pitchId}`)
 
       const status = existingPitch.data.status
-      if (status !== "failed") {
+      if (status !== "draft" && status !== "failed") {
+        // Pitch already in progress or completed
         debugLog(`Pitch already in progress or completed: ${pitchId}`)
 
         return NextResponse.json(
