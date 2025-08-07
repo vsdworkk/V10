@@ -1,6 +1,7 @@
 // Callback endpoint for PromptLayer pitch generation workflow
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
+import { spendCreditsAction } from "@/actions/db/profiles-actions"
 import sanitizeHtml from "sanitize-html"
 import { debugLog } from "@/lib/debug"
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       `Updating pitch with execution ID ${uniqueId}. Sanitized content length: ${htmlPitchContent.length}`
     )
 
+    // Update pitch with content and mark as final
     const updateResult = await updatePitchByExecutionId(uniqueId, {
       pitchContent: htmlPitchContent,
       status: "final"
@@ -57,7 +59,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: updateResult.message }, { status: 500 })
     }
 
-    debugLog("Pitch saved successfully.")
+    // Spend 1 credit on successful pitch generation
+    const creditResult = await spendCreditsAction(updateResult.data.userId, 1)
+
+    if (!creditResult.isSuccess) {
+      console.error(
+        `Failed to spend credit for userId=${updateResult.data.userId}: ${creditResult.message}`
+      )
+    } else {
+      debugLog(
+        `Credit deducted for userId=${updateResult.data.userId} on pitch ${uniqueId}`
+      )
+    }
+
+    debugLog("Pitch saved successfully and credit spent.")
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error("Callback Handler Error:", error)
@@ -69,7 +85,6 @@ export async function POST(req: NextRequest) {
 }
 
 // === Helpers ===
-
 function extractUniqueId(data: any): string | null {
   return (
     data?.input_variables?.id_unique ||
@@ -96,7 +111,6 @@ function formatPitchAsHtml(text: any): string {
   const escape = (str: string) =>
     str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
-  // Try structured formatting
   let json: any = null
   if (typeof text === "string") {
     try {
@@ -120,7 +134,6 @@ function formatPitchAsHtml(text: any): string {
     return html
   }
 
-  // Otherwise, fallback to paragraph formatting
   const plain = typeof text === "string" ? text : JSON.stringify(text)
   return plain
     .split(/\n\s*\n/)

@@ -1,7 +1,10 @@
 // API route to start pitch generation using PromptLayer
 import { NextRequest, NextResponse } from "next/server"
-import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
-import { spendCreditsAction } from "@/actions/db/profiles-actions"
+import {
+  updatePitchByExecutionId,
+  getPitchByExecutionIdAction
+} from "@/actions/db/pitches-actions"
+import { getAvailableCreditsAction } from "@/actions/db/profiles-actions"
 import { PitchRequestSchema } from "@/lib/schemas/pitchSchemas"
 import { debugLog } from "@/lib/debug"
 
@@ -29,7 +32,6 @@ try {
 
 const callbackUrl = `${BASE_URL}/api/pitches/generate/callback`
 
-// === Helper Functions ===
 const formatStarExamples = (examples: any[]) =>
   examples.map((ex, idx) => ({
     id: String(idx + 1),
@@ -94,6 +96,9 @@ const triggerPromptLayerWorkflow = async (
 
 // === Main Handler ===
 export async function POST(req: NextRequest) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
   try {
     const json = await req.json()
     const parsed = PitchRequestSchema.safeParse(json)
@@ -118,16 +123,33 @@ export async function POST(req: NextRequest) {
       starExamplesCount
     } = parsed.data
 
-    const creditResult = await spendCreditsAction(userId, 1)
-    if (!creditResult.isSuccess) {
-      return NextResponse.json({ error: creditResult.message }, { status: 402 })
+    // Check if pitch already exists
+    const existingPitch = await getPitchByExecutionIdAction(pitchId)
+    if (existingPitch.isSuccess) {
+      return NextResponse.json(
+        { error: "Pitch already exists or is in progress" },
+        { status: 409 }
+      )
     }
 
-    const requestId = pitchId
+    // Check credit availability
+    const creditRes = await getAvailableCreditsAction(userId)
+    if (!creditRes.isSuccess) {
+      return NextResponse.json({ error: creditRes.message }, { status: 500 })
+    }
 
-    const updateResult = await updatePitchByExecutionId(requestId, {
-      agentExecutionId: requestId,
-      status: "draft"
+    if (creditRes.data < 1) {
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      )
+    }
+
+    // Create or update pitch record as draft
+    const updateResult = await updatePitchByExecutionId(pitchId, {
+      agentExecutionId: pitchId,
+      status: "draft",
+      userId
     })
 
     if (!updateResult.isSuccess) {
@@ -137,11 +159,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    debugLog(`Pitch updated with execution ID: ${requestId}`)
+    debugLog(`Pitch updated with execution ID: ${pitchId}`)
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-
+    // Build PromptLayer payload
     const formattedStarExamples = formatStarExamples(starExamples)
 
     const jobDescription = [`Role: ${roleName}`, `Level: ${roleLevel}`]
@@ -172,7 +192,7 @@ export async function POST(req: NextRequest) {
         Intro_Word_Count: introWordCount.toString(),
         Conclusion_Word_Count: conclusionWordCount.toString(),
         ILS: "Isssdsd",
-        id_unique: requestId
+        id_unique: pitchId
       },
       metadata: {
         source: "webapp",
@@ -181,31 +201,36 @@ export async function POST(req: NextRequest) {
       return_all_outputs: true
     }
 
+    // Trigger PromptLayer generation
     try {
-      const data = await triggerPromptLayerWorkflow(payload, controller.signal)
-      clearTimeout(timeoutId)
+      await triggerPromptLayerWorkflow(payload, controller.signal)
 
       return NextResponse.json({
         success: true,
-        requestId,
+        requestId: pitchId,
         message: `Agent version ${workflowLabelName} launched.`
       })
     } catch (error: any) {
-      clearTimeout(timeoutId)
       if (error.name === "AbortError") {
         return NextResponse.json({ error: "Request timeout" }, { status: 504 })
       }
-      console.error("PromptLayer request failed:", error)
+
+      console.error(
+        `PromptLayer request failed for userId=${userId}, pitchId=${pitchId}:`,
+        error
+      )
       return NextResponse.json(
         { error: error.message || "Failed to trigger PromptLayer" },
         { status: 500 }
       )
     }
   } catch (error: unknown) {
-    console.error("Unhandled error:", error)
+    console.error("Unhandled error in pitch generation route:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     )
+  } finally {
+    clearTimeout(timeoutId)
   }
 }

@@ -224,6 +224,26 @@ export async function spendCreditsAction(
   }
 }
 
+export async function getAvailableCreditsAction(
+  userId: string
+): Promise<ActionState<number>> {
+  try {
+    const profileResult = await getProfileByUserIdAction(userId)
+    if (!profileResult.isSuccess || !profileResult.data) {
+      return { isSuccess: false, message: "Profile not found" }
+    }
+
+    return {
+      isSuccess: true,
+      message: "Available credits retrieved successfully",
+      data: profileResult.data.credits
+    }
+  } catch (error) {
+    console.error("Error retrieving available credits:", error)
+    return { isSuccess: false, message: "Failed to retrieve available credits" }
+  }
+}
+
 export async function ensureProfileAction(
   userId: string
 ): Promise<ActionState<SelectProfile>> {
