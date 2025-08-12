@@ -1,9 +1,3 @@
-/**
- * Client component for wizard step 4 of the pitch builder.
- * Fetches AI guidance automatically and manages STAR example inputs.
- * Field changes are stored locally and persisted by the wizard when the
- * user clicks Next or Close.
- */
 "use client"
 
 import { useFormContext } from "react-hook-form"
@@ -22,13 +16,11 @@ interface GuidanceStepProps {
 export default function GuidanceStep({
   pitchId: pitchIdFromProp
 }: GuidanceStepProps) {
-  // Destructure and rename prop
   const { watch, setValue, getValues, control, formState } =
     useFormContext<PitchWizardFormData>()
   const { errors } = formState
-  const params = useParams() // Keep for other potential uses or fallback
+  const params = useParams()
 
-  // Form fields that matter for requesting guidance
   const userId = watch("userId")
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
@@ -38,18 +30,14 @@ export default function GuidanceStep({
   const starExamplesCount = watch("starExamplesCount")
   const pitchWordLimit = watch("pitchWordLimit")
 
-  // Determine the definitive pitch ID to use
-  // Prioritize the ID from props (coming from useWizard state)
-  // Fallback to URL params if necessary (though less ideal now)
   const definitivePitchId = pitchIdFromProp || (params?.pitchId as string)
 
-  // Use our custom hook
   const { isLoading, guidance, error, requestId, fetchGuidance } =
     useAiGuidance()
 
-  // Initialize - request guidance if needed
   const hasRequestedRef = useRef(false)
 
+  // Initial fetch of guidance if conditions are met
   useEffect(() => {
     debugLog(
       "[GuidanceStep] Initial guidance check - albertGuidance:",
@@ -86,31 +74,23 @@ export default function GuidanceStep({
     roleDescription,
     relevantExperience,
     userId,
-    definitivePitchId
+    definitivePitchId,
+    fetchGuidance
   ])
 
-  // Update form when guidance is received
+  // Update form when guidance is received, only if different from current form value
   useEffect(() => {
-    debugLog(
-      "[GuidanceStep] useEffect for guidance update triggered. Hook guidance:",
-      guidance,
-      "isLoading:",
-      isLoading
-    )
+    const currentGuidance = getValues("albertGuidance")
 
-    // When guidance exists, update the form and ensure loading is stopped
-    if (guidance) {
-      debugLog("[GuidanceStep] Setting albertGuidance in form with:", guidance)
+    if (guidance && guidance !== currentGuidance) {
+      debugLog("[GuidanceStep] Updating form with new guidance", guidance)
       setValue("albertGuidance", guidance, { shouldDirty: true })
+
       if (requestId) {
-        debugLog(
-          "[GuidanceStep] Setting agentExecutionId in form with:",
-          requestId
-        )
         setValue("agentExecutionId", requestId, { shouldDirty: true })
       }
     }
-  }, [guidance, requestId, setValue, isLoading])
+  }, [guidance, requestId, setValue, getValues])
 
   // Handle STAR example count change
   const handleStarExamplesCountChange = (value: string) => {
@@ -121,11 +101,9 @@ export default function GuidanceStep({
         shouldDirty: true
       }
     )
-
-    // Values will be persisted when the user moves away from this step
   }
 
-  // Refetch guidance
+  // Refetch guidance button handler
   const handleRefetchGuidance = () => {
     if (roleDescription && relevantExperience && userId && definitivePitchId) {
       fetchGuidance(
@@ -143,7 +121,6 @@ export default function GuidanceStep({
     pitchWordLimit < 550 ? "2" : pitchWordLimit <= 700 ? "3" : "4"
   const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
 
-  // Log form state of albertGuidance before rendering
   debugLog(
     "[GuidanceStep] Rendering with albertGuidance (from form watch):",
     albertGuidance
@@ -152,14 +129,12 @@ export default function GuidanceStep({
   return (
     <div className="p-1 sm:p-6">
       <div className="flex h-[500px] flex-col gap-6 overflow-y-auto pr-2">
-        {/* AI suggestions header */}
         {!isLoading && !error && albertGuidance && (
           <div>
             <h3 className="mb-4 text-xl font-semibold text-gray-900">
               AI Suggestions
             </h3>
 
-            {/* Note about guidance being recommendations */}
             <div
               className="mb-4 rounded-xl border p-4"
               style={{
@@ -179,7 +154,6 @@ export default function GuidanceStep({
           </div>
         )}
 
-        {/* If loading */}
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
             <RefreshCw
@@ -190,7 +164,6 @@ export default function GuidanceStep({
           </div>
         )}
 
-        {/* If error */}
         {error && !isLoading && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4">
             <p className="mb-3 text-sm text-red-600">{error}</p>
@@ -198,6 +171,8 @@ export default function GuidanceStep({
             <button
               onClick={handleRefetchGuidance}
               className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100"
+              disabled={isLoading}
+              aria-disabled={isLoading}
             >
               <RefreshCw className="size-4" />
               Retry
@@ -205,7 +180,6 @@ export default function GuidanceStep({
           </div>
         )}
 
-        {/* If there's existing guidance, show it */}
         {!isLoading && !error && albertGuidance && (
           <Card className="rounded-xl border border-gray-200 bg-gray-50">
             <CardContent className="pt-6">
@@ -216,7 +190,6 @@ export default function GuidanceStep({
           </Card>
         )}
 
-        {/* STAR examples count selector */}
         <div className="space-y-4">
           <p className="font-medium text-gray-700">
             How many STAR examples do you want to include?

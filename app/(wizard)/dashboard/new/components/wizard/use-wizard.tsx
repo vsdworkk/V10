@@ -423,7 +423,7 @@ export function useWizard({
     const data = methods.getValues()
 
     // No meaningful data to save
-    if (checkIfObjectIsEmpty(data)) {
+    if (checkIfObjectIsEmpty(data) || currentStep <= 1) {
       router.push("/dashboard")
       return
     }
@@ -457,12 +457,6 @@ export function useWizard({
   // Add event listener for "saveAndExit"
   useEffect(() => {
     const handleSaveAndExit = async () => {
-      if (currentStep <= 1) {
-        // No pitchId, or no meaningful data to save
-        router.push("/dashboard")
-        return
-      }
-
       await handleSaveAndClose()
     }
 
