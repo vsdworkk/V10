@@ -10,6 +10,7 @@ import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
 import { PitchWizardFormData, pitchWizardSchema } from "./schema"
 import { validateStep } from "./validation"
 import {
+  checkIfObjectIsEmpty,
   computeSectionAndHeader,
   firstStepOfSection,
   mapExistingDataToDefaults
@@ -420,6 +421,12 @@ export function useWizard({
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
     const data = methods.getValues()
+
+    // No meaningful data to save
+    if (checkIfObjectIsEmpty(data)) {
+      router.push("/dashboard")
+      return
+    }
 
     try {
       // Await the save to ensure pitchId is set before navigating away
