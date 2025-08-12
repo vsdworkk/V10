@@ -51,7 +51,17 @@ export function useWizard({
 
     return pitchData?.currentStep || 1
   })
-  const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
+
+  const [pitchId, setPitchId] = useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      // Check sessionStorage first, fallback to prop pitchData id
+      return (
+        sessionStorage.getItem("ongoingPitchId") || pitchData?.id || undefined
+      )
+    }
+    return pitchData?.id
+  })
+
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
@@ -83,6 +93,15 @@ export function useWizard({
 
   // Keep track of previous step for animations
   const prevStepRef = useRef(1)
+
+  // Save pitchId to sessionStorage
+  useEffect(() => {
+    if (pitchId) {
+      sessionStorage.setItem("ongoingPitchId", pitchId)
+    } else {
+      sessionStorage.removeItem("ongoingPitchId")
+    }
+  }, [pitchId])
 
   // Disable form fields when pitch generation is confirmed
   useEffect(() => {
@@ -211,6 +230,11 @@ export function useWizard({
       window.history.replaceState({}, "", currentUrl.toString())
     }
   }, [currentStep])
+
+  const clearCachedPitchId = () => {
+    sessionStorage.removeItem("ongoingPitchId")
+    setPitchId(undefined)
+  }
 
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
@@ -424,6 +448,7 @@ export function useWizard({
 
     // No meaningful data to save
     if (checkIfObjectIsEmpty(data) || currentStep <= 1) {
+      clearCachedPitchId()
       router.push("/dashboard")
       return
     }
@@ -431,6 +456,7 @@ export function useWizard({
     try {
       // Await the save to ensure pitchId is set before navigating away
       await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      clearCachedPitchId()
       router.push("/dashboard")
     } catch (error) {
       console.error("Failed to save before navigating:", error)
