@@ -454,6 +454,19 @@ export function useWizard({
     setFinalPitchError(null)
   }, [])
 
+  const retryPitchGeneration = () => {
+    const lastStarStep = 5 + starCount * 4
+    setCurrentStep(lastStarStep)
+
+    // Load the last saved form data into pendingFormDataRef
+    pendingFormDataRef.current = methods.getValues()
+
+    // Show confirmation after the UI updates
+    setTimeout(() => {
+      setShowConfirmDialog(true)
+    }, 0)
+  }
+
   // Add event listener for "saveAndExit"
   useEffect(() => {
     const handleSaveAndExit = async () => {
@@ -496,6 +509,8 @@ export function useWizard({
     handleSaveAndClose,
     handleSubmitFinal,
     handleSectionNavigate,
-    handlePitchLoaded
+    handlePitchLoaded,
+    // Retry pitch generation
+    retryPitchGeneration
   }
 }

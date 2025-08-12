@@ -52,6 +52,16 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    if (pitch?.status === "failed") {
+      return NextResponse.json(
+        {
+          status: "error",
+          error: "Pitch generation failed"
+        },
+        { status: 500 }
+      )
+    }
+
     return new NextResponse(
       JSON.stringify({
         status: "pending",

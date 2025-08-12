@@ -56,12 +56,15 @@ interface ReviewStepProps {
 
   /** Error message if pitch generation failed */
   errorMessage?: string | null
+
+  onRetry?: () => void
 }
 
 export default function ReviewStep({
   isPitchLoading,
   onPitchLoaded,
-  errorMessage
+  errorMessage,
+  onRetry
 }: ReviewStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
@@ -79,7 +82,8 @@ export default function ReviewStep({
     isLoading: isPitchGenerating,
     pitchContent: generatedPitchContent,
     error: pitchGenerationError,
-    startPolling
+    startPolling,
+    reset
   } = usePitchGeneration()
 
   /* ----------------------------------------------------------- */
@@ -242,7 +246,8 @@ export default function ReviewStep({
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (execId) startPolling(execId)
+                  reset()
+                  onRetry?.()
                 }}
               >
                 <RefreshCw className="mr-2 size-4" />

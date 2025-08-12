@@ -55,7 +55,8 @@ export default function PitchWizard({
     handleBack,
     handleSaveAndClose,
     handleSubmitFinal,
-    handlePitchLoaded
+    handlePitchLoaded,
+    retryPitchGeneration
   } = useWizard({ userId, pitchData, initialStep })
 
   // Render the appropriate step component based on current step
@@ -92,6 +93,7 @@ export default function PitchWizard({
         isPitchLoading={isPitchLoading}
         onPitchLoaded={handlePitchLoaded}
         errorMessage={finalPitchError}
+        onRetry={retryPitchGeneration}
       />
     )
   }
