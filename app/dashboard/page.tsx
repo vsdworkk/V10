@@ -119,6 +119,7 @@ async function PitchTableFetcher() {
       <div className="text-red-500">
         <p>Error loading dashboard:</p>
         <p>{dashboardRes.message}</p>
+        <p>Please refresh the page.</p>
       </div>
     )
   }
