@@ -87,7 +87,7 @@ export function useAiGuidance() {
 
     let isPolling = true
     let attempts = 0
-    const maxAttempts = 2
+    const maxAttempts = 20
     const pollInterval = 3000
 
     const checkStatus = async () => {
