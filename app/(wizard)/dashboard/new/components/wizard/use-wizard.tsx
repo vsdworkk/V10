@@ -52,15 +52,9 @@ export function useWizard({
     return pitchData?.currentStep || 1
   })
 
-  const [pitchId, setPitchId] = useState<string | undefined>(() => {
-    if (typeof window !== "undefined") {
-      // Check sessionStorage first, fallback to prop pitchData id
-      return (
-        sessionStorage.getItem("ongoingPitchId") || pitchData?.id || undefined
-      )
-    }
-    return pitchData?.id
-  })
+  const [pitchId, setPitchId] = useState<string | undefined>(
+    pitchData?.id || undefined
+  )
 
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
