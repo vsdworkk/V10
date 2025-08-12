@@ -450,13 +450,12 @@ export function useWizard({
   // Add event listener for "saveAndExit"
   useEffect(() => {
     const handleSaveAndExit = async () => {
-      if (!pitchId || currentStep <= 1) {
+      if (currentStep <= 1) {
         // No pitchId, or no meaningful data to save
         router.push("/dashboard")
         return
       }
 
-      console.log("[usePitchGeneration] Received saveAndExit event")
       await handleSaveAndClose()
     }
 
