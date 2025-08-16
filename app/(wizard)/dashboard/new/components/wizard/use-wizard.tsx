@@ -417,15 +417,6 @@ export function useWizard({
     setCurrentStep(s => Math.max(s - 1, 1))
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
-  // Handler for "Save & Close" button
-  const handleSaveAndClose = useCallback(() => {
-    const data = methods.getValues()
-    // Fire-and-forget save operation
-    savePitchData(data, pitchId, setPitchId, toast, currentStep)
-    // Navigate immediately for optimistic UI
-    router.push("/dashboard")
-  }, [methods, pitchId, currentStep, toast, router])
-
   // Handler for "Submit Pitch" button
   const handleSubmitFinal = useCallback(async () => {
     const data = methods.getValues()
@@ -465,7 +456,6 @@ export function useWizard({
     // Actions
     handleNext,
     handleBack,
-    handleSaveAndClose,
     handleSubmitFinal,
     handleSectionNavigate,
     handlePitchLoaded

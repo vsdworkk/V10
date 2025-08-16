@@ -52,7 +52,6 @@ export default function PitchWizard({
     isNavigating,
     handleNext,
     handleBack,
-    handleSaveAndClose,
     handleSubmitFinal,
     handlePitchLoaded
   } = useWizard({ userId, pitchData, initialStep })
@@ -206,18 +205,6 @@ export default function PitchWizard({
           )}
 
           <div className="flex items-center space-x-4">
-            {/* Save and Close - Only show when NOT on the final review step */}
-            {currentStep < totalSteps && (
-              <Button
-                variant="outline"
-                onClick={handleSaveAndClose}
-                className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
-              >
-                <Save className="mr-2 size-4 group-hover:scale-110" />
-                Close
-              </Button>
-            )}
-
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
               <Button
@@ -268,22 +255,6 @@ export default function PitchWizard({
                 Back
               </Button>
             ) : null}
-
-            {/* Save & Close - Always show except on final step */}
-            {currentStep < totalSteps && (
-              <Button
-                variant="outline"
-                onClick={handleSaveAndClose}
-                className={`group flex items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                  currentStep > 1 && currentStep < totalSteps
-                    ? "flex-1"
-                    : "flex-1"
-                }`}
-              >
-                <Save className="mr-2 size-4 group-hover:scale-110" />
-                Close
-              </Button>
-            )}
 
             {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
