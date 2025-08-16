@@ -154,7 +154,9 @@ export async function POST(req: NextRequest) {
         // IMPORTANT: clear "in progress" flag when upstream returns error
         try {
           if (requestId) {
-            await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+            await updatePitchByExecutionId(requestId, {
+              agentExecutionId: null
+            })
           }
         } catch (e) {
           console.error(
