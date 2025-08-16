@@ -106,6 +106,8 @@ export default function GuidanceStep({
   // Refetch guidance button handler
   const handleRefetchGuidance = () => {
     if (roleDescription && relevantExperience && userId && definitivePitchId) {
+      // Reset the request flag to allow the retry
+      hasRequestedRef.current = false
       fetchGuidance(
         roleDescription,
         relevantExperience,
