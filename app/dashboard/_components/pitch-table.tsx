@@ -261,11 +261,15 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold leading-tight">
-                        {pitch.roleName}
+                        {pitch.roleName?.trim() ? pitch.roleName : "Untitled"}
                       </h3>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <User className="size-3" />
-                        <span>{pitch.roleLevel}</span>
+                        <span>
+                          {pitch.roleLevel?.trim()
+                            ? pitch.roleLevel
+                            : "Untitled"}
+                        </span>
                       </div>
                     </div>
                     <Badge
@@ -277,12 +281,14 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-3">
-                    {pitch.organisationName && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Building className="size-3" />
-                        <span>{pitch.organisationName}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Building className="size-3" />
+                      <span>
+                        {pitch.organisationName?.trim()
+                          ? pitch.organisationName
+                          : "Untitled"}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="size-3" />
                       <span>{formatDate(pitch.createdAt)}</span>
@@ -358,12 +364,16 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                         href={`/dashboard/${pitch.id}`}
                         className="font-medium text-blue-600 hover:text-blue-800"
                       >
-                        {pitch.roleName}
+                        {pitch.roleName?.trim() ? pitch.roleName : "Untitled"}
                       </Link>
                     </td>
-                    <td className="p-4 text-gray-600">{pitch.roleLevel}</td>
                     <td className="p-4 text-gray-600">
-                      {pitch.organisationName || "—"}
+                      {pitch.roleLevel?.trim() ? pitch.roleLevel : "Untitled"}
+                    </td>
+                    <td className="p-4 text-gray-600">
+                      {pitch.organisationName?.trim()
+                        ? pitch.organisationName
+                        : "Untitled"}
                     </td>
                     <td className="p-4">
                       <Badge
