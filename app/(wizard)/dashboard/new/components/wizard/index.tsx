@@ -235,6 +235,16 @@ export default function PitchWizard({
                   </>
                 )}
               </Button>
+            ) : finalPitchError ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveAndClose}
+                className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
+              >
+                <Save className="mr-2 size-4 group-hover:scale-110" />
+                Save and Close
+              </Button>
             ) : (
               <Button
                 type="button"
@@ -302,6 +312,16 @@ export default function PitchWizard({
                     <ArrowRight className="ml-2 size-4 group-hover:translate-x-1" />
                   </>
                 )}
+              </Button>
+            ) : finalPitchError ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveAndClose}
+                className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
+              >
+                <Save className="mr-2 size-4 group-hover:scale-110" />
+                Save and Close
               </Button>
             ) : (
               <Button

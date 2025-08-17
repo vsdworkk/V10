@@ -438,18 +438,14 @@ export function useWizard({
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
     const { isDirty } = methods.formState
-
-    if (!isDirty) {
-      clearCachedPitchId()
-      router.push("/dashboard")
-      return
-    }
-
     const data = methods.getValues()
 
     try {
-      // Await the save to ensure pitchId is set before navigating away
-      await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      // Save when there are unsaved changes or after a generation error
+      if (isDirty || finalPitchError) {
+        await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      }
+
       clearCachedPitchId()
       router.push("/dashboard")
     } catch (error) {
@@ -460,7 +456,7 @@ export function useWizard({
         variant: "destructive"
       })
     }
-  }, [methods, pitchId, currentStep, toast, router])
+  }, [methods, pitchId, currentStep, toast, router, finalPitchError])
 
   // Handler for "Submit Pitch" button
   const handleSubmitFinal = useCallback(async () => {
