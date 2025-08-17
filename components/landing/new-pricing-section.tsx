@@ -11,50 +11,52 @@ import useWindowSize from "@/lib/hooks/use-window-size"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Check } from "lucide-react"
-import { FaStar } from "react-icons/fa"
+import { FaStar, FaTrophy } from "react-icons/fa"
 
 interface NewPricingSectionProps {
   userId: string | null
 }
 
-const FEATURES = [
-  "All core features",
-  "Priority support",
-  "Advanced analytics",
-  "Custom integrations",
-  "API access",
-  "Team collaboration"
+const BASE_FEATURES = [
+  "Personalised to Your Experience",
+  "All Criteria Guaranteed",
+  "APS Framework Compliant",
+  "Perfect Word Count",
+  "For APS1 – EL1 Levels"
 ]
 
 const PRICING_PLANS = [
   {
     name: "Single Pitch",
-    price: "$6.99",
+    price: "$19.99",
     description: "Purchase a single pitch credit",
     buttonText: "Buy Now",
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_SINGLEPITCH || "#",
-    features: FEATURES,
+    features: ["One Submission-Ready Pitch", ...BASE_FEATURES],
     isPopular: false,
+    isBestValue: false,
     credits: "1 credit = 1 pitch"
   },
   {
     name: "Pitch Pack",
-    price: "$16.99",
+    price: "$29.99",
     description: "Bundle of five pitch credits",
     buttonText: "Buy Pack",
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PITCHPACK || "#",
-    features: FEATURES,
+    features: ["Five Submission-Ready Pitches", ...BASE_FEATURES],
     isPopular: true,
+    isBestValue: false,
     credits: "5 credits = 5 pitches"
   },
   {
     name: "Pro Bundle",
-    price: "$25.99",
+    price: "$39.99",
     description: "Best value for power users",
     buttonText: "Buy Bundle",
     href: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PROBUNDLE || "#",
-    features: FEATURES,
+    features: ["Fifteen Submission-Ready Pitches", ...BASE_FEATURES],
     isPopular: false,
+    isBestValue: true,
     credits: "15 credits = 15 pitches"
   }
 ]
@@ -103,7 +105,7 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
             }}
             className={cn(
               `bg-background relative rounded-2xl border-[1px] p-6 text-center lg:flex lg:flex-col lg:justify-center`,
-              plan.isPopular ? "border-primary border-[2px]" : "border-border",
+              plan.isPopular || plan.isBestValue ? "border-primary border-[2px]" : "border-border",
               index === 0 || index === PRICING_PLANS.length - 1
                 ? "-translate-z-[50px] rotate-y-[10deg] z-0 translate-x-0 translate-y-0"
                 : "z-10",
@@ -116,6 +118,14 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
                 <FaStar className="text-white" />
                 <span className="ml-1 font-sans font-semibold text-white">
                   Popular
+                </span>
+              </div>
+            )}
+            {plan.isBestValue && (
+              <div className="bg-primary absolute right-0 top-0 flex items-center rounded-bl-xl rounded-tr-xl px-2 py-0.5">
+                <FaTrophy className="text-white" />
+                <span className="ml-1 font-sans font-semibold text-white">
+                  Best Value
                 </span>
               </div>
             )}

@@ -14,7 +14,7 @@ const problems: ProblemItem[] = [
   {
     title: "Complex APS Requirements",
     description:
-      "Navigating required APS frameworks like ILS, WLS, STAR feels overwhelming, and often requires weeks/months of practice.",
+      "Navigating required APS frameworks is overwhelming, and often requires weeks/months of practice.",
     icon: Target
   },
   {
