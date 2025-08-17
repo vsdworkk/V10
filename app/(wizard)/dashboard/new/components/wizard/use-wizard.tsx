@@ -438,18 +438,26 @@ export function useWizard({
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
     const { isDirty } = methods.formState
+    const data = methods.getValues()
 
-    if (!isDirty) {
+    if (!isDirty && !pitchId) {
       clearCachedPitchId()
       router.push("/dashboard")
       return
     }
 
-    const data = methods.getValues()
+    const lastStarStep = 5 + starCount * 4
+    const isOnReviewStep = currentStep === lastStarStep + 1
+    const generationIncomplete =
+      isOnReviewStep &&
+      (!data.pitchContent || data.pitchContent.trim() === "") &&
+      !!data.agentExecutionId
+
+    const stepToSave =
+      finalPitchError || generationIncomplete ? lastStarStep : currentStep
 
     try {
-      // Await the save to ensure pitchId is set before navigating away
-      await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      await savePitchData(data, pitchId, setPitchId, toast, stepToSave, "draft")
       clearCachedPitchId()
       router.push("/dashboard")
     } catch (error) {
@@ -460,7 +468,7 @@ export function useWizard({
         variant: "destructive"
       })
     }
-  }, [methods, pitchId, currentStep, toast, router])
+  }, [methods, pitchId, currentStep, starCount, finalPitchError, toast, router])
 
   // Handler for "Submit Pitch" button
   const handleSubmitFinal = useCallback(async () => {
