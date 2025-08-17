@@ -105,7 +105,9 @@ export default function NewPricingSection({ userId }: NewPricingSectionProps) {
             }}
             className={cn(
               `bg-background relative rounded-2xl border-[1px] p-6 text-center lg:flex lg:flex-col lg:justify-center`,
-              plan.isPopular || plan.isBestValue ? "border-primary border-[2px]" : "border-border",
+              plan.isPopular || plan.isBestValue
+                ? "border-primary border-[2px]"
+                : "border-border",
               index === 0 || index === PRICING_PLANS.length - 1
                 ? "-translate-z-[50px] rotate-y-[10deg] z-0 translate-x-0 translate-y-0"
                 : "z-10",

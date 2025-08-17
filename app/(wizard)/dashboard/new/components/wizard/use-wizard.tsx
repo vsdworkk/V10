@@ -91,8 +91,6 @@ export function useWizard({
   useEffect(() => {
     if (pitchId) {
       sessionStorage.setItem("ongoingPitchId", pitchId)
-    } else {
-      sessionStorage.removeItem("ongoingPitchId")
     }
   }, [pitchId])
 

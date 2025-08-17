@@ -1,26 +1,10 @@
 /**
- * @description
- * Server page for "/dashboard/new". It ensures the user is authenticated
- * and renders the wizard with step management via search parameters.
- *
- * Key Features:
- * - Uses search params for step navigation (no server re-renders)
- * - Maintains backward compatibility
- * - Handles localStorage pitch resumption
- *
- * @dependencies
- * - `auth` from "@clerk/nextjs/server" for authentication
- * - `redirect` from "next/navigation" to handle authentication redirects
- *
- * @notes
- * - Step navigation is now handled client-side via search parameters
- * - No more server round-trips for step changes
+ * Page: /dashboard/new
+ * Runs on the server, ensures authentication.
  */
-
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
-import PitchWizard from "./components/wizard"
-import CheckStoredPitch from "./components/utilities/check-stored-pitch"
+import PitchWizardWrapper from "./components/wizard/wizard-wrapper"
 
 interface CreateNewPitchPageProps {
   searchParams: Promise<{ step?: string }>
@@ -43,10 +27,10 @@ export default async function CreateNewPitchPage({
       ? initialStep
       : 1
 
+  // hand off to a client wrapper
   return (
     <div className="size-full">
-      <CheckStoredPitch />
-      <PitchWizard userId={userId} initialStep={validStep} />
+      <PitchWizardWrapper userId={userId} initialStep={validStep} />
     </div>
   )
 }
