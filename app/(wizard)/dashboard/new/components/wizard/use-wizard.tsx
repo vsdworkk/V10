@@ -438,18 +438,23 @@ export function useWizard({
   // Handler for "Save & Close" button
   const handleSaveAndClose = useCallback(async () => {
     const { isDirty } = methods.formState
+    const data = methods.getValues()
 
-    if (!isDirty) {
+    if (!isDirty && !pitchId) {
       clearCachedPitchId()
       router.push("/dashboard")
       return
     }
 
-    const data = methods.getValues()
-
     try {
-      // Await the save to ensure pitchId is set before navigating away
-      await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      await savePitchData(
+        data,
+        pitchId,
+        setPitchId,
+        toast,
+        currentStep,
+        "draft"
+      )
       clearCachedPitchId()
       router.push("/dashboard")
     } catch (error) {

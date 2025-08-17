@@ -245,13 +245,17 @@ export default function ReviewStep({
               aria-live="polite"
               style={{ backgroundColor: "#eef2ff", borderColor: "#c7d2fe" }}
             >
-              <div className="mb-2 text-base font-semibold" style={{ color: "#444ec1" }}>
+              <div
+                className="mb-2 text-base font-semibold"
+                style={{ color: "#444ec1" }}
+              >
                 Oops! We ran into a hiccup
               </div>
 
               <p className="mb-4 text-sm" style={{ color: "#444ec1" }}>
-                It looks like something went wrong while generating your pitch. 
-                This can happen if the service is busy or your internet connection briefly dropped.
+                It looks like something went wrong while generating your pitch.
+                This can happen if the service is busy or your internet
+                connection briefly dropped.
               </p>
 
               <div className="flex justify-center">
