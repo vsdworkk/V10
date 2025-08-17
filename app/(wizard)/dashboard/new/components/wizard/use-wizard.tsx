@@ -462,11 +462,43 @@ export function useWizard({
     }
   }, [methods, pitchId, currentStep, toast, router])
 
-  // Handler for "Submit Pitch" button
+  // Handler for "Submit Pitch" or saving draft from final step
   const handleSubmitFinal = useCallback(async () => {
     const data = methods.getValues()
+
+    // If a generation error occurred, treat this as a draft save
+    if (finalPitchError) {
+      // Clear any lingering execution ID so we don't resume polling
+      data.agentExecutionId = ""
+
+      const lastStarStep = 5 + starCount * 4
+
+      try {
+        await savePitchData(data, pitchId, setPitchId, toast, lastStarStep)
+        clearCachedPitchId()
+        router.push("/dashboard")
+      } catch (error) {
+        console.error("Failed to save draft after generation error:", error)
+        toast({
+          title: "Save Error",
+          description: "We couldn’t save your pitch. Please try again.",
+          variant: "destructive"
+        })
+      }
+      return
+    }
+
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
-  }, [methods, pitchId, toast, router])
+  }, [
+    methods,
+    pitchId,
+    setPitchId,
+    toast,
+    router,
+    finalPitchError,
+    starCount,
+    clearCachedPitchId
+  ])
 
   // Handler for pitch loading completion
   const handlePitchLoaded = useCallback(() => {
