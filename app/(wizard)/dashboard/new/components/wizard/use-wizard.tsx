@@ -87,10 +87,12 @@ export function useWizard({
   // Keep track of previous step for animations
   const prevStepRef = useRef(1)
 
-  // Save pitchId to sessionStorage
+  // Save pitchId to sessionStorage, clearing stale values when no pitch
   useEffect(() => {
     if (pitchId) {
       sessionStorage.setItem("ongoingPitchId", pitchId)
+    } else {
+      sessionStorage.removeItem("ongoingPitchId")
     }
   }, [pitchId])
 
