@@ -1,4 +1,4 @@
-// Callback endpoint for AI guidance workflow
+// app/api/guidance/callback/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"
@@ -7,10 +7,8 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json()
 
-    // Extract the unique ID and AI guidance text
+    // Extract the unique ID (pitch ID) from common locations
     let uniqueId = ""
-
-    // Check common locations for the ID
     if (data.input_variables?.id_unique) {
       uniqueId = data.input_variables.id_unique
     } else if (data.output?.data?.id_unique) {
@@ -50,7 +48,7 @@ export async function POST(req: NextRequest) {
       `Updating pitch with execution ID ${uniqueId} and guidance text (${albertGuidance.length} chars)`
     )
     const updateResult = await updatePitchByExecutionId(uniqueId, {
-      albertGuidance
+      albertGuidance,
     })
 
     if (!updateResult.isSuccess) {
@@ -61,7 +59,7 @@ export async function POST(req: NextRequest) {
     debugLog("Guidance saved successfully")
     return NextResponse.json({
       success: true,
-      message: "Guidance saved successfully"
+      message: "Guidance saved successfully",
     })
   } catch (error) {
     console.error("Error processing guidance callback:", error)

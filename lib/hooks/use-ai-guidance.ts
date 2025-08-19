@@ -1,8 +1,8 @@
-// React hook for fetching AI guidance and polling for updates.
+// lib/hooks/use-ai-guidance.ts
 import { useState, useEffect } from "react"
 import {
   requestGuidance,
-  checkGuidanceStatus
+  checkGuidanceStatus,
 } from "@/lib/services/ai-guidance-service"
 import { debugLog } from "@/lib/debug"
 
@@ -13,7 +13,7 @@ export function useAiGuidance() {
   const [requestId, setRequestId] = useState<string | null>(null)
   const [triggerTimestamp, setTriggerTimestamp] = useState<string | null>(null)
 
-  // Function to request guidance
+  // Request guidance (idempotent at service & server)
   const fetchGuidance = async (
     jobDescription: string,
     experience: string,
@@ -30,34 +30,27 @@ export function useAiGuidance() {
         jobDescription,
         experience,
         userId,
-        pitchId
+        pitchId,
       })
 
       if (!result.isSuccess) {
-        debugLog(
-          "[useAiGuidance] fetchGuidance received error:",
-          result.message
-        )
+        debugLog("[useAiGuidance] fetchGuidance received error:", result.message)
         throw new Error(result.message)
       }
 
-      debugLog(
-        "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
-        result.data
-      )
-
+      debugLog("[useAiGuidance] fetchGuidance succeeded, setting requestId:", result.data)
       setTriggerTimestamp(new Date().toString())
       setRequestId(result.data) // triggers polling useEffect
 
-      // Immediate check after slight delay
+      // Immediate status check after a slight delay to catch fast callbacks
       setTimeout(() => {
         debugLog("[useAiGuidance] Immediate check for existing guidance")
         checkGuidanceStatus(result.data)
-          .then(statusResult => {
+          .then((statusResult) => {
             if (statusResult.isSuccess && statusResult.data) {
               debugLog(
                 "[useAiGuidance] Found guidance immediately:",
-                statusResult.data.substring(0, 20) + "..."
+                statusResult.data.substring(0, 20) + "."
               )
               setGuidance(statusResult.data)
               setIsLoading(false)
@@ -65,18 +58,13 @@ export function useAiGuidance() {
               debugLog("[useAiGuidance] No immediate guidance found, will poll")
             }
           })
-          .catch(err =>
-            console.error(
-              "[useAiGuidance] Error checking immediate guidance:",
-              err
-            )
+          .catch((err) =>
+            console.error("[useAiGuidance] Error checking immediate guidance:", err)
           )
       }, 100)
     } catch (err) {
       console.error("[useAiGuidance] fetchGuidance error:", err)
-      setError(
-        err instanceof Error ? err.message : "Failed to request guidance"
-      )
+      setError(err instanceof Error ? err.message : "Failed to request guidance")
       setIsLoading(false)
     }
   }
@@ -92,7 +80,6 @@ export function useAiGuidance() {
 
     const checkStatus = async () => {
       if (!isPolling) return true
-
       try {
         const result = await checkGuidanceStatus(requestId)
         if (result.isSuccess && result.data) {
@@ -103,6 +90,7 @@ export function useAiGuidance() {
           }
           return true
         }
+
         attempts++
         if (attempts >= maxAttempts) {
           if (isPolling) {
@@ -112,18 +100,17 @@ export function useAiGuidance() {
           }
           return true
         }
+
         return false
       } catch (err) {
         if (isPolling) {
           setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to check guidance status"
+            err instanceof Error ? err.message : "Failed to check guidance status"
           )
           setIsLoading(false)
           isPolling = false
         }
-        return true
+        return true // stop polling on error
       }
     }
 
@@ -154,6 +141,6 @@ export function useAiGuidance() {
       setError(null)
       setRequestId(null)
       setIsLoading(false)
-    }
+    },
   }
 }
