@@ -13,8 +13,6 @@ interface GuidanceStepProps {
   pitchId?: string // Accept pitchId as an optional prop
 }
 
-const requestedPitchIds = new Set<string>()
-
 export default function GuidanceStep({
   pitchId: pitchIdFromProp
 }: GuidanceStepProps) {
@@ -51,13 +49,11 @@ export default function GuidanceStep({
       roleDescription &&
       relevantExperience &&
       userId &&
-      definitivePitchId &&
-      !requestedPitchIds.has(definitivePitchId)
+      definitivePitchId
     ) {
       debugLog(
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
-      requestedPitchIds.add(definitivePitchId)
       fetchGuidance(
         roleDescription,
         relevantExperience,
@@ -106,8 +102,6 @@ export default function GuidanceStep({
   // Refetch guidance button handler
   const handleRefetchGuidance = () => {
     if (roleDescription && relevantExperience && userId && definitivePitchId) {
-      // Remove pitchId to allow retry
-      requestedPitchIds.delete(definitivePitchId)
       fetchGuidance(
         roleDescription,
         relevantExperience,
