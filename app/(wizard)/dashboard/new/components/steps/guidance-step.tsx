@@ -1,7 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
 import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
@@ -16,7 +16,7 @@ interface GuidanceStepProps {
 export default function GuidanceStep({
   pitchId: pitchIdFromProp
 }: GuidanceStepProps) {
-  const { watch, setValue, getValues, control, formState } =
+  const { watch, setValue, getValues, formState } =
     useFormContext<PitchWizardFormData>()
   const { errors } = formState
   const params = useParams()
@@ -35,8 +35,6 @@ export default function GuidanceStep({
   const { isLoading, guidance, error, requestId, fetchGuidance } =
     useAiGuidance()
 
-  const hasRequestedRef = useRef(false)
-
   // Initial fetch of guidance if conditions are met
   useEffect(() => {
     debugLog(
@@ -51,13 +49,11 @@ export default function GuidanceStep({
       roleDescription &&
       relevantExperience &&
       userId &&
-      definitivePitchId &&
-      !hasRequestedRef.current
+      definitivePitchId
     ) {
       debugLog(
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
-      hasRequestedRef.current = true
       fetchGuidance(
         roleDescription,
         relevantExperience,
@@ -106,8 +102,6 @@ export default function GuidanceStep({
   // Refetch guidance button handler
   const handleRefetchGuidance = () => {
     if (roleDescription && relevantExperience && userId && definitivePitchId) {
-      // Reset the request flag to allow the retry
-      hasRequestedRef.current = false
       fetchGuidance(
         roleDescription,
         relevantExperience,
