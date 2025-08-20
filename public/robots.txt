@@ -21,4 +21,4 @@ Disallow: /api/
 Disallow: /trpc/
 
 # List your sitemap(s) with fully-qualified URLs:
-Sitemap: https://apspitchpro.com/sitemap.xml
+Sitemap: https://www.apspitchpro.com/sitemap.xml
