@@ -6,14 +6,14 @@ import { useToast } from "@/lib/hooks/use-toast"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 import type { Section } from "@/types"
 
+import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
 import { PitchWizardFormData, pitchWizardSchema } from "./schema"
+import { validateStep } from "./validation"
 import {
   computeSectionAndHeader,
   firstStepOfSection,
   mapExistingDataToDefaults
 } from "./helpers"
-import { savePitchData, triggerFinalPitch, submitFinalPitch } from "./api"
-import { validateStep } from "./validation"
 
 interface UseWizardOptions {
   userId: string
@@ -50,7 +50,11 @@ export function useWizard({
 
     return pitchData?.currentStep || 1
   })
-  const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id)
+
+  const [pitchId, setPitchId] = useState<string | undefined>(
+    pitchData?.id || undefined
+  )
+
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
@@ -68,13 +72,13 @@ export function useWizard({
   const methods = useForm<PitchWizardFormData>({
     resolver: zodResolver(pitchWizardSchema),
     defaultValues: mapExistingDataToDefaults(userId, pitchData),
-    mode: "onTouched",
+    mode: "onChange",
     delayError: 0
   })
 
   // Watch for starExamplesCount
   const starCount = parseInt(methods.watch("starExamplesCount") || "2", 10)
-  const totalSteps = 4 + starCount * 4 + 1
+  const totalSteps = 4 + 1 + starCount * 4 + 1 // Added 1 for the STAR intro step
 
   // Get current section and header
   const { section: currentSection, header: currentHeader } =
@@ -82,6 +86,15 @@ export function useWizard({
 
   // Keep track of previous step for animations
   const prevStepRef = useRef(1)
+
+  // Save pitchId to sessionStorage, clearing stale values when no pitch
+  useEffect(() => {
+    if (pitchId) {
+      sessionStorage.setItem("ongoingPitchId", pitchId)
+    } else {
+      sessionStorage.removeItem("ongoingPitchId")
+    }
+  }, [pitchId])
 
   // Disable form fields when pitch generation is confirmed
   useEffect(() => {
@@ -211,6 +224,11 @@ export function useWizard({
     }
   }, [currentStep])
 
+  const clearCachedPitchId = () => {
+    sessionStorage.removeItem("ongoingPitchId")
+    setPitchId(undefined)
+  }
+
   // Handler for navigating to a specific section
   const handleSectionNavigate = useCallback(
     async (target: Section) => {
@@ -266,7 +284,7 @@ export function useWizard({
 
   // Handler for proceeding with pitch generation
   const handleConfirmPitchGeneration = useCallback(async () => {
-    const lastStarStep = 4 + starCount * 4
+    const lastStarStep = 5 + starCount * 4
 
     // Only proceed if we've saved form data and we're at the last STAR step
     if (pendingFormDataRef.current && currentStep === lastStarStep) {
@@ -315,8 +333,8 @@ export function useWizard({
 
     const nextStep = Math.min(currentStep + 1, totalSteps)
 
-    // Intro step (step 1) has no validation
-    if (currentStep === 1) {
+    // Intro step (step 1) and STAR Examples Intro step (step 5) have no validation
+    if (currentStep === 1 || currentStep === 5) {
       setCurrentStep(nextStep)
       return
     }
@@ -332,7 +350,7 @@ export function useWizard({
       }
 
       // STEP 2: Handle special case for moving to pitch generation BEFORE advancing UI
-      const lastStarStep = 4 + starCount * 4
+      const lastStarStep = 5 + starCount * 4 // Adjusted for new intro step
       if (currentStep === lastStarStep) {
         // Store the form data for pitch generation confirmation
         const formData = methods.getValues()
@@ -418,25 +436,100 @@ export function useWizard({
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
   // Handler for "Save & Close" button
-  const handleSaveAndClose = useCallback(() => {
+  const handleSaveAndClose = useCallback(async () => {
+    const { isDirty } = methods.formState
+
+    if (!isDirty) {
+      clearCachedPitchId()
+      router.push("/dashboard")
+      return
+    }
+
     const data = methods.getValues()
-    // Fire-and-forget save operation
-    savePitchData(data, pitchId, setPitchId, toast, currentStep)
-    // Navigate immediately for optimistic UI
-    router.push("/dashboard")
+
+    try {
+      // Await the save to ensure pitchId is set before navigating away
+      await savePitchData(data, pitchId, setPitchId, toast, currentStep)
+      clearCachedPitchId()
+      router.push("/dashboard")
+    } catch (error) {
+      console.error("Failed to save before navigating:", error)
+      toast({
+        title: "Save Error",
+        description: "We couldn’t save your pitch. Please try again.",
+        variant: "destructive"
+      })
+    }
   }, [methods, pitchId, currentStep, toast, router])
 
-  // Handler for "Submit Pitch" button
+  // Handler for "Submit Pitch" or saving draft from final step
   const handleSubmitFinal = useCallback(async () => {
     const data = methods.getValues()
+
+    // If a generation error occurred, treat this as a draft save
+    if (finalPitchError) {
+      // Clear any lingering execution ID so we don't resume polling
+      data.agentExecutionId = ""
+
+      const lastStarStep = 5 + starCount * 4
+
+      try {
+        await savePitchData(data, pitchId, setPitchId, toast, lastStarStep)
+        clearCachedPitchId()
+        router.push("/dashboard")
+      } catch (error) {
+        console.error("Failed to save draft after generation error:", error)
+        toast({
+          title: "Save Error",
+          description: "We couldn’t save your pitch. Please try again.",
+          variant: "destructive"
+        })
+      }
+      return
+    }
+
     await submitFinalPitch(data, pitchId, setPitchId, toast, router)
-  }, [methods, pitchId, toast, router])
+  }, [
+    methods,
+    pitchId,
+    setPitchId,
+    toast,
+    router,
+    finalPitchError,
+    starCount,
+    clearCachedPitchId
+  ])
 
   // Handler for pitch loading completion
   const handlePitchLoaded = useCallback(() => {
     setIsPitchLoading(false)
     setFinalPitchError(null)
   }, [])
+
+  const retryPitchGeneration = () => {
+    const lastStarStep = 5 + starCount * 4
+    setCurrentStep(lastStarStep)
+
+    // Load the last saved form data into pendingFormDataRef
+    pendingFormDataRef.current = methods.getValues()
+
+    // Show confirmation after the UI updates
+    setTimeout(() => {
+      setShowConfirmDialog(true)
+    }, 0)
+  }
+
+  // Add event listener for "saveAndExit"
+  useEffect(() => {
+    const handleSaveAndExit = async () => {
+      await handleSaveAndClose()
+    }
+
+    window.addEventListener("saveAndExit", handleSaveAndExit)
+    return () => {
+      window.removeEventListener("saveAndExit", handleSaveAndExit)
+    }
+  }, [handleSaveAndClose])
 
   return {
     // Form state
@@ -468,6 +561,8 @@ export function useWizard({
     handleSaveAndClose,
     handleSubmitFinal,
     handleSectionNavigate,
-    handlePitchLoaded
+    handlePitchLoaded,
+    // Retry pitch generation
+    retryPitchGeneration
   }
 }

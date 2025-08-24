@@ -20,8 +20,6 @@
  * - OPTIMIZATION: Uses combined dashboard action for single database round trip
  */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import { getDashboardDataAction } from "@/actions/db/dashboard-actions"
 import { Suspense } from "react"
@@ -121,6 +119,7 @@ async function PitchTableFetcher() {
       <div className="text-red-500">
         <p>Error loading dashboard:</p>
         <p>{dashboardRes.message}</p>
+        <p>Please refresh the page.</p>
       </div>
     )
   }

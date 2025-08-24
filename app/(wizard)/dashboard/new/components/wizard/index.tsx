@@ -12,6 +12,7 @@ import WizardIntroStep from "../steps/wizard-intro-step"
 import RoleStep from "../steps/role-step"
 import ExperienceStep from "../steps/experience-step"
 import GuidanceStep from "../steps/guidance-step"
+import StarExamplesIntroStep from "../steps/star-examples-intro-step"
 import SituationStep from "../steps/situation-step"
 import TaskStep from "../steps/task-step"
 import ActionStep from "../steps/action-step"
@@ -54,7 +55,8 @@ export default function PitchWizard({
     handleBack,
     handleSaveAndClose,
     handleSubmitFinal,
-    handlePitchLoaded
+    handlePitchLoaded,
+    retryPitchGeneration
   } = useWizard({ userId, pitchData, initialStep })
 
   // Render the appropriate step component based on current step
@@ -67,12 +69,14 @@ export default function PitchWizard({
     if (currentStep === 3) return <ExperienceStep />
     // Step 4 => Guidance
     if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
+    // Step 5 => STAR Examples Introduction
+    if (currentStep === 5) return <StarExamplesIntroStep />
 
-    // Next: starExamples sub-steps
-    const firstStarStep = 5
-    const lastStarStep = 4 + starCount * 4
-    if (currentStep >= firstStarStep && currentStep <= lastStarStep) {
-      const stepInStar = currentStep - firstStarStep
+    // Next: starExamples sub-steps (now starting from step 6)
+    const firstActualStarStep = 6
+    const lastStarStep = 5 + starCount * 4
+    if (currentStep >= firstActualStarStep && currentStep <= lastStarStep) {
+      const stepInStar = currentStep - firstActualStarStep
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
 
@@ -89,6 +93,7 @@ export default function PitchWizard({
         isPitchLoading={isPitchLoading}
         onPitchLoaded={handlePitchLoaded}
         errorMessage={finalPitchError}
+        onRetry={retryPitchGeneration}
       />
     )
   }
@@ -149,13 +154,7 @@ export default function PitchWizard({
         {/* Main content area - Scrollable */}
         <div className="min-h-0 flex-1 lg:mb-6">
           {/* Desktop Content Container */}
-          <div
-            className="hidden h-full overflow-hidden rounded-2xl bg-white lg:block"
-            style={{
-              boxShadow:
-                "0 12px 28px -12px rgba(0, 0, 0, 0.07), 0 5px 12px -6px rgba(0, 0, 0, 0.035)"
-            }}
-          >
+          <div className="hidden h-full overflow-hidden lg:block">
             <div className="h-full overflow-y-auto">
               <motion.div
                 key={currentStep}
@@ -211,10 +210,11 @@ export default function PitchWizard({
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
+                disabled={!methods.formState.isDirty}
                 className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
-                Close
+                Save & Close
               </Button>
             )}
 
@@ -274,6 +274,7 @@ export default function PitchWizard({
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
+                disabled={!methods.formState.isDirty}
                 className={`group flex items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
                   currentStep > 1 && currentStep < totalSteps
                     ? "flex-1"
@@ -281,7 +282,7 @@ export default function PitchWizard({
                 }`}
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
-                Close
+                Save & Close
               </Button>
             )}
 

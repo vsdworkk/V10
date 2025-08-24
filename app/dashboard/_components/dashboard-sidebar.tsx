@@ -20,8 +20,6 @@
  * - OPTIMIZATION: Now accepts userId as a prop to avoid redundant auth checks.
  */
 
-"use server"
-
 import Link from "next/link"
 import { Settings, CreditCard } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"

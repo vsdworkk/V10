@@ -43,7 +43,7 @@ export default function StarFieldComponent({
             <Textarea
               {...field}
               placeholder={placeholder}
-              className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+              className="min-h-48 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300 sm:min-h-24"
               style={
                 {
                   "--focus-ring-color": "#444ec1",

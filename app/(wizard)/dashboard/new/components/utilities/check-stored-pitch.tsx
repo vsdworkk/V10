@@ -3,39 +3,52 @@
 import { useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-/**
- * @description
- * Client component that checks for a stored pitch ID in local storage
- * and redirects to the pitch edit page if found.
- *
- * If the URL contains ?new=true, it will clear any stored ID
- * to ensure a fresh start.
- */
-export default function CheckStoredPitch() {
+export default function CheckStoredPitch({
+  onReady
+}: {
+  onReady?: () => void
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const isNewPitch = searchParams.get("new") === "true"
 
   useEffect(() => {
-    // If explicitly creating a new pitch, clear any stored ID
+    const isNewPitch = searchParams.get("new") === "true"
+    const stepParam = searchParams.get("step")
+    const storedPitchId = sessionStorage.getItem("ongoingPitchId")
+
     if (isNewPitch) {
-      localStorage.removeItem("currentPitchId")
-      // Update the URL to remove the query parameter
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
+      sessionStorage.removeItem("ongoingPitchId")
+      let newUrl = window.location.pathname
+      if (stepParam) newUrl += `?step=${stepParam}`
+      if (window.location.pathname + window.location.search !== newUrl) {
+        window.history.replaceState({}, "", newUrl)
+      }
+      onReady?.()
       return
     }
 
-    // Check if there's a stored pitch ID
-    const storedPitchId = localStorage.getItem("currentPitchId")
-
     if (storedPitchId) {
-      // Redirect to the pitch edit page using new URL structure
-      // This will trigger the redirect logic in [pitchId]/page.tsx
-      router.push(`/dashboard/new/${storedPitchId}`)
-    }
-  }, [router, isNewPitch])
+      const query = window.location.search
+      const targetUrl = `/dashboard/new/${storedPitchId}${query}`
 
-  // This component doesn't render anything
+      // Only redirect if we are not already on the target URL
+      if (window.location.pathname + window.location.search !== targetUrl) {
+        router.replace(targetUrl)
+      } else {
+        onReady?.()
+      }
+    } else {
+      // Redirect to clean /new only if not already there
+      if (
+        window.location.pathname + window.location.search !==
+        "/dashboard/new"
+      ) {
+        router.replace("/dashboard/new")
+      } else {
+        onReady?.()
+      }
+    }
+  }, [router, searchParams, onReady])
+
   return null
 }

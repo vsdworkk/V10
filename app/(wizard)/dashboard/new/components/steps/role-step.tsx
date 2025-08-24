@@ -26,13 +26,7 @@ We replaced old roleLevel items with APS1, APS2, APS3, APS4, APS5, APS6, EL1.
 
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData } from "../wizard/schema"
-import {
-  FormField,
-  FormItem,
-  FormControl,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form"
+import { FormField, FormControl, FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -43,7 +37,6 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { motion } from "framer-motion"
-import { cn } from "@/lib/utils"
 
 // Animation variants for staggered animations
 const containerVariants = {

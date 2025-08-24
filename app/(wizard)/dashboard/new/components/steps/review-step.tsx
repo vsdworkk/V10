@@ -24,7 +24,8 @@ import {
   ListOrdered,
   Undo2,
   Redo2,
-  Heading1
+  Heading1,
+  RefreshCw
 } from "lucide-react"
 
 // TipTap & its extensions
@@ -55,12 +56,15 @@ interface ReviewStepProps {
 
   /** Error message if pitch generation failed */
   errorMessage?: string | null
+
+  onRetry?: () => void
 }
 
 export default function ReviewStep({
   isPitchLoading,
   onPitchLoaded,
-  errorMessage
+  errorMessage,
+  onRetry
 }: ReviewStepProps) {
   const { watch, setValue } = useFormContext<PitchWizardFormData>()
   const { toast } = useToast()
@@ -78,7 +82,8 @@ export default function ReviewStep({
     isLoading: isPitchGenerating,
     pitchContent: generatedPitchContent,
     error: pitchGenerationError,
-    startPolling
+    startPolling,
+    reset
   } = usePitchGeneration()
 
   /* ----------------------------------------------------------- */
@@ -232,24 +237,56 @@ export default function ReviewStep({
         </div>
 
         {/* Loading animation in the editor area */}
-        <div className="min-h-[300px] rounded-xl border border-white/30 bg-white/50 p-0 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
-          <AIThinkingLoader
-            visible={true}
-            errorMessage={pitchGenerationError || errorMessage}
-            onCancel={() => {
-              // Set empty content to exit loading state
-              setValue("pitchContent", "<p>Your pitch content...</p>", {
-                shouldDirty: true
-              })
-              onPitchLoaded() // Reset isLoading in parent
-            }}
-            onComplete={() => {
-              // This shouldn't be needed as the content should
-              // be loaded via the hook, but just in case
-              onPitchLoaded()
-            }}
-            className="h-full min-h-[300px]"
-          />
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-white/30 bg-white/50 p-0 px-4 py-6 text-center shadow-inner backdrop-blur-md dark:bg-gray-900/40">
+          {pitchGenerationError || errorMessage ? (
+            <div
+              className="rounded-xl border p-5 text-center"
+              role="alert"
+              aria-live="polite"
+              style={{ backgroundColor: "#eef2ff", borderColor: "#c7d2fe" }}
+            >
+              <div
+                className="mb-2 text-base font-semibold"
+                style={{ color: "#444ec1" }}
+              >
+                Oops! We ran into a hiccup
+              </div>
+
+              <p className="mb-4 text-sm" style={{ color: "#444ec1" }}>
+                It looks like something went wrong while generating your pitch.
+                This can happen if the service is busy or your internet
+                connection briefly dropped.
+              </p>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    reset()
+                    onRetry?.()
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:brightness-110"
+                  style={{ backgroundColor: "#444ec1" }}
+                >
+                  <RefreshCw className="size-4" />
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : (
+            <AIThinkingLoader
+              visible={true}
+              className="h-full min-h-[300px]"
+              onCancel={() => {
+                setValue("pitchContent", "<p>Your pitch content...</p>", {
+                  shouldDirty: true
+                })
+                onPitchLoaded()
+              }}
+              onComplete={() => {
+                onPitchLoaded()
+              }}
+            />
+          )}
         </div>
       </div>
     )
@@ -374,7 +411,7 @@ export default function ReviewStep({
       {/* The Editor Content */}
       <ScrollArea className="h-[50vh] w-full overflow-hidden rounded-xl border border-white/30 bg-white/50 shadow-inner backdrop-blur-md dark:bg-gray-900/40">
         <div
-          className="prose prose-slate prose-neutral dark:prose-invert max-w-none p-6 text-neutral-900"
+          className="prose prose-neutral dark:prose-invert max-w-none p-6 text-neutral-900"
           style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
         >
           <EditorContent editor={editor} />

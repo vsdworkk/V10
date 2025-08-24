@@ -1,8 +1,8 @@
-// React hook for fetching AI guidance and polling for updates.
+// lib/hooks/use-ai-guidance.ts
 import { useState, useEffect } from "react"
 import {
   requestGuidance,
-  checkGuidanceStatus
+  checkGuidanceStatus,
 } from "@/lib/services/ai-guidance-service"
 import { debugLog } from "@/lib/debug"
 
@@ -11,8 +11,9 @@ export function useAiGuidance() {
   const [guidance, setGuidance] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [requestId, setRequestId] = useState<string | null>(null)
+  const [triggerTimestamp, setTriggerTimestamp] = useState<string | null>(null)
 
-  // Function to request guidance
+  // Request guidance (idempotent at service & server)
   const fetchGuidance = async (
     jobDescription: string,
     experience: string,
@@ -22,39 +23,34 @@ export function useAiGuidance() {
     debugLog("[useAiGuidance] fetchGuidance called - setting isLoading to true")
     setIsLoading(true)
     setError(null)
+    setGuidance(null) // reset guidance on retry
 
     try {
       const result = await requestGuidance({
         jobDescription,
         experience,
         userId,
-        pitchId
+        pitchId,
       })
 
       if (!result.isSuccess) {
-        debugLog(
-          "[useAiGuidance] fetchGuidance received error:",
-          result.message
-        )
+        debugLog("[useAiGuidance] fetchGuidance received error:", result.message)
         throw new Error(result.message)
       }
 
-      debugLog(
-        "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
-        result.data
-      )
-      setRequestId(result.data)
+      debugLog("[useAiGuidance] fetchGuidance succeeded, setting requestId:", result.data)
+      setTriggerTimestamp(new Date().toString())
+      setRequestId(result.data) // triggers polling useEffect
 
-      // If we already have guidance in the database (e.g., from a previous request),
-      // immediately check if it's available
+      // Immediate status check after a slight delay to catch fast callbacks
       setTimeout(() => {
         debugLog("[useAiGuidance] Immediate check for existing guidance")
         checkGuidanceStatus(result.data)
-          .then(statusResult => {
+          .then((statusResult) => {
             if (statusResult.isSuccess && statusResult.data) {
               debugLog(
                 "[useAiGuidance] Found guidance immediately:",
-                statusResult.data.substring(0, 20) + "..."
+                statusResult.data.substring(0, 20) + "."
               )
               setGuidance(statusResult.data)
               setIsLoading(false)
@@ -62,18 +58,13 @@ export function useAiGuidance() {
               debugLog("[useAiGuidance] No immediate guidance found, will poll")
             }
           })
-          .catch(err =>
-            console.error(
-              "[useAiGuidance] Error checking immediate guidance:",
-              err
-            )
+          .catch((err) =>
+            console.error("[useAiGuidance] Error checking immediate guidance:", err)
           )
       }, 100)
     } catch (err) {
       console.error("[useAiGuidance] fetchGuidance error:", err)
-      setError(
-        err instanceof Error ? err.message : "Failed to request guidance"
-      )
+      setError(err instanceof Error ? err.message : "Failed to request guidance")
       setIsLoading(false)
     }
   }
@@ -82,75 +73,47 @@ export function useAiGuidance() {
   useEffect(() => {
     if (!requestId) return
 
-    const pollInterval = 3000 // 3 seconds
+    let isPolling = true
     let attempts = 0
-    const maxAttempts = 20 // Timeout after ~1 minute
-    let isPolling = true // Flag to track if polling is active
+    const maxAttempts = 20
+    const pollInterval = 3000
 
     const checkStatus = async () => {
-      if (!isPolling) return true // Don't continue if polling was stopped
-
+      if (!isPolling) return true
       try {
         const result = await checkGuidanceStatus(requestId)
-
         if (result.isSuccess && result.data) {
-          debugLog(
-            "[useAiGuidance] Received successful guidance data from service:",
-            result.data
-          )
           if (isPolling) {
-            // Check flag before updating state
             setGuidance(result.data)
-            debugLog("[useAiGuidance] Setting isLoading to false")
             setIsLoading(false)
-            debugLog(
-              "[useAiGuidance] Current states - isLoading:",
-              false,
-              "guidance:",
-              result.data?.substring(0, 20) + "..."
-            )
-            isPolling = false // Stop polling
+            isPolling = false
           }
-          return true // Stop polling
+          return true
         }
 
-        // Continue polling if not complete
         attempts++
-        debugLog(
-          `[useAiGuidance] Poll attempt ${attempts}/${maxAttempts}, continuing polling`
-        )
         if (attempts >= maxAttempts) {
-          debugLog(
-            "[useAiGuidance] Reached max attempts, setting error and stopping polling"
-          )
           if (isPolling) {
-            // Check flag before updating state
             setError("Guidance generation timed out. Please try again.")
             setIsLoading(false)
-            isPolling = false // Stop polling
+            isPolling = false
           }
-          return true // Stop polling
+          return true
         }
 
-        if (!isPolling) return true // Don't continue if polling was stopped
-        return false // Continue polling
+        return false
       } catch (err) {
-        console.error("[useAiGuidance] Error during polling:", err)
         if (isPolling) {
-          // Check flag before updating state
           setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to check guidance status"
+            err instanceof Error ? err.message : "Failed to check guidance status"
           )
           setIsLoading(false)
-          isPolling = false // Stop polling
+          isPolling = false
         }
-        return true // Stop polling on error
+        return true // stop polling on error
       }
     }
 
-    // Start polling
     const poll = async () => {
       const shouldStop = await checkStatus()
       if (!shouldStop && isPolling) {
@@ -158,17 +121,14 @@ export function useAiGuidance() {
       }
     }
 
-    // Force loading state at the start of polling
     setIsLoading(true)
     poll()
 
-    // Cleanup
     return () => {
-      debugLog("[useAiGuidance] Cleanup function called, stopping polling")
-      isPolling = false // Signal to stop polling on unmount
-      attempts = maxAttempts // Force stop on unmount (legacy approach)
+      debugLog("[useAiGuidance] Cleanup called, stopping polling")
+      isPolling = false
     }
-  }, [requestId])
+  }, [requestId, triggerTimestamp])
 
   return {
     isLoading,
@@ -181,6 +141,6 @@ export function useAiGuidance() {
       setError(null)
       setRequestId(null)
       setIsLoading(false)
-    }
+    },
   }
 }

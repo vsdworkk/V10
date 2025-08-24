@@ -1,9 +1,6 @@
 /*
 Global styles for the app.
 */
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -147,43 +144,43 @@ Global styles for the app.
       transform: rotate(180deg);
     }
   }
-  
+
   .in-data-\[state\=active\]\:scale-0 {
     &[data-state="active"] {
       transform: scale(0);
     }
   }
-  
+
   .in-data-\[state\=active\]\:opacity-0 {
     &[data-state="active"] {
       opacity: 0;
     }
   }
-  
+
   .in-data-\[state\=active\]\:rotate-0 {
     &[data-state="active"] {
       transform: rotate(0deg);
     }
   }
-  
+
   .in-data-\[state\=active\]\:scale-100 {
     &[data-state="active"] {
       transform: scale(1);
     }
   }
-  
+
   .in-data-\[state\=active\]\:opacity-100 {
     &[data-state="active"] {
       opacity: 1;
     }
   }
-  
+
   .in-data-\[state\=active\]\:block {
     &[data-state="active"] {
       display: block;
     }
   }
-  
+
   @screen lg {
     .lg\:in-data-\[state\=active\]\:flex {
       &[data-state="active"] {
@@ -194,11 +191,25 @@ Global styles for the app.
 
   /* Shake animation for word count indicator */
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-    20%, 40%, 60%, 80% { transform: translateX(4px); }
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translateX(-4px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translateX(4px);
+    }
   }
-  
+
   .animate-shake {
     animation: shake 0.6s ease-in-out;
   }

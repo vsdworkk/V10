@@ -1,21 +1,16 @@
 "use server"
 
 /**
- * Server actions that deal with the external PromptLayer "Master_Agent_V1".
- * The main export, `generateAgentPitchAction`, kicks‑off the workflow and
- * returns the *workflow_version_execution_id* so the caller can persist it
- * (→ `agentExecutionId`) and subscribe to realtime updates.
+ * @description
+ * Server action to trigger PromptLayer "Master_Agent_V1" to generate a pitch.
+ * Returns a unique 6-digit ID (→ `agentExecutionId`) for tracking.
  */
 
 import { ActionState } from "@/types"
 import { StarSchema } from "@/db/schema/pitches-schema"
 import { debugLog } from "@/lib/debug"
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                             */
-/* ------------------------------------------------------------------ */
-
-export interface GenerateAgentPitchParams {
+interface GenerateAgentPitchParams {
   roleName: string
   roleLevel: string
   pitchWordLimit: number
@@ -32,42 +27,55 @@ interface StarExampleOutput {
   result: string
 }
 
-/* ------------------------------------------------------------------ */
-/*  Main action                                                       */
-/* ------------------------------------------------------------------ */
+function getEnvVar(name: string): string {
+  const value = process.env[name]
+  if (!value || value.trim() === "") {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+const PROMPTLAYER_API_KEY = getEnvVar("PROMPTLAYER_API_KEY")
+const PROMPTLAYER_CALLBACK_URL = getEnvVar("PROMPTLAYER_CALLBACK_URL")
+const PROMPTLAYER_API_URL = getEnvVar("PROMPTLAYER_API_URL")
 
 export async function generateAgentPitchAction(
   pitchData: GenerateAgentPitchParams
 ): Promise<ActionState<string>> {
   try {
-    /* -------------------------------------------------------------- */
-    /* 1. Validate STAR count                                         */
-    /* -------------------------------------------------------------- */
-    const numExamples = pitchData.starExamples.length
+    const {
+      roleName,
+      roleLevel,
+      pitchWordLimit,
+      relevantExperience,
+      roleDescription,
+      starExamples
+    } = pitchData
+
+    const numExamples = starExamples.length
     if (numExamples < 2 || numExamples > 4) {
       return {
         isSuccess: false,
-        message: `Agent currently supports 2 – 4 STAR examples (you sent ${numExamples}).`
+        message: `Agent requires 2–4 STAR examples (received ${numExamples}).`
       }
     }
 
-    /* -------------------------------------------------------------- */
-    /* 2. Build job‑description & STAR JSON                           */
-    /* -------------------------------------------------------------- */
     const jobDescription = [
-      `Role: ${pitchData.roleName}`,
-      `Level: ${pitchData.roleLevel}`,
-      pitchData.roleDescription ? `Description: ${pitchData.roleDescription}` : undefined
+      `Role: ${roleName}`,
+      `Level: ${roleLevel}`,
+      roleDescription && `Description: ${roleDescription}`
     ]
       .filter(Boolean)
       .join("\n")
 
-    const starExamplesArray: StarExampleOutput[] = pitchData.starExamples.map(
+    const starExamplesArray: StarExampleOutput[] = starExamples.map(
       (ex, idx) => ({
         id: String(idx + 1),
         situation: [
           ex.situation?.["where-and-when-did-this-experience-occur"],
-          ex.situation?.["briefly-describe-the-situation-or-challenge-you-faced"]
+          ex.situation?.[
+            "briefly-describe-the-situation-or-challenge-you-faced"
+          ]
         ]
           .filter(Boolean)
           .join("\n"),
@@ -78,13 +86,13 @@ export async function generateAgentPitchAction(
           .filter(Boolean)
           .join("\n"),
         action: ex.action.steps
-          .map(
-            (s, i) =>
-              `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}` +
-              (s["what-was-the-outcome-of-this-step-optional"]
-                ? `\nOutcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
-                : "")
-          )
+          .map((step, i) => {
+            const stepText = `Step ${i + 1}: ${step["what-did-you-specifically-do-in-this-step"]}`
+            const outcome = step["what-was-the-outcome-of-this-step-optional"]
+              ? `\nOutcome: ${step["what-was-the-outcome-of-this-step-optional"]}`
+              : ""
+            return stepText + outcome
+          })
           .join("\n\n"),
         result:
           ex.result?.[
@@ -94,95 +102,75 @@ export async function generateAgentPitchAction(
     )
 
     const starComponents = JSON.stringify({ starExamples: starExamplesArray })
-    debugLog("Formatted star components:", starComponents);
+    debugLog("Formatted STAR components:", starComponents)
 
-    /* -------------------------------------------------------------- */
-    /* 2.5 Generate a unique 6‑digit identifier                        */
-    /* -------------------------------------------------------------- */
-    const idUnique = Math.floor(100000 + Math.random() * 900000).toString()
+    const agentExecutionId = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString()
 
-    /* -------------------------------------------------------------- */
-    /* 3. Choose agent version                                        */
-    /* -------------------------------------------------------------- */
-    const getVersion = (n: number) =>
-      ({ 2: "v1.2", 3: "v1.3", 4: "v1.4" } as const)[n] || "v1.2"
+    const workflowVersion =
+      {
+        2: "v1.2",
+        3: "v1.3",
+        4: "v1.4"
+      }[numExamples] ?? "v1.2"
 
-    const workflowLabelName = getVersion(numExamples)
-
-    /* -------------------------------------------------------------- */
-    /* 4. Prepare PromptLayer call                                    */
-    /* -------------------------------------------------------------- */
-    const apiKey = process.env.PROMPTLAYER_API_KEY
-    if (!apiKey) {
-      throw new Error("PROMPTLAYER_API_KEY not set in environment")
-    }
-
-    const callbackUrl =
-      process.env.PROMPTLAYER_CALLBACK_URL ||
-      "https://your‑domain.com/api/promptlayer-callback"
-
-    const introWordCount = Math.round(pitchData.pitchWordLimit * 0.1)
-    const conclusionWordCount = Math.round(pitchData.pitchWordLimit * 0.1)
-    const starWordCount = Math.round(
-      (pitchData.pitchWordLimit * 0.8) / numExamples
-    )
+    /* Calculate word limits */
+    const introWordCount = Math.round(pitchWordLimit * 0.1)
+    const conclusionWordCount = Math.round(pitchWordLimit * 0.1)
+    const starWordCount = Math.round((pitchWordLimit * 0.8) / numExamples)
 
     const body = {
-      workflow_label_name: workflowLabelName,
-      metadata: { callback_url: callbackUrl },
+      workflow_label_name: workflowVersion,
+      metadata: { callback_url: PROMPTLAYER_CALLBACK_URL },
       input_variables: {
         job_description: jobDescription,
         star_components: starComponents,
         Star_Word_Count: starWordCount.toString(),
-        User_Experience: pitchData.relevantExperience,
+        User_Experience: relevantExperience,
         Intro_Word_Count: introWordCount.toString(),
         Conclusion_Word_Count: conclusionWordCount.toString(),
-        ILS: "Isssdsd",
-        id_unique: idUnique
+        ILS: "Isssdsd", // Placeholder value
+        id_unique: agentExecutionId
       },
       return_all_outputs: true
     }
 
+    /* Make request to PromptLayer */
     const res = await fetch(
-      "https://api.promptlayer.com/workflows/Master_Agent_V1/run",
+      `${PROMPTLAYER_API_URL}/workflows/Master_Agent_V1/run`,
       {
         method: "POST",
-        headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
+        headers: {
+          "X-API-KEY": PROMPTLAYER_API_KEY,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(body)
       }
     )
 
     if (!res.ok) {
-      throw new Error(
-        `PromptLayer responded ${res.status}: ${await res.text()}`
-      )
+      const errorText = await res.text()
+      throw new Error(`PromptLayer error ${res.status}: ${errorText}`)
     }
 
-    const { success, workflow_version_execution_id: _execId, message } =
-      await res.json()
+    const result = await res.json()
 
-    // We ignore the PromptLayer execution‑id for now because the
-    // agent does not reliably return it in the callback.  Instead, we rely on
-    // our own 6‑digit identifier (`idUnique`) which we sent in the input
-    // variables and expect back in the callback payload.
-
-    if (!success) {
-      throw new Error(message || "PromptLayer reported a failure.")
+    if (!result.success) {
+      throw new Error(result.message || "PromptLayer returned a failure.")
     }
 
-    /* -------------------------------------------------------------- */
-    /* 5. Return our custom identifier immediately                     */
-    /* -------------------------------------------------------------- */
+    /* Return success response */
     return {
       isSuccess: true,
-      message: `Agent version ${workflowLabelName} launched.`,
-      data: idUnique  // caller should persist this to pitches.agentExecutionId
+      message: `Agent (version ${workflowVersion}) launched successfully.`,
+      data: agentExecutionId
     }
   } catch (err: any) {
     console.error("generateAgentPitchAction error:", err)
     return {
       isSuccess: false,
-      message: err.message || "Unknown error contacting PromptLayer"
+      message: err.message || "Unknown error while contacting PromptLayer"
     }
   }
 }

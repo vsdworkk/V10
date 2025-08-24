@@ -1,12 +1,115 @@
 // API route to start pitch generation using PromptLayer
 import { NextRequest, NextResponse } from "next/server"
-import { updatePitchByExecutionId } from "@/actions/db/pitches-actions"
-import { spendCreditsAction } from "@/actions/db/profiles-actions"
+import {
+  updatePitchByExecutionId,
+  getPitchByExecutionIdAction
+} from "@/actions/db/pitches-actions"
+import { getAvailableCreditsAction } from "@/actions/db/profiles-actions"
+import { PitchRequestSchema } from "@/lib/schemas/pitchSchemas"
 import { debugLog } from "@/lib/debug"
 
+const REQUEST_TIMEOUT_MS = 60_000
+const INTRO_CONCLUSION_RATIO = 0.1
+const STAR_RATIO = 0.8
+
+// === Environment Handling ===
+function getRequiredEnvVar(name: string): string {
+  const value = process.env[name]
+  if (!value || value.trim() === "") {
+    throw new Error(`Missing or empty environment variable: ${name}`)
+  }
+  return value
+}
+
+const PROMPTLAYER_URL = getRequiredEnvVar("PROMPTLAYER_URL")
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "")
+
+try {
+  new URL(BASE_URL!)
+} catch {
+  throw new Error(`Invalid NEXT_PUBLIC_BASE_URL: ${BASE_URL}`)
+}
+
+const callbackUrl = `${BASE_URL}/api/pitches/generate/callback`
+
+const formatStarExamples = (examples: any[]) =>
+  examples.map((ex, idx) => ({
+    id: String(idx + 1),
+    situation: [
+      ex.situation?.["where-and-when-did-this-experience-occur"],
+      ex.situation?.["briefly-describe-the-situation-or-challenge-you-faced"]
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    task: [
+      ex.task?.["what-was-your-responsibility-in-addressing-this-issue"],
+      ex.task?.["what-constraints-or-requirements-did-you-need-to-consider"]
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    action: ex.action?.steps
+      ?.map(
+        (s: any, i: number) =>
+          `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}` +
+          (s["what-was-the-outcome-of-this-step-optional"]
+            ? `\nOutcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
+            : "")
+      )
+      .join("\n\n"),
+    result:
+      ex.result?.[
+        "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
+      ] || ""
+  }))
+
+const getVersion = (n: number): string => {
+  const versions: Record<number, string> = { 2: "v1.2", 3: "v1.3", 4: "v1.4" }
+  return versions[n] ?? "v1.2"
+}
+
+const triggerPromptLayerWorkflow = async (
+  payload: any,
+  signal: AbortSignal
+) => {
+  const apiKey = process.env.PROMPTLAYER_API_KEY
+  if (!apiKey) {
+    throw new Error("Missing PromptLayer API key")
+  }
+
+  const response = await fetch(PROMPTLAYER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-KEY": apiKey
+    },
+    body: JSON.stringify(payload),
+    signal
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`PromptLayer error: ${errorText}`)
+  }
+
+  return response.json()
+}
+
+// === Main Handler ===
 export async function POST(req: NextRequest) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
   try {
-    const pitchData = await req.json()
+    const json = await req.json()
+    const parsed = PitchRequestSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.format() },
+        { status: 400 }
+      )
+    }
+
     const {
       userId,
       pitchId,
@@ -16,186 +119,126 @@ export async function POST(req: NextRequest) {
       pitchWordLimit,
       roleDescription,
       relevantExperience,
-      albertGuidance,
       starExamples,
       starExamplesCount
-    } = pitchData
+    } = parsed.data
 
-    // Validate required fields
-    if (!userId || !pitchId || !roleName || !roleLevel) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
-    }
+    // Check if pitch already exists
+    const existingPitch = await getPitchByExecutionIdAction(pitchId)
+    if (existingPitch.isSuccess && existingPitch.data) {
+      debugLog(`Existing pitch found: ${pitchId}`)
 
-    const creditResult = await spendCreditsAction(userId, 1)
-    if (!creditResult.isSuccess) {
-      return NextResponse.json({ error: creditResult.message }, { status: 402 })
-    }
+      const status = existingPitch.data.status
+      if (status !== "draft" && status !== "failed") {
+        // Pitch already in progress or completed
+        debugLog(`Pitch already in progress or completed: ${pitchId}`)
 
-    // Use the pitchId as the requestId for the agent - this is the key pattern
-    // that matches the guidance system
-    const requestId = pitchId
-
-    // Store the request in database with the pitch ID set as the agentExecutionId
-    try {
-      const updateResult = await updatePitchByExecutionId(requestId, {
-        agentExecutionId: requestId, // Store the pitch ID as the execution ID
-        // Set status to indicate pitch generation is in progress
-        status: "draft"
-      })
-
-      if (!updateResult.isSuccess) {
-        console.error(
-          `Failed to update pitch with execution ID: ${updateResult.message}`
-        )
         return NextResponse.json(
-          { error: `Failed to update pitch: ${updateResult.message}` },
-          { status: 500 }
+          { error: "Generation already in progress or completed." },
+          { status: 409 }
         )
       }
+    }
 
-      debugLog(`Successfully updated pitch with execution ID: ${requestId}`)
-    } catch (error) {
-      console.error(`Error updating pitch with execution ID: ${error}`)
+    // Check credit availability
+    const creditRes = await getAvailableCreditsAction(userId)
+    if (!creditRes.isSuccess) {
+      return NextResponse.json({ error: creditRes.message }, { status: 500 })
+    }
+
+    if (creditRes.data < 1) {
       return NextResponse.json(
-        { error: `Error updating pitch: ${error}` },
+        { error: "Insufficient credits" },
+        { status: 402 }
+      )
+    }
+
+    // Create or update pitch record as draft
+    const updateResult = await updatePitchByExecutionId(pitchId, {
+      agentExecutionId: pitchId,
+      status: "draft",
+      userId
+    })
+
+    if (!updateResult.isSuccess) {
+      return NextResponse.json(
+        { error: `Failed to update pitch: ${updateResult.message}` },
         { status: 500 }
       )
     }
 
-    // Call PromptLayer with proper error handling and timeout
-    const promptLayerApiKey = process.env.PROMPTLAYER_API_KEY
-    if (!promptLayerApiKey) {
-      return NextResponse.json(
-        { error: "PromptLayer API key not configured" },
-        { status: 500 }
-      )
+    debugLog(`Pitch updated with execution ID: ${pitchId}`)
+
+    // Build PromptLayer payload
+    const formattedStarExamples = formatStarExamples(starExamples)
+
+    const jobDescription = [`Role: ${roleName}`, `Level: ${roleLevel}`]
+    if (roleDescription) {
+      jobDescription.push(`Description: ${roleDescription}`)
     }
 
-    const callbackUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://yourdomain.com"}/api/pitches/generate/callback`
+    const numExamples = starExamplesCount || starExamples.length
+    const workflowLabelName = getVersion(numExamples)
 
-    // We use AbortController to handle timeouts
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 seconds timeout
+    const introWordCount = Math.round(pitchWordLimit * INTRO_CONCLUSION_RATIO)
+    const conclusionWordCount = Math.round(
+      pitchWordLimit * INTRO_CONCLUSION_RATIO
+    )
+    const starWordCount = Math.round(
+      (pitchWordLimit * STAR_RATIO) / numExamples
+    )
 
+    const payload = {
+      workflow_label_name: workflowLabelName,
+      input_variables: {
+        job_description: jobDescription.join("\n"),
+        star_components: JSON.stringify({
+          starExamples: formattedStarExamples
+        }),
+        Star_Word_Count: starWordCount.toString(),
+        User_Experience: relevantExperience,
+        Intro_Word_Count: introWordCount.toString(),
+        Conclusion_Word_Count: conclusionWordCount.toString(),
+        ILS: "Isssdsd",
+        id_unique: pitchId
+      },
+      metadata: {
+        source: "webapp",
+        callback_url: callbackUrl
+      },
+      return_all_outputs: true
+    }
+
+    // Trigger PromptLayer generation
     try {
-      // Prepare star examples in a format suitable for PromptLayer
-      const formattedStarExamples = starExamples.map(
-        (ex: any, idx: number) => ({
-          id: String(idx + 1),
-          situation: [
-            ex.situation?.["where-and-when-did-this-experience-occur"],
-            ex.situation?.[
-              "briefly-describe-the-situation-or-challenge-you-faced"
-            ]
-          ]
-            .filter(Boolean)
-            .join("\n"),
-          task: [
-            ex.task?.["what-was-your-responsibility-in-addressing-this-issue"],
-            ex.task?.[
-              "what-constraints-or-requirements-did-you-need-to-consider"
-            ]
-          ]
-            .filter(Boolean)
-            .join("\n"),
-          action: ex.action.steps
-            .map(
-              (s: any, i: number) =>
-                `Step ${i + 1}: ${s["what-did-you-specifically-do-in-this-step"]}` +
-                (s["what-was-the-outcome-of-this-step-optional"]
-                  ? `\nOutcome: ${s["what-was-the-outcome-of-this-step-optional"]}`
-                  : "")
-            )
-            .join("\n\n"),
-          result:
-            ex.result?.[
-              "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-            ] || ""
-        })
-      )
-
-      // Build job description string
-      const jobDescription = [
-        `Role: ${roleName}`,
-        `Level: ${roleLevel}`,
-        roleDescription ? `Description: ${roleDescription}` : undefined
-      ]
-        .filter(Boolean)
-        .join("\n")
-
-      // Choose agent version based on number of examples
-      const numExamples = starExamplesCount || starExamples.length
-      const getVersion = (n: number) =>
-        (({ 2: "v1.2", 3: "v1.3", 4: "v1.4" }) as const)[n] || "v1.2"
-
-      const workflowLabelName = getVersion(numExamples)
-
-      // Calculate word counts
-      const introWordCount = Math.round(pitchWordLimit * 0.1)
-      const conclusionWordCount = Math.round(pitchWordLimit * 0.1)
-      const starWordCount = Math.round((pitchWordLimit * 0.8) / numExamples)
-
-      // Make the PromptLayer API call with the correct workflow and parameters
-      const response = await fetch(
-        "https://api.promptlayer.com/workflows/Master_Agent_V1/run",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-KEY": promptLayerApiKey
-          },
-          body: JSON.stringify({
-            workflow_label_name: workflowLabelName,
-            input_variables: {
-              job_description: jobDescription,
-              star_components: JSON.stringify({
-                starExamples: formattedStarExamples
-              }),
-              Star_Word_Count: starWordCount.toString(),
-              User_Experience: relevantExperience,
-              Intro_Word_Count: introWordCount.toString(),
-              Conclusion_Word_Count: conclusionWordCount.toString(),
-              ILS: "Isssdsd", // This appears to be a constant in the original code
-              id_unique: requestId // The pitch ID is passed as id_unique to PromptLayer
-            },
-            metadata: {
-              source: "webapp",
-              callback_url: callbackUrl
-            },
-            return_all_outputs: true
-          }),
-          signal: controller.signal
-        }
-      )
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`PromptLayer error: ${errorText}`)
-      }
-
-      const data = await response.json()
+      await triggerPromptLayerWorkflow(payload, controller.signal)
 
       return NextResponse.json({
         success: true,
-        requestId, // Return the pitch ID as the requestId
+        requestId: pitchId,
         message: `Agent version ${workflowLabelName} launched.`
       })
     } catch (error: any) {
       if (error.name === "AbortError") {
         return NextResponse.json({ error: "Request timeout" }, { status: 504 })
       }
-      throw error
+
+      console.error(
+        `PromptLayer request failed for userId=${userId}, pitchId=${pitchId}:`,
+        error
+      )
+      return NextResponse.json(
+        { error: error.message || "Failed to trigger PromptLayer" },
+        { status: 500 }
+      )
     }
-  } catch (error: any) {
-    console.error("Error requesting pitch generation:", error)
+  } catch (error: unknown) {
+    console.error("Unhandled error in pitch generation route:", error)
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     )
+  } finally {
+    clearTimeout(timeoutId)
   }
 }

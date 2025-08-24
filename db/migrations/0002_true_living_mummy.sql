@@ -1,0 +1,1 @@
+ALTER TYPE "public"."pitch_status" ADD VALUE 'failed';

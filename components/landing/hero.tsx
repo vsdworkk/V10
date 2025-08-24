@@ -53,7 +53,7 @@ function HeroTitles() {
         )}
       </h1>
       <p className="text-muted-foreground mx-auto max-w-xl text-balance text-center text-lg leading-7 sm:text-xl sm:leading-9">
-        Personalised APS Statements of Claims Written by AI
+        Personalised APS Pitches Written by AI
       </p>
     </div>
   )

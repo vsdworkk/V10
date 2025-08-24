@@ -21,8 +21,6 @@
  * - OPTIMIZATION: We perform a single auth check here and pass the userId to children components to avoid redundant auth checks.
  */
 
-"use server"
-
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
 import DashboardSidebar from "./_components/dashboard-sidebar"

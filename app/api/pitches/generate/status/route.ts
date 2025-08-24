@@ -1,52 +1,93 @@
 // Poll for pitch generation completion by execution ID
-import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
+import { NextRequest, NextResponse } from "next/server"
 import { debugLog } from "@/lib/debug"
+
+const RETRY_AFTER_SECONDS = 5
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const requestId = searchParams.get("requestId")
+    const executionId = searchParams.get("requestId")
 
-    if (!requestId) {
+    if (!executionId) {
       return NextResponse.json(
-        { error: "Missing requestId parameter" },
+        {
+          status: "error",
+          error: "Missing 'requestId' query parameter"
+        },
         { status: 400 }
       )
     }
 
-    // Note: The requestId is actually the pitch ID
-    // getPitchByExecutionIdAction is designed to look up by BOTH agentExecutionId and id fields
-    // This is the exact same pattern used by the guidance system
-    const result = await getPitchByExecutionIdAction(requestId)
+    const result = await getPitchByExecutionIdAction(executionId)
     debugLog(
-      `Pitch status check for requestId ${requestId}: ${result.isSuccess ? "found" : "not found"}`
+      `Polling pitch status for executionId "${executionId}": ${
+        result.isSuccess ? "found" : "not found"
+      }`
     )
 
     if (!result.isSuccess) {
-      return NextResponse.json({
-        status: "pending",
-        message: "Pitch not found or still processing"
-      })
+      return new NextResponse(
+        JSON.stringify({
+          status: "pending",
+          message: "Pitch not found or still processing"
+        }),
+        {
+          status: 202,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": RETRY_AFTER_SECONDS.toString()
+          }
+        }
+      )
     }
 
-    // If we have pitch content, return it
-    if (result.data?.pitchContent) {
+    const pitch = result.data
+
+    if (pitch?.pitchContent) {
       return NextResponse.json({
         status: "completed",
-        pitchContent: result.data.pitchContent
+        pitchContent: pitch.pitchContent
       })
     }
 
-    // Otherwise, it's still processing
-    return NextResponse.json({
-      status: "pending",
-      message: "Pitch still processing"
-    })
-  } catch (error: any) {
-    console.error("Error checking pitch status:", error)
+    if (pitch?.status === "failed") {
+      return NextResponse.json(
+        {
+          status: "error",
+          error: "Pitch generation failed"
+        },
+        { status: 500 }
+      )
+    }
+
+    return new NextResponse(
+      JSON.stringify({
+        status: "pending",
+        message: "Pitch is still being generated"
+      }),
+      {
+        status: 202,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": RETRY_AFTER_SECONDS.toString()
+        }
+      }
+    )
+  } catch (error: unknown) {
+    console.error("Error polling pitch status")
+
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Unexpected error occurred while polling pitch status"
+
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      {
+        status: "error",
+        error: errorMessage
+      },
       { status: 500 }
     )
   }

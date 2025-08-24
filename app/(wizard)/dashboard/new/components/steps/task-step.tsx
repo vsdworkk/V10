@@ -22,8 +22,8 @@ export default function TaskStep({ exampleIndex }: TaskStepProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
-      <div className="w-full px-8">
-        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="w-full sm:px-8">
+        <div className="mb-8 rounded-2xl bg-white p-3 shadow-sm sm:p-6">
           <h2 className="mb-5 text-xl font-bold text-gray-800">Task</h2>
 
           <div className="mb-6">

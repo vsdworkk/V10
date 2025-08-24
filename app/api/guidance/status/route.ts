@@ -1,4 +1,4 @@
-// API route to poll for AI guidance completion by execution ID
+// app/api/guidance/status/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getPitchByExecutionIdAction } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"
@@ -23,22 +23,20 @@ export async function GET(req: NextRequest) {
     if (!result.isSuccess) {
       return NextResponse.json({
         status: "pending",
-        message: "Guidance not found or still processing"
+        message: "Guidance not found or still processing",
       })
     }
 
-    // If we have guidance, return it
     if (result.data?.albertGuidance) {
       return NextResponse.json({
         status: "completed",
-        guidance: result.data.albertGuidance
+        guidance: result.data.albertGuidance,
       })
     }
 
-    // Otherwise, it's still processing
     return NextResponse.json({
       status: "pending",
-      message: "Guidance still processing"
+      message: "Guidance still processing",
     })
   } catch (error) {
     console.error("Error checking guidance status:", error)

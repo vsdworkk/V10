@@ -1,0 +1,24 @@
+# robots.txt for APSPitchPro (Next.js App Router)
+# See Google robots.txt guidance.
+
+User-agent: *
+# Keep render-critical assets crawlable for proper rendering:
+Allow: /_next/static/
+Allow: /_next/image/
+
+# Block private/app areas (behind authentication):
+Disallow: /dashboard/
+Disallow: /todo/
+
+# Block auth & transactional flows (not useful in search results):
+Disallow: /login
+Disallow: /signup
+Disallow: /checkout/
+Disallow: /checkout/success
+
+# Block machine endpoints (APIs, webhooks, RPC):
+Disallow: /api/
+Disallow: /trpc/
+
+# List your sitemap(s) with fully-qualified URLs:
+Sitemap: https://www.apspitchpro.com/sitemap.xml

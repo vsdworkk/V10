@@ -26,7 +26,6 @@ import {
   FormLabel,
   FormMessage
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { motion } from "framer-motion"
 
@@ -41,17 +40,12 @@ const containerVariants = {
   }
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-}
-
 export default function ExperienceStep() {
   const { control } = useFormContext<PitchWizardFormData>()
 
   return (
     <motion.div
-      className="space-y-8 overflow-hidden rounded-2xl border border-gray-100 bg-white"
+      className="space-y-8 overflow-hidden border-gray-100 bg-white sm:rounded-2xl sm:border"
       style={{
         boxShadow:
           "0 4px 12px -8px rgba(0, 0, 0, 0.01), 0 2px 4px -2px rgba(0, 0, 0, 0.005)"
@@ -60,7 +54,7 @@ export default function ExperienceStep() {
       initial="hidden"
       animate="visible"
     >
-      <div className="space-y-8 p-8">
+      <div className="space-y-8 p-3 sm:p-8">
         {/* Relevant Experience */}
         <div className="space-y-4">
           <FormField

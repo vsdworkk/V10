@@ -91,6 +91,7 @@ export function usePitchGeneration() {
 
   // Start polling for an existing pitch without triggering a new generation
   const startPolling = async (existingRequestId: string) => {
+    debugLog("[usePitchGeneration] startPolling called")
     setPitchContent(null)
     setError(null)
     setIsLoading(true)

@@ -1,7 +1,5 @@
-"use server"
-
-import { auth } from "@clerk/nextjs/server"
 import SettingsInterface from "./_components/settings-interface"
+import { auth } from "@clerk/nextjs/server"
 
 export default async function SettingsPage() {
   const { userId } = await auth()

@@ -1,40 +1,27 @@
-/**
- * Client component for wizard step 4 of the pitch builder.
- * Fetches AI guidance automatically and manages STAR example inputs.
- * Field changes are stored locally and persisted by the wizard when the
- * user clicks Next or Close.
- */
+// app/(wizard)/dashboard/new/components/steps/guidance-step.tsx
 "use client"
 
 import { useFormContext } from "react-hook-form"
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { RefreshCw, Lightbulb } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
 import { debugLog } from "@/lib/debug"
 import { PitchWizardFormData } from "../wizard/schema"
 import { useParams } from "next/navigation"
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent
-} from "@/components/ui/accordion"
 
 interface GuidanceStepProps {
   pitchId?: string // Accept pitchId as an optional prop
 }
 
 export default function GuidanceStep({
-  pitchId: pitchIdFromProp
+  pitchId: pitchIdFromProp,
 }: GuidanceStepProps) {
-  // Destructure and rename prop
-  const { watch, setValue, getValues, control, formState } =
+  const { watch, setValue, getValues, formState } =
     useFormContext<PitchWizardFormData>()
   const { errors } = formState
-  const params = useParams() // Keep for other potential uses or fallback
+  const params = useParams()
 
-  // Form fields that matter for requesting guidance
   const userId = watch("userId")
   const roleName = watch("roleName")
   const roleLevel = watch("roleLevel")
@@ -44,18 +31,13 @@ export default function GuidanceStep({
   const starExamplesCount = watch("starExamplesCount")
   const pitchWordLimit = watch("pitchWordLimit")
 
-  // Determine the definitive pitch ID to use
-  // Prioritize the ID from props (coming from useWizard state)
-  // Fallback to URL params if necessary (though less ideal now)
   const definitivePitchId = pitchIdFromProp || (params?.pitchId as string)
 
-  // Use our custom hook
-  const { isLoading, guidance, error, requestId, fetchGuidance } =
-    useAiGuidance()
+  const { isLoading, guidance, error, requestId, fetchGuidance } = useAiGuidance()
 
-  // Initialize - request guidance if needed
   const hasRequestedRef = useRef(false)
 
+  // Initial fetch of guidance if conditions are met (guarded to one fire)
   useEffect(() => {
     debugLog(
       "[GuidanceStep] Initial guidance check - albertGuidance:",
@@ -76,12 +58,7 @@ export default function GuidanceStep({
         "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
       )
       hasRequestedRef.current = true
-      fetchGuidance(
-        roleDescription,
-        relevantExperience,
-        userId,
-        definitivePitchId
-      )
+      fetchGuidance(roleDescription, relevantExperience, userId, definitivePitchId)
     } else if (albertGuidance) {
       debugLog(
         "[GuidanceStep] Not fetching guidance as it already exists in form state"
@@ -92,161 +69,113 @@ export default function GuidanceStep({
     roleDescription,
     relevantExperience,
     userId,
-    definitivePitchId
+    definitivePitchId,
+    fetchGuidance,
   ])
 
-  // Update form when guidance is received
+  // Update form when guidance is received, only if different from current value
   useEffect(() => {
-    debugLog(
-      "[GuidanceStep] useEffect for guidance update triggered. Hook guidance:",
-      guidance,
-      "isLoading:",
-      isLoading
-    )
-
-    // When guidance exists, update the form and ensure loading is stopped
-    if (guidance) {
-      debugLog("[GuidanceStep] Setting albertGuidance in form with:", guidance)
+    const currentGuidance = getValues("albertGuidance")
+    if (guidance && guidance !== currentGuidance) {
+      debugLog("[GuidanceStep] Updating form with new guidance", guidance)
       setValue("albertGuidance", guidance, { shouldDirty: true })
       if (requestId) {
-        debugLog(
-          "[GuidanceStep] Setting agentExecutionId in form with:",
-          requestId
-        )
         setValue("agentExecutionId", requestId, { shouldDirty: true })
       }
     }
-  }, [guidance, requestId, setValue, isLoading])
+  }, [guidance, requestId, setValue, getValues])
 
-  // Handle STAR example count change
-  const handleStarExamplesCountChange = (value: string) => {
-    setValue(
-      "starExamplesCount",
-      value as PitchWizardFormData["starExamplesCount"],
-      {
-        shouldDirty: true
-      }
-    )
-
-    // Values will be persisted when the user moves away from this step
+  // Manual retry handler
+  const handleRefetchGuidance = () => {
+    if (roleDescription && relevantExperience && userId && definitivePitchId) {
+      // Reset the request flag to allow a controlled retry later if needed
+      hasRequestedRef.current = false
+      fetchGuidance(roleDescription, relevantExperience, userId, definitivePitchId)
+    }
   }
 
   const possibleStarCounts = ["2", "3", "4"]
   const starCount = starExamplesCount || "2"
-  const recommendedCount =
-    pitchWordLimit < 550 ? "2" : pitchWordLimit <= 700 ? "3" : "4"
-  const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined)
+  const recommendedCount = pitchWordLimit < 550 ? "2" : pitchWordLimit <= 700 ? "3" : "4"
 
-  // Log form state of albertGuidance before rendering
-  debugLog(
-    "[GuidanceStep] Rendering with albertGuidance (from form watch):",
-    albertGuidance
-  )
+  debugLog("[GuidanceStep] Rendering with albertGuidance (from form watch):", albertGuidance)
 
   return (
-    <div className="p-6">
+    <div className="p-1 sm:p-6">
       <div className="flex h-[500px] flex-col gap-6 overflow-y-auto pr-2">
-        {/* Tips accordion - moved to top */}
-        <Accordion
-          type="single"
-          collapsible
-          className="w-full"
-          value={tipsOpen}
-          onValueChange={setTipsOpen}
-        >
-          <AccordionItem value="guidance-tips" className="border-none">
-            <AccordionTrigger
-              className="flex items-center gap-2 rounded-xl p-4 text-sm font-normal transition-colors hover:no-underline"
-              style={{
-                backgroundColor: "#eef2ff",
-                color: "#444ec1"
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = "#ddd6fe"
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = "#eef2ff"
-              }}
-            >
-              <Lightbulb className="size-4" />
-              <span>Tips for this step</span>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4 pt-2 text-sm text-gray-700">
-              <ul className="list-disc space-y-2 pl-5">
-                <li>
-                  The AI will analyze your experience and job requirements to
-                  provide guidance.
-                </li>
-                <li>
-                  This guidance helps you craft effective STAR examples that
-                  highlight relevant skills.
-                </li>
-                <li>
-                  Choose how many STAR examples you want to include in your
-                  pitch (1-4).
-                </li>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        {!isLoading && !error && albertGuidance && (
+          <div>
+            <h3 className="mb-4 text-xl font-semibold text-gray-900">AI Suggestions</h3>
 
-        {/* If loading */}
+            <div
+              className="mb-4 rounded-xl border p-4"
+              style={{ backgroundColor: "#eef2ff", borderColor: "#c7d2fe" }}
+            >
+              <p className="text-sm" style={{ color: "#444ec1" }}>
+                <strong>Note:</strong> The suggestions below were generated by AI analyzing
+                your experience and job description to spark ideas and help you recall
+                impactful moments. These examples won't carry forward automatically—you
+                choose what to use in upcoming sections. If you have experiences that
+                better highlight your capabilities, you're encouraged to draw on those
+                instead.
+              </p>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 py-4">
-            <RefreshCw
-              className="size-8 animate-spin"
-              style={{ color: "#444ec1" }}
-            />
+            <RefreshCw className="size-8 animate-spin" style={{ color: "#444ec1" }} />
             <p>Generating AI Guidance...</p>
           </div>
         )}
 
-        {/* If error */}
         {error && !isLoading && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="mb-3 text-sm text-red-600">{error}</p>
+          <div
+            className="rounded-xl border p-5 text-center"
+            role="alert"
+            aria-live="polite"
+            style={{ backgroundColor: "#eef2ff", borderColor: "#c7d2fe" }}
+          >
+            <div className="mb-2 text-base font-semibold" style={{ color: "#444ec1" }}>
+              Oops! We ran into a hiccup
+            </div>
+            <p className="mb-4 text-sm" style={{ color: "#444ec1" }}>
+              It looks like something went wrong while trying to generate your suggestions.
+              This can happen if the service is busy or your internet connection briefly
+              dropped.
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleRefetchGuidance}
+                className="inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:brightness-110"
+                style={{ backgroundColor: "#444ec1" }}
+              >
+                <RefreshCw className="size-4" />
+                Retry
+              </button>
+            </div>
           </div>
         )}
 
-        {/* If there's existing guidance, show it */}
         {!isLoading && !error && albertGuidance && (
           <Card className="rounded-xl border border-gray-200 bg-gray-50">
             <CardContent className="pt-6">
-              <div className="whitespace-pre-wrap text-sm">
-                {albertGuidance}
-              </div>
+              <div className="whitespace-pre-wrap text-sm">{albertGuidance}</div>
             </CardContent>
           </Card>
         )}
 
-        {/* Note about guidance being recommendations */}
-        {!isLoading && !error && albertGuidance && (
-          <div
-            className="rounded-xl border p-4"
-            style={{
-              backgroundColor: "#eef2ff",
-              borderColor: "#c7d2fe"
-            }}
-          >
-            <p className="text-sm" style={{ color: "#444ec1" }}>
-              <strong>Note:</strong> While these suggestions are designed to be
-              helpful, they are merely recommendations. If you have a different,
-              more impactful example in mind that you believe better showcases
-              your skills, you are encouraged to use it.
-            </p>
-          </div>
-        )}
-
-        {/* STAR examples count selector */}
+        {/* STAR examples count chooser */}
         <div className="space-y-4">
-          <p className="font-medium text-gray-700">
-            How many STAR examples do you want to include?
-          </p>
+          <p className="font-medium text-gray-700">How many STAR examples do you want to include?</p>
           <div className="grid grid-cols-3 gap-4">
-            {possibleStarCounts.map(val => (
+            {possibleStarCounts.map((val) => (
               <div key={val} className="flex flex-col items-center gap-1">
                 <button
-                  onClick={() => handleStarExamplesCountChange(val)}
+                  onClick={() =>
+                    setValue("starExamplesCount", val as any, { shouldDirty: true })
+                  }
                   className={`flex h-16 w-full flex-col items-center justify-center rounded-xl transition-all duration-200 ${
                     starCount === val
                       ? "font-medium"
@@ -254,20 +183,14 @@ export default function GuidanceStep({
                   }`}
                   style={
                     starCount === val
-                      ? {
-                          backgroundColor: "#eef2ff",
-                          color: "#444ec1"
-                        }
+                      ? { backgroundColor: "#eef2ff", color: "#444ec1" }
                       : {}
                   }
                 >
                   <span className="text-lg font-semibold">{val}</span>
                   {recommendedCount === val && (
-                    <span
-                      className="flex items-center gap-1 text-xs font-medium"
-                      style={{ color: "#444ec1" }}
-                    >
-                      <span>✨</span>
+                    <span className="flex items-center gap-1 text-xs font-medium" style={{ color: "#444ec1" }}>
+                      <span>✨ </span>
                       Recommended by Recruiters
                     </span>
                   )}
@@ -275,6 +198,7 @@ export default function GuidanceStep({
               </div>
             ))}
           </div>
+
           {errors.starExamplesCount && (
             <p className="text-sm text-red-500">
               {errors.starExamplesCount.message as string}
