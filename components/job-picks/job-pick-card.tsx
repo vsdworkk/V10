@@ -4,8 +4,8 @@
  * Server component that renders a single curated APS Job Pick in a marketing-friendly card.
  * Shows role title, agency, APS classification, salary, location, closing date, and a short highlight note.
  * Includes two CTAs:
- *  - "View on APS Jobs" (external) with UTM tracking appended.
- *  - "Generate your APS pitch" (internal) linking to the wizard with prefill query params.
+ *  - "Apply on APS Jobs" (external) with UTM tracking appended.
+ *  - "Generate your Pitch" (internal) linking to the wizard with prefill query params.
  *
  * Key features:
  * - Accepts DB-inferred type `SelectJobPick` directly as props for simple spread usage: <JobPickCard {...pick} />
@@ -25,6 +25,7 @@
  */
 
 import Link from "next/link"
+import { auth } from "@clerk/nextjs/server"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -107,7 +108,7 @@ function buildWizardPrefillHref(pick: SelectJobPick): string {
  * JobPickCard component.
  * Accepts the job pick row as the prop object to allow spread usage in maps: <JobPickCard {...pick} />
  */
-export default function JobPickCard(pick: SelectJobPick) {
+export default async function JobPickCard(pick: SelectJobPick) {
   // Prepare external URL with UTM tracking
   const apsHref = withUTM(pick.apsJobsUrl, {
     utm_source: "apspitchpro",
@@ -118,6 +119,10 @@ export default function JobPickCard(pick: SelectJobPick) {
 
   // Internal wizard CTA
   const wizardHref = buildWizardPrefillHref(pick)
+  const { userId } = await auth()
+  const targetHref = userId
+    ? wizardHref
+    : `/login?redirect_url=${encodeURIComponent(wizardHref)}`
 
   return (
     <Card className="h-full overflow-hidden">
@@ -179,7 +184,7 @@ export default function JobPickCard(pick: SelectJobPick) {
 
         {pick.highlightNote && (
           <div className="rounded-md border p-3 text-sm">
-            <div className="text-muted-foreground mb-1">Why this role</div>
+            <div className="text-muted-foreground mb-1">About this role</div>
             <div>{pick.highlightNote}</div>
           </div>
         )}
@@ -192,17 +197,17 @@ export default function JobPickCard(pick: SelectJobPick) {
             href={apsHref}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="View role on APS Jobs"
+            aria-label="Apply on APS Jobs"
           >
             <ExternalLink className="mr-2 size-4" />
-            View on APS Jobs
+            Apply on APS Jobs
           </a>
         </Button>
 
         <Button asChild className="w-full sm:w-auto">
-          <Link href={wizardHref} aria-label="Generate your APS pitch for this role">
+          <Link href={targetHref} aria-label="Generate your pitch for this role">
             <Wand2 className="mr-2 size-4" />
-            Generate your APS pitch
+            Generate your Pitch
           </Link>
         </Button>
       </CardFooter>

@@ -7,7 +7,8 @@
 
 "use client"
 
-import Link from "next/link"
+import { useAuth } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -72,14 +73,17 @@ interface JobPickDetailViewProps {
 }
 
 export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
+  const router = useRouter()
+  const { userId } = useAuth()
+
   if (!job) {
     return (
       <div className="flex h-full items-center justify-center p-8 text-center">
         <div className="space-y-3">
-          <div className="text-lg font-medium text-muted-foreground">
+          <div className="text-muted-foreground text-lg font-medium">
             Select a job to view details
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             Click on any job card from the left to see the full details here
           </div>
         </div>
@@ -97,16 +101,22 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
   // Internal wizard CTA
   const wizardHref = buildWizardPrefillHref(job)
+  const handleGenerate = () => {
+    const href = userId
+      ? wizardHref
+      : `/login?redirect_url=${encodeURIComponent(wizardHref)}`
+    router.push(href)
+  }
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 p-6">
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <h1 className="text-2xl font-bold leading-tight">{job.title}</h1>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2">
                 <Building2 className="size-4" />
                 <span className="text-lg">{job.agency}</span>
               </div>
@@ -120,12 +130,12 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
           <div className="flex flex-wrap gap-4 text-sm">
             {job.location && (
               <div className="flex items-center gap-1">
-                <MapPin className="size-4 text-muted-foreground" />
+                <MapPin className="text-muted-foreground size-4" />
                 <span>{job.location}</span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <Clock className="size-4 text-muted-foreground" />
+              <Clock className="text-muted-foreground size-4" />
               <span>Full-time</span>
             </div>
           </div>
@@ -133,21 +143,19 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild size="lg" className="flex-1">
-            <Link href={wizardHref} aria-label="Generate your APS pitch for this role">
-              <Wand2 className="mr-2 size-4" />
-              Generate your APS pitch
-            </Link>
+          <Button onClick={handleGenerate} size="lg" className="flex-1">
+            <Wand2 className="mr-2 size-4" />
+            Generate your Pitch
           </Button>
           <Button asChild variant="outline" size="lg" className="flex-1">
             <a
               href={apsHref}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="View role on APS Jobs"
+              aria-label="Apply on APS Jobs"
             >
               <ExternalLink className="mr-2 size-4" />
-              View on APS Jobs
+              Apply on APS Jobs
             </a>
           </Button>
         </div>
@@ -164,7 +172,7 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="size-4 text-muted-foreground" />
+                    <DollarSign className="text-muted-foreground size-4" />
                     <span className="font-medium">Salary</span>
                   </div>
                   <div className="text-lg font-semibold">
@@ -174,7 +182,7 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <CalendarDays className="size-4 text-muted-foreground" />
+                    <CalendarDays className="text-muted-foreground size-4" />
                     <span className="font-medium">Closing Date</span>
                   </div>
                   <div className="text-lg font-semibold">
@@ -184,17 +192,24 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <MapPin className="size-4 text-muted-foreground" />
+                    <MapPin className="text-muted-foreground size-4" />
                     <span className="font-medium">Location</span>
                   </div>
                   <div className="text-lg font-semibold">
                     {job.location || "Not specified"}
                   </div>
                 </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Clock className="text-muted-foreground size-4" />
+                    <span className="font-medium">Job Type</span>
+                  </div>
+                  <div className="text-lg font-semibold">Full-time</div>
+                </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Building2 className="size-4 text-muted-foreground" />
+                    <Building2 className="text-muted-foreground size-4" />
                     <span className="font-medium">Classification</span>
                   </div>
                   <div className="text-lg font-semibold">
@@ -209,7 +224,7 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
           {job.highlightNote && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Why this role?</CardTitle>
+                <CardTitle className="text-lg">About this role</CardTitle>
                 <CardDescription>
                   Our expert insights on what makes this role special
                 </CardDescription>
@@ -221,23 +236,6 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
               </CardContent>
             </Card>
           )}
-
-          {/* Additional info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Additional Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Month Tag</span>
-                <Badge variant="outline">{job.monthTag}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Job Type</span>
-                <span className="text-sm">Full-time</span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
