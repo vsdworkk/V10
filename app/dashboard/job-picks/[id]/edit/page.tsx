@@ -46,6 +46,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import ClassificationSelect from "../../_components/classification-select"
 import { Save, ArrowLeft, Upload, Archive as ArchiveIcon, Trash2 } from "lucide-react"
+import Link from "next/link"
 
 /**
  * UUID validator for server-side form actions.
@@ -206,10 +207,10 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
 
         <div>
           <Button variant="outline" asChild>
-            <a href="/dashboard/job-picks">
+            <Link href="/dashboard/job-picks">
               <ArrowLeft className="mr-2 size-4" />
               Back to list
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
@@ -282,10 +283,10 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
           </form>
 
           <Button variant="outline" asChild>
-            <a href="/dashboard/job-picks">
+            <Link href="/dashboard/job-picks">
               <ArrowLeft className="mr-2 size-4" />
               Back to list
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

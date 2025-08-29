@@ -127,7 +127,7 @@ export default function JobPickFilters({
         {/* Text Search */}
         <div className="flex-1 max-w-sm">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
             <Input
               type="text"
               value={searchText}

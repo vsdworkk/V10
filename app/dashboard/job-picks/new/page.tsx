@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label"
 import ClassificationSelect from "../_components/classification-select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Save, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 interface PageProps {
   searchParams: Promise<{ error?: string }>
@@ -110,10 +111,10 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
         </div>
 
         <Button variant="outline" asChild>
-          <a href="/dashboard/job-picks">
+          <Link href="/dashboard/job-picks">
             <ArrowLeft className="mr-2 size-4" />
             Back to list
-          </a>
+          </Link>
         </Button>
       </div>
 

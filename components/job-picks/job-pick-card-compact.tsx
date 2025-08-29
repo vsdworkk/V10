@@ -83,7 +83,7 @@ export default function JobPickCardCompact({
                 }}
                 variant="ghost" 
                 size="icon" 
-                className="h-7 w-7"
+                className="size-7"
               />
             </div>
           </div>
