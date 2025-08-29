@@ -94,7 +94,7 @@ export const jobPickFormSchema = z.object({
     .refine(isAllowedApsJobsUrl, "URL must be an APS Jobs link (apsjobs.gov.au)"),
   highlightNote: z
     .string()
-    .max(600, "Highlight note too long")
+    .max(10000, "Highlight note too long")
     .optional()
     .or(z.literal("")),
   // YYYY-MM for grouping and SEO (e.g., 2025-08)
