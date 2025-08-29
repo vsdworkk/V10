@@ -1,6 +1,7 @@
 import { TailwindIndicator } from "@/components/utilities/tailwind-indicator"
 import { Providers } from "@/components/utilities/providers"
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 
 import { Poppins, Playfair_Display } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
@@ -26,7 +27,22 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "APSPitchPro",
-  description: "3X Your Interview Chances With AI-Powered Pitches"
+  description: "3X Your Interview Chances With AI-Powered Pitches",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  openGraph: {
+    title: "APSPitchPro",
+    description: "3X Your Interview Chances With AI-Powered Pitches",
+    url: "https://www.apspitchpro.com",
+    siteName: "APSPitchPro",
+    type: "website",
+  },
 }
 
 export default async function RootLayout({
@@ -59,6 +75,7 @@ export default async function RootLayout({
             <TailwindIndicator />
 
             <Toaster />
+            <SonnerToaster />
           </Providers>
         </body>
       </html>

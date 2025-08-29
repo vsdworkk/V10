@@ -1,27 +1,18 @@
 /**
+ * @file app/dashboard/_components/dashboard-sidebar.tsx
  * @description
  * Server component providing a sidebar for the dashboard area.
- * It displays navigation links for pitch management, such as viewing
- * existing pitches or starting a new pitch wizard.
+ * Displays credits, create pitch CTA, settings, and (if admin) the Job Picks admin link.
  *
- * Key features:
- * - Simple vertical list of navigation links relevant to pitch building.
- * - Integrates seamlessly into the dashboard layout.
- *
- * @dependencies
- * - This component currently only uses standard Next.js links,
- *   no external dependencies.
- *
- * @notes
- * - It's a server component for now; any future interactive or dynamic
- *   behavior may require converting it to a client component if needed.
- * - The actual routes (/dashboard, /dashboard/new) will be implemented
- *   in later steps (5, 6, etc.).
- * - OPTIMIZATION: Now accepts userId as a prop to avoid redundant auth checks.
+ * Changes:
+ * - Added admin-only "Job Picks" link using isAdmin() from lib/authz
+ * - Added "use server" directive at top per project conventions
  */
 
+"use server"
+
 import Link from "next/link"
-import { Settings, CreditCard } from "lucide-react"
+import { Settings, CreditCard, Newspaper } from "lucide-react"
 import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,36 +27,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from "@/components/ui/sidebar"
+import { isAdmin } from "@/lib/authz"
 
-/**
- * @interface DashboardSidebarProps
- * Defines the props for the DashboardSidebar component.
- */
 interface DashboardSidebarProps {
   userId: string
 }
 
-/**
- * @function DashboardSidebar
- * @description
- * Server component that provides navigation for the dashboard.
- * Displays user credits and main action buttons.
- *
- * @param {DashboardSidebarProps} props - The userId for the current user
- * @returns JSX Element for the dashboard sidebar
- *
- * @notes
- * - OPTIMIZATION: Efficient profile data fetching
- * - Credits display updates when user performs credit-consuming actions
- */
-export default async function DashboardSidebar({
-  userId
-}: DashboardSidebarProps) {
-  // Retrieve user profile for credits display
+export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+  // Credits
   const profileResult = await getProfileByUserIdAction(userId)
-  const credits = profileResult.isSuccess
-    ? (profileResult.data?.credits ?? 0)
-    : 0
+  const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
+
+  // Admin check for conditional links
+  const admin = await isAdmin()
 
   return (
     <Sidebar variant="inset">
@@ -79,19 +53,12 @@ export default async function DashboardSidebar({
               <div className="flex items-center gap-2">
                 <CreditCard className="text-muted-foreground size-4" />
                 <span className="text-muted-foreground text-sm">Credits</span>
-                <Badge
-                  variant="secondary"
-                  className="ml-auto text-sm font-medium"
-                >
+                <Badge variant="secondary" className="ml-auto text-sm font-medium">
                   {credits}
                 </Badge>
               </div>
               <div className="mt-3">
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-8 w-full text-xs"
-                >
+                <Button asChild variant="outline" className="h-8 w-full text-xs">
                   <Link href="/#pricing">+ More Credits</Link>
                 </Button>
               </div>
@@ -125,11 +92,27 @@ export default async function DashboardSidebar({
             </SidebarMenuItem>
           </SidebarMenu>
         </div>
+
+        {admin && (
+          <div className="mt-4 border-t pt-4">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/dashboard/job-picks"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                  >
+                    <Newspaper className="size-4" />
+                    Job Picks (Admin)
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+        )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        {/* Footer content can go here if needed */}
-      </SidebarFooter>
+      <SidebarFooter className="p-4">{/* Reserved for future items */}</SidebarFooter>
     </Sidebar>
   )
 }

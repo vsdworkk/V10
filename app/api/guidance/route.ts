@@ -8,7 +8,6 @@ import { debugLog } from "@/lib/debug"
 import { auth } from "@clerk/nextjs/server"
 
 export async function POST(req: NextRequest) {
-  // Keep requestId in outer scope so we can attempt to clear it on any error
   let requestId: string | null = null
 
   try {
@@ -28,10 +27,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Use the pitchId as the requestId for the agent
+    // Use pitchId as the long-running request correlation id
     requestId = pitchId
 
-    // Check for existing guidance or in-progress requests
+    // If guidance already present or in progress, short-circuit
     const existing = await getPitchByIdAction(pitchId, userId)
     if (existing.isSuccess && existing.data) {
       if (existing.data.albertGuidance) {
@@ -51,134 +50,94 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Store "in-progress" status (agentExecutionId) BEFORE calling the external service
-    try {
-      if (!requestId) {
-        return NextResponse.json({ error: "Invalid request ID" }, { status: 400 })
-      }
-      const updateResult = await updatePitchByExecutionId(requestId, {
-        agentExecutionId: requestId,
-      })
-      if (!updateResult.isSuccess) {
-        console.error(`Failed to update pitch with execution ID: ${updateResult.message}`)
+    // Mark in-progress before calling external service
+    if (!requestId) {
+      return NextResponse.json({ error: "Invalid request ID" }, { status: 400 })
+    }
+    {
+      const res = await updatePitchByExecutionId(requestId, { agentExecutionId: requestId })
+      if (!res.isSuccess) {
         return NextResponse.json(
-          { error: `Failed to update pitch: ${updateResult.message}` },
+          { error: `Failed to update pitch: ${res.message}` },
           { status: 500 }
         )
       }
       debugLog(`Successfully updated pitch with execution ID: ${requestId}`)
-    } catch (error) {
-      console.error(`Error updating pitch with execution ID: ${error}`)
-      return NextResponse.json(
-        { error: `Error updating pitch: ${error}` },
-        { status: 500 }
-      )
     }
 
-    // Call PromptLayer with proper error handling and timeout
-    const promptLayerApiKey = process.env.AGENT_API_KEY
-    if (!promptLayerApiKey) {
-      // IMPORTANT: clear "in progress" flag on failure to start
+    // n8n webhook
+    const webhookUrl = process.env.N8N_GUIDANCE_WEBHOOK_URL
+    if (!webhookUrl) {
       try {
-        if (requestId) {
-          await updatePitchByExecutionId(requestId, { agentExecutionId: null })
-        }
-      } catch (e) {
-        console.error("Failed clearing agentExecutionId after missing API key", e)
-      }
-      return NextResponse.json(
-        { error: "PromptLayer API key not configured" },
-        { status: 500 }
-      )
+        await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+      } catch {}
+      return NextResponse.json({ error: "N8N webhook URL not configured" }, { status: 500 })
     }
 
     const callbackUrl = `${
       process.env.NEXT_PUBLIC_BASE_URL || "https://yourdomain.com"
     }/api/guidance/callback`
 
-    // Use AbortController to handle timeouts
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 30000)
 
     try {
-      const response = await fetch(
-        "https://api.promptlayer.com/workflows/AI Guidance/run",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-KEY": promptLayerApiKey,
-          },
-          body: JSON.stringify({
-            workflow_label_name: "v1",
-            input_variables: {
-              job_description: jobDescription,
-              User_Experience: experience,
-              id_unique: requestId,
-            },
-            metadata: {
-              source: "webapp",
-              callback_url: callbackUrl,
-            },
-          }),
-          signal: controller.signal,
-        }
-      )
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      // Optional: bearer/basic token for protected n8n webhook
+      if (process.env.N8N_WEBHOOK_AUTH) {
+        headers.Authorization = process.env.N8N_WEBHOOK_AUTH
+      }
+
+      const upstream = await fetch(webhookUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          id_unique: requestId,
+          job_description: jobDescription,
+          user_experience: experience,
+          user_id: userId,
+          pitch_id: pitchId,
+          callback_url: callbackUrl,
+          source: "webapp",
+        }),
+        signal: controller.signal,
+      })
 
       clearTimeout(timeoutId)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        // IMPORTANT: clear "in progress" flag when upstream returns error
+      if (!upstream.ok) {
         try {
-          if (requestId) {
-            await updatePitchByExecutionId(requestId, { agentExecutionId: null })
-          }
-        } catch (e) {
-          console.error("Failed clearing agentExecutionId after PromptLayer non-OK", e)
-        }
-        return NextResponse.json(
-          { error: `PromptLayer error: ${errorText}` },
-          { status: 500 }
-        )
+          await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+        } catch {}
+        const text = await upstream.text()
+        return NextResponse.json({ error: `n8n webhook error: ${text}` }, { status: 500 })
       }
 
-      // Success: keep agentExecutionId set; the callback will populate albertGuidance later
+      // Success: keep agentExecutionId set; callback will populate albertGuidance
       return NextResponse.json({
         success: true,
         requestId,
         message: "Guidance request initiated",
       })
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId)
-      // IMPORTANT: clear "in progress" flag on timeout or any fetch error
       try {
-        if (requestId)
-          await updatePitchByExecutionId(requestId, { agentExecutionId: null })
-      } catch (e) {
-        console.error("Failed clearing agentExecutionId after fetch error", e)
-      }
-
-      if ((error as Error).name === "AbortError") {
+        await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+      } catch {}
+      if (error?.name === "AbortError") {
         return NextResponse.json({ error: "Request timeout" }, { status: 504 })
       }
       return NextResponse.json(
-        {
-          error: (error as Error).message || "Failed to initiate guidance request",
-        },
+        { error: error?.message || "Failed to initiate guidance request" },
         { status: 500 }
       )
     }
-  } catch (error) {
-    // LAST RESORT: attempt to clear the flag if we got far enough to have a requestId
+  } catch (error: any) {
     try {
       if (requestId) await updatePitchByExecutionId(requestId, { agentExecutionId: null })
-    } catch (e) {
-      console.error("Failed clearing agentExecutionId in outer catch", e)
-    }
-    console.error("Error requesting guidance:", error)
+    } catch {}
     return NextResponse.json(
-      { error: (error as Error).message || "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     )
   }
