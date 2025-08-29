@@ -35,37 +35,16 @@ function formatAUSDate(date?: Date | string | null): string {
 }
 
 /**
- * Appends or sets UTM parameters on a URL string.
+ * Safely appends UTM parameters to a URL.
  */
 function withUTM(href: string, utm: Record<string, string>): string {
   try {
     const url = new URL(href)
-    Object.entries(utm).forEach(([k, v]) => url.searchParams.set(k, v))
+    Object.entries(utm).forEach(([key, value]) => url.searchParams.set(key, value))
     return url.toString()
   } catch {
     return href
   }
-}
-
-/**
- * Allowed role levels for prefill.
- */
-const ALLOWED_ROLE_LEVELS = new Set([
-  "APS1", "APS2", "APS3", "APS4", "APS5", "APS6", "EL1"
-])
-
-/**
- * Builds the internal wizard prefill URL with safe query parameters.
- */
-function buildWizardPrefillHref(pick: SelectJobPick): string {
-  const params = new URLSearchParams()
-  params.set("source", "job-picks")
-  if (pick.title?.trim()) params.set("roleName", pick.title)
-  if (pick.agency?.trim()) params.set("organisationName", pick.agency)
-  if (ALLOWED_ROLE_LEVELS.has(pick.classification)) {
-    params.set("roleLevel", pick.classification)
-  }
-  return `/dashboard/new?${params.toString()}`
 }
 
 interface JobPickDetailViewProps {
@@ -99,12 +78,11 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
     utm_content: job.title || "role"
   })
 
-  // Internal wizard CTA
-  const wizardHref = buildWizardPrefillHref(job)
+  // Internal dashboard CTA (changed from wizard)
   const handleGenerate = () => {
     const href = userId
-      ? wizardHref
-      : `/login?redirect_url=${encodeURIComponent(wizardHref)}`
+      ? "/dashboard"
+      : `/login?redirect_url=${encodeURIComponent("/dashboard")}`
     router.push(href)
   }
 

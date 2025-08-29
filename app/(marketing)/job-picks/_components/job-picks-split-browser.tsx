@@ -1,11 +1,12 @@
 /**
  * @file app/(marketing)/job-picks/_components/job-picks-split-browser.tsx
  * @description
- * Split-view client component that renders a left panel with filtered job cards
- * and a right panel with detailed job view. Manages selection state and filtering.
+ * Split-view client component that renders a left panel with job cards
+ * and a right panel with detailed job view. Manages selection state.
+ * Filtering is now handled at the parent level for a cleaner interface.
  * 
  * Layout:
- * - Left panel: List of compact job cards with filters
+ * - Left panel: List of compact job cards
  * - Right panel: Detailed view of selected job
  * - Responsive: stacks on mobile, side-by-side on desktop
  */
@@ -15,7 +16,6 @@
 import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import type { SelectJobPick } from "@/types"
-import JobPickFilters from "@/components/job-picks/job-pick-filters"
 import JobPickCardCompact from "@/components/job-picks/job-pick-card-compact"
 import JobPickDetailView from "@/components/job-picks/job-pick-detail-view"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -30,9 +30,6 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
   const router = useRouter()
   const pathname = usePathname()
   
-  const [visibleIds, setVisibleIds] = React.useState<Set<string>>(
-    () => new Set(picks.map((p) => p.id))
-  )
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(() => {
     // Initialize from URL search params if valid job ID exists
     const jobId = searchParams?.get('job')
@@ -43,17 +40,6 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
     const jobId = searchParams?.get('job')
     return jobId && picks.some(p => p.id === jobId)
   })
-
-  const handleFilterChange = React.useCallback((filtered: SelectJobPick[]) => {
-    const newVisibleIds = new Set(filtered.map((p) => p.id))
-    setVisibleIds(newVisibleIds)
-    
-    // If current selection is not in filtered results, clear selection
-    if (selectedJobId && !newVisibleIds.has(selectedJobId)) {
-      setSelectedJobId(null)
-      setShowMobileDetail(false)
-    }
-  }, [selectedJobId])
 
   const updateURLWithJobId = React.useCallback((jobId: string | null) => {
     const newSearchParams = new URLSearchParams(searchParams?.toString() || '')
@@ -76,11 +62,6 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
     setShowMobileDetail(false)
     // Don't clear the URL on mobile back, just hide the detail view
   }, [])
-
-  const visiblePicks = React.useMemo(
-    () => picks.filter((p) => visibleIds.has(p.id)),
-    [picks, visibleIds]
-  )
 
   const selectedJob = React.useMemo(
     () => selectedJobId ? picks.find((p) => p.id === selectedJobId) || null : null,
@@ -105,31 +86,23 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
   }, [searchParams, picks, selectedJobId, updateURLWithJobId])
 
   const total = picks.length
-  const visibleCount = visiblePicks.length
 
   return (
-    <div className="h-[800px] border rounded-lg overflow-hidden bg-background">
+    <div className="h-[800px] rounded-lg overflow-hidden bg-background">
       {/* Mobile view */}
       <div className="block lg:hidden h-full">
         {!showMobileDetail ? (
           // Mobile list view
           <div className="h-full flex flex-col">
-            <div className="p-4 border-b space-y-4 shrink-0">
-              <JobPickFilters picks={picks} onChange={handleFilterChange} />
-              <div className="text-muted-foreground text-sm">
-                Showing {visibleCount} of {total} role{total === 1 ? "" : "s"}
-              </div>
-            </div>
-            
             <ScrollArea className="flex-1">
               <div className="p-4">
-                {visibleCount === 0 ? (
-                  <div className="text-muted-foreground rounded-md border p-6 text-center text-sm">
-                    No roles match your filters.
+                {total === 0 ? (
+                  <div className="text-muted-foreground rounded-md bg-gray-50 p-6 text-center text-sm">
+                    No roles in this group.
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {visiblePicks.map((pick) => (
+                    {picks.map((pick) => (
                       <JobPickCardCompact
                         key={pick.id}
                         {...pick}
@@ -145,7 +118,7 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
         ) : (
           // Mobile detail view
           <div className="h-full flex flex-col">
-            <div className="p-4 border-b shrink-0">
+            <div className="p-4 border-b bg-white/50 shrink-0">
               <button
                 onClick={handleBackToList}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium"
@@ -163,23 +136,16 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
       {/* Desktop view */}
       <div className="hidden lg:flex h-full">
         {/* Left panel */}
-        <div className="w-1/2 border-r flex flex-col">
-          <div className="p-4 border-b space-y-4 shrink-0">
-            <JobPickFilters picks={picks} onChange={handleFilterChange} />
-            <div className="text-muted-foreground text-sm">
-              Showing {visibleCount} of {total} role{total === 1 ? "" : "s"}
-            </div>
-          </div>
-          
+        <div className="w-1/2 bg-white/30 flex flex-col">
           <ScrollArea className="flex-1">
             <div className="p-4">
-              {visibleCount === 0 ? (
-                <div className="text-muted-foreground rounded-md border p-6 text-center text-sm">
-                  No roles match your filters.
+              {total === 0 ? (
+                <div className="text-muted-foreground rounded-md bg-gray-50 p-6 text-center text-sm">
+                  No roles in this group.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {visiblePicks.map((pick) => (
+                  {picks.map((pick) => (
                     <JobPickCardCompact
                       key={pick.id}
                       {...pick}
@@ -194,7 +160,7 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
         </div>
 
         {/* Right panel */}
-        <div className="w-1/2">
+        <div className="w-1/2 border-l border-gray-100">
           <JobPickDetailView job={selectedJob} />
         </div>
       </div>

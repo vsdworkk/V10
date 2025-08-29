@@ -35,6 +35,7 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -42,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Filter, X } from "lucide-react"
+import { Filter, X, Search } from "lucide-react"
 import type { SelectJobPick } from "@/types"
 
 /**
@@ -79,6 +80,7 @@ export default function JobPickFilters({
 }: JobPickFiltersProps) {
   const [classification, setClassification] = React.useState<ClassificationValue>("all")
   const [agency, setAgency] = React.useState<string>("all")
+  const [searchText, setSearchText] = React.useState<string>("")
 
   // Build a sorted unique list of agencies from the data.
   const agencies = React.useMemo(() => {
@@ -95,39 +97,60 @@ export default function JobPickFilters({
       const matchesClass =
         classification === "all" ? true : p.classification === classification
       const matchesAgency = agency === "all" ? true : p.agency === agency
-      return matchesClass && matchesAgency
+      
+      // Text search across multiple fields
+      const matchesText = searchText.trim() === "" ? true : 
+        [p.title, p.agency, p.highlightNote, p.salary, p.location]
+          .filter(Boolean)
+          .some(field => 
+            field?.toLowerCase().includes(searchText.toLowerCase())
+          )
+      
+      return matchesClass && matchesAgency && matchesText
     })
     onChange(filtered)
-  }, [classification, agency, picks, onChange])
+  }, [classification, agency, searchText, picks, onChange])
 
-  const hasActiveFilters = classification !== "all" || agency !== "all"
+  const hasActiveFilters = classification !== "all" || agency !== "all" || searchText.trim() !== ""
   const disabled = picks.length === 0
 
   const clearFilters = () => {
     setClassification("all")
     setAgency("all")
+    setSearchText("")
   }
 
   return (
-    <div className={`bg-background mb-6 rounded-lg border p-4 ${className || ""}`}>
-      {/* Header row */}
-      <div className="mb-4 flex items-center gap-2">
-        <Filter className="size-4" />
-        <div className="text-sm font-medium">Filter job picks</div>
-        
-      </div>
+    <div className={`bg-transparent p-6 ${className || ""}`}>
+      {/* Controls - search bar style layout */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-center max-w-5xl mx-auto">
+        {/* Text Search */}
+        <div className="flex-1 max-w-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
+            <Input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search Jobs"
+              disabled={disabled}
+              className="h-12 pl-10 text-base border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm"
+            />
+          </div>
+        </div>
 
-      {/* Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         {/* Classification */}
-        <div className="flex-1">
+        <div className="flex-1 max-w-xs">
           <Select
             value={classification}
             onValueChange={v => setClassification(v as ClassificationValue)}
             disabled={disabled}
           >
-            <SelectTrigger aria-label="Filter by APS classification">
-              <SelectValue placeholder="Filter by classification" />
+            <SelectTrigger 
+              aria-label="Filter by APS classification"
+              className="h-12 text-base border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm"
+            >
+              <SelectValue placeholder="Job classification" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All classifications</SelectItem>
@@ -141,14 +164,17 @@ export default function JobPickFilters({
         </div>
 
         {/* Agency */}
-        <div className="flex-1">
+        <div className="flex-1 max-w-xs">
           <Select
             value={agency}
             onValueChange={v => setAgency(v)}
             disabled={disabled}
           >
-            <SelectTrigger aria-label="Filter by agency">
-              <SelectValue placeholder="Filter by agency" />
+            <SelectTrigger 
+              aria-label="Filter by agency"
+              className="h-12 text-base border-gray-200 bg-white hover:border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm"
+            >
+              <SelectValue placeholder="Agency or department" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All agencies</SelectItem>
@@ -161,11 +187,17 @@ export default function JobPickFilters({
           </Select>
         </div>
 
-        {/* Clear */}
-        <div className="sm:ml-auto">
-          <Button type="button" variant="outline" onClick={clearFilters} disabled={!hasActiveFilters}>
+        {/* Clear button - styled like a search button */}
+        <div className="sm:ml-4">
+          <Button 
+            type="button" 
+            variant={hasActiveFilters ? "outline" : "ghost"} 
+            onClick={clearFilters} 
+            disabled={!hasActiveFilters}
+            className="h-12 px-6 text-base border-gray-200 hover:border-gray-300 shadow-sm"
+          >
             <X className="mr-2 size-4" />
-            Clear
+            Clear filters
           </Button>
         </div>
       </div>

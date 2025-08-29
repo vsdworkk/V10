@@ -50,24 +50,24 @@ export default function JobPickCardCompact({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md",
-        isSelected ? "border-blue-500 bg-blue-50 shadow-md" : "hover:border-gray-300"
+        "cursor-pointer transition-all duration-200 hover:shadow-sm border-gray-100 bg-white",
+        isSelected ? "border-blue-200 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "hover:border-gray-200 hover:bg-gray-50/50"
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm leading-tight line-clamp-2">
+            <h3 className="font-semibold text-base leading-tight line-clamp-2">
               {title}
             </h3>
-            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-              <Building2 className="size-3" />
+            <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+              <Building2 className="size-4" />
               <span className="truncate">{agency}</span>
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-sm px-2 py-1">
               {classification}
             </Badge>
             <div onClick={(e) => e.stopPropagation()}>
@@ -83,7 +83,7 @@ export default function JobPickCardCompact({
                 }}
                 variant="ghost" 
                 size="icon" 
-                className="h-6 w-6"
+                className="h-7 w-7"
               />
             </div>
           </div>
@@ -91,19 +91,19 @@ export default function JobPickCardCompact({
       </CardHeader>
 
       <CardContent className="pt-0">
-        <div className="space-y-1 text-xs text-muted-foreground">
+        <div className="space-y-2 text-sm text-muted-foreground">
           {location && (
             <div className="flex items-center gap-1">
-              <MapPin className="size-3" />
+              <MapPin className="size-4" />
               <span className="truncate">{location}</span>
             </div>
           )}
           <div className="flex items-center gap-1">
-            <CalendarDays className="size-3" />
+            <CalendarDays className="size-4" />
             <span>Closes: {formatCompactDate(closingDate)}</span>
           </div>
           {salary && (
-            <div className="text-xs font-medium text-foreground truncate">
+            <div className="text-sm font-medium text-foreground truncate">
               {salary}
             </div>
           )}

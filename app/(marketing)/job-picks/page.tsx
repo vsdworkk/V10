@@ -25,6 +25,7 @@ import type { Metadata } from "next"
 import { getPublicJobPicksAction } from "@/actions/db/job-picks-actions"
 import type { SelectJobPick } from "@/types"
 import JobPicksSplitBrowser from "@/app/(marketing)/job-picks/_components/job-picks-split-browser"
+import JobPicksWithFilters from "@/app/(marketing)/job-picks/_components/job-picks-with-filters"
 
 /**
  * ISR: revalidate once per hour to keep listings fresh.
@@ -92,9 +93,6 @@ async function JobPicksFetcher() {
     )
   }
 
-  const groups = groupByMonthTag(picks)
-  const monthKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a)) // latest first
-
   return (
     <div className="container mx-auto py-12">
       <div className="mx-auto mb-8 max-w-3xl text-center">
@@ -105,25 +103,8 @@ async function JobPicksFetcher() {
         </div>
       </div>
 
-      <div className="space-y-12">
-        {monthKeys.map((key) => {
-          const monthPicks = groups[key]
-          return (
-            <div key={key} className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-semibold">{formatMonthTag(key)}</div>
-
-                <div className="text-muted-foreground text-sm">
-                  {monthPicks.length} role{monthPicks.length === 1 ? "" : "s"}
-                </div>
-              </div>
-
-              {/* Split-view browser with clickable cards and detail panel */}
-              <JobPicksSplitBrowser picks={monthPicks} />
-            </div>
-          )
-        })}
-      </div>
+      {/* Global search/filter bar positioned under header */}
+      <JobPicksWithFilters picks={picks} />
     </div>
   )
 }
