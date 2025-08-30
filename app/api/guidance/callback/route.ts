@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       `Updating pitch with execution ID ${uniqueId} and guidance text (${albertGuidance.length} chars)`
     )
     const updateResult = await updatePitchByExecutionId(uniqueId, {
-      albertGuidance,
+      albertGuidance
     })
 
     if (!updateResult.isSuccess) {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     debugLog("Guidance saved successfully")
     return NextResponse.json({
       success: true,
-      message: "Guidance saved successfully",
+      message: "Guidance saved successfully"
     })
   } catch (error) {
     console.error("Error processing guidance callback:", error)

@@ -23,20 +23,20 @@ export async function GET(req: NextRequest) {
     if (!result.isSuccess) {
       return NextResponse.json({
         status: "pending",
-        message: "Guidance not found or still processing",
+        message: "Guidance not found or still processing"
       })
     }
 
     if (result.data?.albertGuidance) {
       return NextResponse.json({
         status: "completed",
-        guidance: result.data.albertGuidance,
+        guidance: result.data.albertGuidance
       })
     }
 
     return NextResponse.json({
       status: "pending",
-      message: "Guidance still processing",
+      message: "Guidance still processing"
     })
   } catch (error) {
     console.error("Error checking guidance status:", error)

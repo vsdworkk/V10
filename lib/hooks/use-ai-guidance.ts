@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import {
   requestGuidance,
-  checkGuidanceStatus,
+  checkGuidanceStatus
 } from "@/lib/services/ai-guidance-service"
 import { debugLog } from "@/lib/debug"
 
@@ -30,15 +30,21 @@ export function useAiGuidance() {
         jobDescription,
         experience,
         userId,
-        pitchId,
+        pitchId
       })
 
       if (!result.isSuccess) {
-        debugLog("[useAiGuidance] fetchGuidance received error:", result.message)
+        debugLog(
+          "[useAiGuidance] fetchGuidance received error:",
+          result.message
+        )
         throw new Error(result.message)
       }
 
-      debugLog("[useAiGuidance] fetchGuidance succeeded, setting requestId:", result.data)
+      debugLog(
+        "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
+        result.data
+      )
       setTriggerTimestamp(new Date().toString())
       setRequestId(result.data) // triggers polling useEffect
 
@@ -46,7 +52,7 @@ export function useAiGuidance() {
       setTimeout(() => {
         debugLog("[useAiGuidance] Immediate check for existing guidance")
         checkGuidanceStatus(result.data)
-          .then((statusResult) => {
+          .then(statusResult => {
             if (statusResult.isSuccess && statusResult.data) {
               debugLog(
                 "[useAiGuidance] Found guidance immediately:",
@@ -58,13 +64,18 @@ export function useAiGuidance() {
               debugLog("[useAiGuidance] No immediate guidance found, will poll")
             }
           })
-          .catch((err) =>
-            console.error("[useAiGuidance] Error checking immediate guidance:", err)
+          .catch(err =>
+            console.error(
+              "[useAiGuidance] Error checking immediate guidance:",
+              err
+            )
           )
       }, 100)
     } catch (err) {
       console.error("[useAiGuidance] fetchGuidance error:", err)
-      setError(err instanceof Error ? err.message : "Failed to request guidance")
+      setError(
+        err instanceof Error ? err.message : "Failed to request guidance"
+      )
       setIsLoading(false)
     }
   }
@@ -105,7 +116,9 @@ export function useAiGuidance() {
       } catch (err) {
         if (isPolling) {
           setError(
-            err instanceof Error ? err.message : "Failed to check guidance status"
+            err instanceof Error
+              ? err.message
+              : "Failed to check guidance status"
           )
           setIsLoading(false)
           isPolling = false
@@ -141,6 +154,6 @@ export function useAiGuidance() {
       setError(null)
       setRequestId(null)
       setIsLoading(false)
-    },
+    }
   }
 }
