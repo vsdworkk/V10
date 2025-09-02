@@ -1,8 +1,18 @@
+
 /**
- * db/schema/pitches-schema.ts
+ * @file db/schema/pitches-schema.ts
+ * @description Drizzle schema for APSPitchPro "pitches".
+ * Extends the table with post-generation user feedback columns:
+ * - pitchRating: integer 1–5 (nullable)
+ * - ratingReason: text JSON or plain text (nullable)
  *
- * + Added agentExecutionId column (nullable) so we can match
- *   PromptLayer callbacks back to the correct pitch record.
+ * Key design points:
+ * - Follows existing schema patterns and timestamps with $onUpdate.
+ * - userId references profiles table with cascade delete.
+ * - JSONB types for STAR examples.
+ *
+ * Deployment note:
+ * - Add a DB-level CHECK constraint for pitchRating range via SQL (no migrations per project rules).
  */
 
 import {
@@ -17,9 +27,12 @@ import {
 import { profilesTable } from "@/db/schema/profiles-schema"
 
 /* ------------------------------------------------------------------ */
-/*  enums & interfaces (unchanged)                                    */
+/* enums & interfaces                                                  */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Pitch lifecycle status.
+ */
 export const pitchStatusEnum = pgEnum("pitch_status", [
   "draft",
   "final",
@@ -27,12 +40,21 @@ export const pitchStatusEnum = pgEnum("pitch_status", [
   "failed"
 ])
 
+/**
+ * Structured action step within STAR "Action".
+ */
 export interface ActionStep {
+  /** 1-based ordinal in the action sequence */
   stepNumber: number
+  /** What did you specifically do in this step? */
   "what-did-you-specifically-do-in-this-step": string
+  /** What was the outcome of this step? (optional) */
   "what-was-the-outcome-of-this-step-optional"?: string
 }
 
+/**
+ * STAR example data captured through the wizard.
+ */
 export interface StarSchema {
   situation: {
     "where-and-when-did-this-experience-occur"?: string
@@ -50,12 +72,22 @@ export interface StarSchema {
   }
 }
 
+/** JSONB array of STAR examples */
 export type StarJsonbSchema = StarSchema[]
 
 /* ------------------------------------------------------------------ */
-/*  pitches table                                                     */
+/* pitches table                                                       */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Main pitches table.
+ *
+ * Notes:
+ * - Mirrors existing fields for role data, AI outputs, and bookkeeping.
+ * - Adds feedback fields (pitchRating, ratingReason) before timestamps.
+ *
+ * Reference style and existing columns confirmed from the codebase PDF.
+ */
 export const pitchesTable = pgTable("pitches", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
 
@@ -80,13 +112,26 @@ export const pitchesTable = pgTable("pitches", {
   albertGuidance: text("albert_guidance"),
   pitchContent: text("pitch_content"),
 
-  /** NEW — PromptLayer workflow execution id */
+  /** PromptLayer / workflow execution id (nullable) */
   agentExecutionId: text("agent_execution_id"),
+
+  /* feedback (NEW) */
+  /**
+   * Nullable star rating after generation. Valid range 1–5.
+   * DB-level CHECK constraint recommended; see deployment SQL.
+   */
+  pitchRating: integer("pitch_rating"),
+  /**
+   * Optional reason for the rating. Can be plain text or JSON stringified detail.
+   */
+  ratingReason: text("rating_reason"),
 
   /* bookkeeping */
   status: pitchStatusEnum("status").default("draft").notNull(),
   starExamplesCount: integer("star_examples_count").default(2).notNull(),
   currentStep: integer("current_step").default(1).notNull(),
+
+  /* timestamps */
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -94,6 +139,9 @@ export const pitchesTable = pgTable("pitches", {
     .$onUpdate(() => new Date())
 })
 
-/* inferred types */
+/* ------------------------------------------------------------------ */
+/* inferred types                                                      */
+/* ------------------------------------------------------------------ */
+
 export type InsertPitch = typeof pitchesTable.$inferInsert
 export type SelectPitch = typeof pitchesTable.$inferSelect

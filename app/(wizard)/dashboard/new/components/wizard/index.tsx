@@ -1,9 +1,10 @@
-// app/(wizard)/dashboard/new/_components/pitch-wizard/index.tsx
+// app/(wizard)/dashboard/new/components/wizard/index.tsx
 "use client"
 
 import { FormProvider } from "react-hook-form"
 import { motion } from "framer-motion"
 import { Save, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import type { SelectPitch } from "@/db/schema/pitches-schema"
 
 // Components
@@ -19,9 +20,10 @@ import ActionStep from "../steps/action-step"
 import ResultStep from "../steps/result-step"
 import ReviewStep from "../steps/review-step"
 import PitchConfirmationDialog from "../dialogs/pitch-confirmation-dialog"
+import FeedbackDialog from "./dialogs/feedback-dialog"
 import { Button } from "@/components/ui/button"
 
-// Custom hook
+// Hook
 import { useWizard } from "./use-wizard"
 
 interface PitchWizardProps {
@@ -30,11 +32,8 @@ interface PitchWizardProps {
   initialStep?: number
 }
 
-export default function PitchWizard({
-  userId,
-  pitchData,
-  initialStep
-}: PitchWizardProps) {
+export default function PitchWizard({ userId, pitchData, initialStep }: PitchWizardProps) {
+  const router = useRouter()
   const {
     methods,
     currentStep,
@@ -56,38 +55,31 @@ export default function PitchWizard({
     handleSaveAndClose,
     handleSubmitFinal,
     handlePitchLoaded,
-    retryPitchGeneration
+    retryPitchGeneration,
+    // Feedback dialog control
+    showFeedbackDialog,
+    setShowFeedbackDialog
   } = useWizard({ userId, pitchData, initialStep })
 
-  // Render the appropriate step component based on current step
   function renderStep() {
-    // Step 1 => Intro
     if (currentStep === 1) return <WizardIntroStep />
-    // Step 2 => Role
     if (currentStep === 2) return <RoleStep />
-    // Step 3 => Experience
     if (currentStep === 3) return <ExperienceStep />
-    // Step 4 => Guidance
     if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
-    // Step 5 => STAR Examples Introduction
     if (currentStep === 5) return <StarExamplesIntroStep />
 
-    // Next: starExamples sub-steps (now starting from step 6)
     const firstActualStarStep = 6
     const lastStarStep = 5 + starCount * 4
     if (currentStep >= firstActualStarStep && currentStep <= lastStarStep) {
       const stepInStar = currentStep - firstActualStarStep
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
-
-      if (subStepIndex === 0)
-        return <SituationStep exampleIndex={exampleIndex} />
+      if (subStepIndex === 0) return <SituationStep exampleIndex={exampleIndex} />
       if (subStepIndex === 1) return <TaskStep exampleIndex={exampleIndex} />
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
     }
 
-    // Final step: review
     return (
       <ReviewStep
         isPitchLoading={isPitchLoading}
@@ -98,11 +90,9 @@ export default function PitchWizard({
     )
   }
 
-  // Return the entire form + wizard controls
   return (
     <FormProvider {...methods}>
       <div className="relative flex h-full flex-col">
-        {/* Add global styles for form fields */}
         <style jsx global>{`
           .space-y-8 input,
           .space-y-8 textarea,
@@ -112,7 +102,6 @@ export default function PitchWizard({
             border-radius: 0.5rem !important;
             transition: all 0.2s ease-in-out;
           }
-
           .space-y-8 input:focus,
           .space-y-8 textarea:focus,
           .space-y-8 select:focus {
@@ -121,7 +110,7 @@ export default function PitchWizard({
           }
         `}</style>
 
-        {/* Confirmation Dialog */}
+        {/* Confirmation dialog */}
         <PitchConfirmationDialog
           isOpen={showConfirmDialog}
           onOpenChange={setShowConfirmDialog}
@@ -129,31 +118,38 @@ export default function PitchWizard({
           onCancel={handleCancelPitchGeneration}
         />
 
-        {/* Desktop Header - Only visible on desktop */}
-        <div className="mb-6 hidden shrink-0 lg:block">
-          <WizardHeader
-            header={currentHeader}
-            isIntro={currentSection === "INTRO"}
+        {/* Feedback dialog (Step 6). Only render if we have a pitchId */}
+        {pitchId ? (
+          <FeedbackDialog
+            pitchId={pitchId}
+            open={showFeedbackDialog}
+            onOpenChange={(v) => {
+              setShowFeedbackDialog(v)
+              if (!v) router.push("/dashboard")
+            }}
           />
+        ) : null}
+
+        {/* Desktop header */}
+        <div className="mb-6 hidden shrink-0 lg:block">
+          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
         </div>
 
-        {/* Mobile Header - Only visible on mobile */}
+        {/* Mobile header */}
         <div className="mb-4 shrink-0 lg:hidden">
           <div className="px-2">
             <h1 className="text-lg font-semibold leading-tight text-gray-900 sm:text-xl">
               {currentHeader}
             </h1>
             {currentSection !== "INTRO" && (
-              <p className="mt-1 text-sm text-gray-600">
-                Complete the fields below to continue
-              </p>
+              <p className="mt-1 text-sm text-gray-600">Complete the fields below to continue</p>
             )}
           </div>
         </div>
 
-        {/* Main content area - Scrollable */}
+        {/* Main content */}
         <div className="min-h-0 flex-1 lg:mb-6">
-          {/* Desktop Content Container */}
+          {/* Desktop */}
           <div className="hidden h-full overflow-hidden lg:block">
             <div className="h-full overflow-y-auto">
               <motion.div
@@ -167,8 +163,7 @@ export default function PitchWizard({
               </motion.div>
             </div>
           </div>
-
-          {/* Mobile Content Container */}
+          {/* Mobile */}
           <div className="h-full lg:hidden">
             <motion.div
               key={currentStep}
@@ -183,18 +178,16 @@ export default function PitchWizard({
           </div>
         </div>
 
-        {/* Desktop Navigation - Only visible on desktop */}
+        {/* Desktop navigation */}
         <div className="hidden shrink-0 items-center justify-between border-t border-gray-100 bg-white pt-4 lg:flex">
-          {/* Back button - only show when not on the review step */}
+          {/* Back */}
           {currentStep > 1 && currentStep < totalSteps ? (
             <Button
               variant="outline"
               onClick={handleBack}
               disabled={isNavigating || isPitchGenerationConfirmed}
               className={`group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                isPitchGenerationConfirmed
-                  ? "cursor-not-allowed opacity-50"
-                  : ""
+                isPitchGenerationConfirmed ? "cursor-not-allowed opacity-50" : ""
               }`}
             >
               <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
@@ -205,7 +198,7 @@ export default function PitchWizard({
           )}
 
           <div className="flex items-center space-x-4">
-            {/* Save and Close - Only show when NOT on the final review step */}
+            {/* Save & Close (keep original disabled behavior) */}
             {currentStep < totalSteps && (
               <Button
                 variant="outline"
@@ -249,19 +242,16 @@ export default function PitchWizard({
           </div>
         </div>
 
-        {/* Mobile Navigation - Fixed at bottom, only visible on mobile */}
+        {/* Mobile navigation - fixed at bottom (restored) */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-4 lg:hidden">
           <div className="flex items-center justify-between gap-3">
-            {/* Back button - show when not on first step and not on final step */}
             {currentStep > 1 && currentStep < totalSteps ? (
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={isNavigating || isPitchGenerationConfirmed}
                 className={`group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                  isPitchGenerationConfirmed
-                    ? "cursor-not-allowed opacity-50"
-                    : ""
+                  isPitchGenerationConfirmed ? "cursor-not-allowed opacity-50" : ""
                 }`}
               >
                 <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
@@ -269,24 +259,18 @@ export default function PitchWizard({
               </Button>
             ) : null}
 
-            {/* Save & Close - Always show except on final step */}
             {currentStep < totalSteps && (
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
                 disabled={!methods.formState.isDirty}
-                className={`group flex items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                  currentStep > 1 && currentStep < totalSteps
-                    ? "flex-1"
-                    : "flex-1"
-                }`}
+                className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save & Close
               </Button>
             )}
 
-            {/* Next or Final Submit */}
             {currentStep < totalSteps ? (
               <Button
                 onClick={handleNext}
