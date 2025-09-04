@@ -4,7 +4,7 @@
 import { useFormContext } from "react-hook-form"
 import { PitchWizardFormData, actionStepSchema } from "../wizard/schema"
 import WordCountIndicator from "../utilities/word-count-indicator"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { FormLabel } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
@@ -40,6 +40,8 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   const [steps, setSteps] = useState<ActionStepType[]>([])
   const [openStep, setOpenStep] = useState<string | undefined>(undefined)
   const [tipsOpen, setTipsOpen] = useState<string | undefined>("tips-panel")
+  // Track unsaved changes for each step by step ID
+  const pendingChangesRef = useRef<Map<string, string>>(new Map())
 
   const MAX_STEPS = 5
   const hasReachedMaxSteps = steps.length >= MAX_STEPS
@@ -125,6 +127,45 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       { shouldDirty: true }
     )
   }
+
+  /**
+   * Flush any unsaved changes to the form data
+   * This is called when outer save/navigation operations occur
+   */
+  const flushUnsavedChanges = useCallback(() => {
+    const pendingChanges = pendingChangesRef.current
+    if (pendingChanges.size === 0) return
+
+    // Create updated steps with any pending changes
+    const updatedSteps = steps.map(step => {
+      const pendingValue = pendingChanges.get(step.id)
+      if (pendingValue !== undefined) {
+        return {
+          ...step,
+          "what-did-you-specifically-do-in-this-step": pendingValue,
+          isCompleted: Boolean(pendingValue.trim()),
+          title: `Step ${step.position}`,
+          description: ""
+        }
+      }
+      return step
+    })
+
+    // Update form data and clear pending changes
+    updateActionValue(updatedSteps)
+    setSteps(updatedSteps)
+    pendingChanges.clear()
+  }, [steps, updateActionValue])
+
+  // Listen for flush events from parent wizard
+  useEffect(() => {
+    const handleFlushEvent = () => {
+      flushUnsavedChanges()
+    }
+
+    window.addEventListener('flushUnsavedData', handleFlushEvent)
+    return () => window.removeEventListener('flushUnsavedData', handleFlushEvent)
+  }, [flushUnsavedChanges])
 
   // Save step changes
   const handleSaveStep = (stepId: string, what: string) => {
@@ -286,6 +327,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
                     step={step}
                     onSave={handleSaveStep}
                     exampleIndex={exampleIndex}
+                    pendingChangesRef={pendingChangesRef}
                   />
                 ))}
               </Accordion>
@@ -318,12 +360,13 @@ interface StepItemProps {
   step: ActionStepType
   onSave: (stepId: string, what: string) => void
   exampleIndex: number
+  pendingChangesRef: React.MutableRefObject<Map<string, string>>
 }
 
 /**
  * Renders a single collapsible step item.
  */
-function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
+function StepItem({ step, onSave, exampleIndex, pendingChangesRef }: StepItemProps) {
   const {
     formState: { errors }
   } = useFormContext<PitchWizardFormData>()
@@ -357,9 +400,16 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
     step["what-did-you-specifically-do-in-this-step"] || ""
   )
 
+  // Track pending changes in parent ref
+  const updatePendingChange = (value: string) => {
+    pendingChangesRef.current.set(step.id, value)
+  }
+
   useEffect(() => {
     setWhat(step["what-did-you-specifically-do-in-this-step"] || "")
-  }, [step])
+    // Clear any pending changes when step data changes from external source
+    pendingChangesRef.current.delete(step.id)
+  }, [step, pendingChangesRef])
 
   // Check if current values meet validation requirements
   const isValidStep = () => {
@@ -400,6 +450,8 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
 
     // Only save if validation passes
     onSave(step.id, what ?? "")
+    // Clear pending changes when explicitly saved
+    pendingChangesRef.current.delete(step.id)
   }
 
   return (
@@ -460,7 +512,10 @@ function StepItem({ step, onSave, exampleIndex }: StepItemProps) {
               <Textarea
                 id={`step-${step.id}-what`}
                 value={what}
-                onChange={e => setWhat(e.target.value)}
+                onChange={e => {
+                  setWhat(e.target.value)
+                  updatePendingChange(e.target.value)
+                }}
                 placeholder="Describe the steps you took to address the situation..."
                 className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
                 style={

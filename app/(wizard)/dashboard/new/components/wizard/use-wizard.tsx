@@ -303,6 +303,12 @@ export function useWizard({
   const handleNext = useCallback(async () => {
     if (isNavigating) return
 
+    // First, flush any unsaved data from ActionStep components
+    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
+    
+    // Give a brief moment for the flush to complete
+    await new Promise(resolve => setTimeout(resolve, 10))
+
     const nextStep = Math.min(currentStep + 1, totalSteps)
 
     // Intro (1) and STAR Intro (5) have no validations
@@ -378,6 +384,12 @@ export function useWizard({
    * Saves if dirty, otherwise just clears cache and navigates.
    */
   const handleSaveAndClose = useCallback(async () => {
+    // First, flush any unsaved data from ActionStep components
+    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
+    
+    // Give a brief moment for the flush to complete
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
     const { isDirty } = methods.formState
     if (!isDirty) {
       clearCachedPitchId()
@@ -393,7 +405,7 @@ export function useWizard({
       console.error("Failed to save before navigating:", error)
       toast({
         title: "Save Error",
-        description: "We couldn’t save your pitch. Please try again.",
+        description: "We couldn't save your pitch. Please try again.",
         variant: "destructive"
       })
     }
@@ -402,9 +414,15 @@ export function useWizard({
   /**
    * Final Save and Close on the review step.
    * - If there was a generation error: save as draft and navigate to dashboard.
-   * - Otherwise: finalize the pitch. NEW: show feedback dialog instead of redirect.
+   * - Otherwise: finalize the pitch. NEW: show feedback dialog instead of redirecting.
    */
   const handleSubmitFinal = useCallback(async () => {
+    // First, flush any unsaved data from ActionStep components
+    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
+    
+    // Give a brief moment for the flush to complete
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
     const data = methods.getValues()
 
     // Branch: treat as draft save if final generation failed
