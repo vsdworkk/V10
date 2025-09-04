@@ -1,4 +1,8 @@
-// app/(wizard)/dashboard/new/components/wizard/index.tsx
+/**
+ * @file app/(wizard)/dashboard/new/components/wizard/index.tsx
+ * Wizard UI shell. Renders steps, navigation, and Save/Close controls.
+ * Change: make Save & Close enabled on steps > Role Details whenever a pitch exists.
+ */
 "use client"
 
 import { FormProvider } from "react-hook-form"
@@ -79,7 +83,6 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
     }
-
     return (
       <ReviewStep
         isPitchLoading={isPitchLoading}
@@ -89,6 +92,12 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
       />
     )
   }
+
+  // New: precise enablement for Save & Close (bug fix).
+  // Step 2 (Role Details): only if dirty. Steps >2: enable if pitch exists or dirty. Step 1 stays disabled.
+  const isDirty = methods.formState.isDirty
+  const canSaveAndClose =
+    currentStep === 2 ? isDirty : currentStep > 2 ? !!pitchId || isDirty : isDirty
 
   return (
     <FormProvider {...methods}>
@@ -163,6 +172,7 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
               </motion.div>
             </div>
           </div>
+
           {/* Mobile */}
           <div className="h-full lg:hidden">
             <motion.div
@@ -198,13 +208,18 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
           )}
 
           <div className="flex items-center space-x-4">
-            {/* Save & Close (keep original disabled behavior) */}
+            {/* Save & Close (bug fix: conditional enablement) */}
             {currentStep < totalSteps && (
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
-                disabled={!methods.formState.isDirty}
+                disabled={!canSaveAndClose}
                 className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
+                title={
+                  !canSaveAndClose && currentStep === 2
+                    ? "Make a change to enable Save & Close"
+                    : undefined
+                }
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save & Close
@@ -242,7 +257,7 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
           </div>
         </div>
 
-        {/* Mobile navigation - fixed at bottom (restored) */}
+        {/* Mobile navigation - fixed at bottom */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-4 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             {currentStep > 1 && currentStep < totalSteps ? (
@@ -263,8 +278,13 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
               <Button
                 variant="outline"
                 onClick={handleSaveAndClose}
-                disabled={!methods.formState.isDirty}
+                disabled={!canSaveAndClose}
                 className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
+                title={
+                  !canSaveAndClose && currentStep === 2
+                    ? "Make a change to enable Save & Close"
+                    : undefined
+                }
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
                 Save & Close
