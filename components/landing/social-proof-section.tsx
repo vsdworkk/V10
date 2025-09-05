@@ -1,149 +1,306 @@
 /*
-Social proof section component with testimonials and customer reviews.
+  APSPitchPro — Horizontal rail variants (5 options derived from Variant Two)
+  Focus: cards that host text cleanly with better rhythm and polish.
 */
 
-"use server"
+"use client"
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-export async function SocialProofSection() {
+type Testimonial = {
+  id: string
+  quote: string
+  name: string
+  role: string
+  initials: string
+  avatar?: string
+}
+
+const TESTIMONIALS: Testimonial[] = [
+  {
+    id: "lachie",
+    quote:
+      "Two applications, two interviews. That's my result with APSPitchPro after struggling with rejections. It perfectly captured the 'APS tone' and aligned my experience to the criteria, even helping me uncover examples I'd forgotten. It took all the stress out of the process and delivered real results. I can't recommend it enough for anyone serious about their APS career.",
+    name: "Lachie M",
+    role: "Department of Finance",
+    initials: "LM",
+    avatar: "https://tailus.io/images/reviews/shekinah.webp"
+  },
+  {
+    id: "malith",
+    quote:
+      "I was skeptical of AI after trying tools like ChatGPT that just produced robotic, generic text. APSPitchPro is in a different league. It guided me to structure my own unique experiences, so the final pitch sounded authentically like me, while also ensuring my experience was perfectly aligned with the selection criteria and relevant APS frameworks.",
+    name: "Malith G",
+    role: "Australian Taxation Office",
+    initials: "MG",
+    avatar: "https://tailus.io/images/reviews/jonathan.webp"
+  },
+  {
+    id: "chloe",
+    quote:
+      "Juggling a full-time job and applications was burning me out. I used to spend my entire weekend stressing over a single pitch. With APSPitchPro, I generated a fully compliant, tailored statement of claims in about 40 minutes. It's incredible. I've applied for three roles in the time it used to take me to write one. A massive time-saver.",
+    name: "Chloe T",
+    role: "Department of Finance",
+    initials: "CT",
+    avatar: "https://tailus.io/images/reviews/yucel.webp"
+  },
+  {
+    id: "aaron",
+    quote:
+      "The blank page is the worst, I always struggle to find good examples to use in my applications. The AI guidance feature was a lifesaver, it just pulled out my best achievements that fit the criteria that I could use to build my pitch. But the final pitch blew me away. Honestly, it sounded like me, was totally compliant, and was just as good as a pitch I paid $750 for a few years back. Seriously impressed.",
+    name: "Aaron M",
+    role: "Department of Treasury",
+    initials: "AM",
+    avatar: "https://tailus.io/images/reviews/rodrigo.webp"
+  }
+]
+
+function Meta({ t }: { t: Testimonial }) {
   return (
-    <section className="pb-16 pt-4 md:pb-32 md:pt-8">
-      <div className="mx-auto max-w-6xl space-y-8 px-6 md:space-y-16">
-        <div className="relative z-10 mx-auto max-w-xl space-y-6 text-center md:space-y-12">
-          <h2 className="text-4xl font-semibold lg:text-5xl">
+    <div className="grid grid-cols-[auto_1fr] items-center gap-3">
+      <Avatar className="size-12">
+        {t.avatar ? (
+          <AvatarImage
+            src={t.avatar}
+            alt={t.name}
+            height={96}
+            width={96}
+            loading="lazy"
+          />
+        ) : null}
+        <AvatarFallback>{t.initials}</AvatarFallback>
+      </Avatar>
+      <div>
+        <p className="text-sm font-medium">{t.name}</p>
+        <p className="text-muted-foreground text-sm">{t.role}</p>
+      </div>
+    </div>
+  )
+}
+
+function EmphasizeProduct({ text }: { text: string }) {
+  const parts = text.split(/APSPitchPro/g)
+  return (
+    <>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {part}
+          {i < parts.length - 1 ? (
+            <mark className="bg-primary/10 text-primary rounded px-1 py-0.5">
+              APSPitchPro
+            </mark>
+          ) : null}
+        </span>
+      ))}
+    </>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   RAIL VARIANT A — Soft top stripe + measured text
+   - Even rhythm, max line length, subtle divider before meta.
+────────────────────────────────────────────────────────────────────────────── */
+export function SocialProofRailVariantA() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl space-y-8 px-6">
+        <header className="text-center">
+          <h2 className="text-4xl font-semibold tracking-tight lg:text-5xl">
             What our users are saying
           </h2>
-        </div>
+        </header>
 
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-rows-2">
-          <Card className="grid grid-rows-[auto_1fr] gap-8 sm:col-span-2 sm:p-6 lg:row-span-2">
-            <CardContent>
-              <blockquote className="grid h-full grid-rows-[1fr_auto] gap-6">
-                <p className="text-xl font-medium">
-                  Applying for a role, I had no idea how to write a statement of
-                  claims, it was overwhelming. I stumbled upon APSPitchPro, it
-                  was super easy to use. All I had to do was answer a couple
-                  simple questions and it did all the complex APS alignment, and
-                  wrote a pitch unique to my experience. I highly recommend it
-                  to anyone unsure where to start and wants to land more APS
-                  interviews!
-                </p>
-
-                <div className="grid grid-cols-[auto_1fr] items-center gap-3">
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      src="https://tailus.io/images/reviews/shekinah.webp"
-                      alt="Malith G"
-                      height="400"
-                      width="400"
-                      loading="lazy"
-                    />
-                    <AvatarFallback>MG</AvatarFallback>
-                  </Avatar>
-
-                  <div>
-                    <cite className="text-sm font-medium">Malith G</cite>
-                    <span className="text-muted-foreground block text-sm">
-                      APS Applicant
-                    </span>
+        <div className="[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1">
+            {TESTIMONIALS.map(t => (
+              <Card
+                key={t.id}
+                className="bg-card/80 relative w-[88%] shrink-0 snap-center overflow-hidden rounded-xl border sm:w-[520px]"
+              >
+                <div className="via-primary/70 pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent to-transparent" />
+                <CardContent className="p-6">
+                  <div className="grid h-full grid-rows-[1fr_auto] gap-6">
+                    <p className="text-pretty text-[1.05rem] leading-7 tracking-tight md:text-lg md:leading-8">
+                      {t.quote}
+                    </p>
+                    <div>
+                      <hr className="border-border/60 mb-4 mt-2" />
+                      <Meta t={t} />
+                    </div>
                   </div>
-                </div>
-              </blockquote>
-            </CardContent>
-          </Card>
-          <Card className="md:col-span-2">
-            <CardContent className="h-full pt-6">
-              <blockquote className="grid h-full grid-rows-[1fr_auto] gap-6">
-                <p className="text-xl font-medium">
-                  Tailus is really extraordinary and very practical, no need to
-                  break your head. A real gold mine.
-                </p>
-
-                <div className="grid grid-cols-[auto_1fr] items-center gap-3">
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      src="https://tailus.io/images/reviews/jonathan.webp"
-                      alt="Jonathan Yombo"
-                      height="400"
-                      width="400"
-                      loading="lazy"
-                    />
-                    <AvatarFallback>JY</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <cite className="text-sm font-medium">Jonathan Yombo</cite>
-                    <span className="text-muted-foreground block text-sm">
-                      Software Ingineer
-                    </span>
-                  </div>
-                </div>
-              </blockquote>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="h-full pt-6">
-              <blockquote className="grid h-full grid-rows-[1fr_auto] gap-6">
-                <p>
-                  Great work on tailfolio template. This is one of the best
-                  personal website that I have seen so far!
-                </p>
-
-                <div className="grid items-center gap-3 [grid-template-columns:auto_1fr]">
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      src="https://tailus.io/images/reviews/yucel.webp"
-                      alt="Yucel Faruksahan"
-                      height="400"
-                      width="400"
-                      loading="lazy"
-                    />
-                    <AvatarFallback>YF</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <cite className="text-sm font-medium">
-                      Yucel Faruksahan
-                    </cite>
-                    <span className="text-muted-foreground block text-sm">
-                      Creator, Tailkits
-                    </span>
-                  </div>
-                </div>
-              </blockquote>
-            </CardContent>
-          </Card>
-          <Card className="card variant-mixed">
-            <CardContent className="h-full pt-6">
-              <blockquote className="grid h-full grid-rows-[1fr_auto] gap-6">
-                <p>
-                  Great work on tailfolio template. This is one of the best
-                  personal website that I have seen so far!
-                </p>
-
-                <div className="grid grid-cols-[auto_1fr] gap-3">
-                  <Avatar className="size-12">
-                    <AvatarImage
-                      src="https://tailus.io/images/reviews/rodrigo.webp"
-                      alt="Rodrigo Aguilar"
-                      height="400"
-                      width="400"
-                      loading="lazy"
-                    />
-                    <AvatarFallback>YF</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">Rodrigo Aguilar</p>
-                    <span className="text-muted-foreground block text-sm">
-                      Creator, TailwindAwesome
-                    </span>
-                  </div>
-                </div>
-              </blockquote>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   )
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   RAIL VARIANT B — Left rule quote
+   - Indented block with inner left border, large opening mark.
+────────────────────────────────────────────────────────────────────────────── */
+export function SocialProofRailVariantB() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl space-y-8 px-6">
+        <header className="text-center">
+          <h2 className="text-4xl font-semibold tracking-tight lg:text-5xl">
+            What our users are saying
+          </h2>
+        </header>
+
+        <div className="[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1">
+            {TESTIMONIALS.map(t => (
+              <Card
+                key={t.id}
+                className="bg-card/90 w-[85%] shrink-0 snap-center rounded-xl border sm:w-[520px]"
+              >
+                <CardContent className="p-6">
+                  <div className="grid h-full grid-rows-[1fr_auto] gap-6">
+                    <div className="relative pl-4">
+                      <span
+                        aria-hidden
+                        className="text-muted-foreground/20 absolute -left-1 -top-2 text-6xl leading-none"
+                      >
+                        “
+                      </span>
+                      <div className="border-l pl-4">
+                        <p className="text-pretty text-[1.05rem] leading-7 md:text-lg md:leading-8">
+                          {t.quote}
+                        </p>
+                      </div>
+                    </div>
+                    <Meta t={t} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   RAIL VARIANT C — Meta-first
+   - Avatar and name first, then the quote; clearer scannability.
+────────────────────────────────────────────────────────────────────────────── */
+export function SocialProofRailVariantC() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl space-y-8 px-6">
+        <header className="text-center">
+          <h2 className="text-4xl font-semibold tracking-tight lg:text-5xl">
+            What our users are saying
+          </h2>
+        </header>
+
+        <div className="[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1">
+            {TESTIMONIALS.map(t => (
+              <Card
+                key={t.id}
+                className="bg-card/80 w-[86%] shrink-0 snap-center rounded-xl border sm:w-[520px]"
+              >
+                <CardContent className="p-6">
+                  <div className="grid h-full grid-rows-[auto_1fr] gap-4">
+                    <Meta t={t} />
+                    <p className="text-balance text-[1.05rem] leading-7 md:text-lg md:leading-8">
+                      {t.quote}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   RAIL VARIANT D — Compact tiles
+   - Narrower measure, stronger shadow, tight rhythm for dense rails.
+────────────────────────────────────────────────────────────────────────────── */
+export function SocialProofRailVariantD() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl space-y-8 px-6">
+        <header className="text-center">
+          <h2 className="text-4xl font-semibold tracking-tight lg:text-5xl">
+            What our users are saying
+          </h2>
+        </header>
+
+        <div className="[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1">
+            {TESTIMONIALS.map(t => (
+              <Card
+                key={t.id}
+                className="bg-card/90 w-[78%] shrink-0 snap-center rounded-xl border shadow-sm sm:w-[440px]"
+              >
+                <CardContent className="p-6">
+                  <div className="grid h-full grid-rows-[1fr_auto] gap-5">
+                    <p className="text-pretty text-base leading-7 md:text-[1.05rem] md:leading-7">
+                      {t.quote}
+                    </p>
+                    <Meta t={t} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   RAIL VARIANT E — Magazine highlight
+   - Product name highlighted; thin top+bottom rules; airy spacing.
+────────────────────────────────────────────────────────────────────────────── */
+export function SocialProofRailVariantE() {
+  return (
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl space-y-8 px-6">
+        <header className="text-center">
+          <h2 className="text-4xl font-semibold tracking-tight lg:text-5xl">
+            What our users are saying
+          </h2>
+        </header>
+
+        <div className="[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pt-1">
+            {TESTIMONIALS.map(t => (
+              <Card
+                key={t.id}
+                className="bg-card/80 relative w-[88%] shrink-0 snap-center overflow-hidden rounded-xl border sm:w-[520px]"
+              >
+                <div className="bg-border/80 absolute inset-x-0 top-0 h-px" />
+                <div className="bg-border/80 absolute inset-x-0 bottom-0 h-px" />
+                <CardContent className="p-6">
+                  <div className="grid h-full grid-rows-[1fr_auto] gap-6">
+                    <p className="text-pretty text-[1.05rem] leading-7 md:text-lg md:leading-8">
+                      <EmphasizeProduct text={t.quote} />
+                    </p>
+                    <Meta t={t} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export const SocialProofSection = SocialProofRailVariantE
