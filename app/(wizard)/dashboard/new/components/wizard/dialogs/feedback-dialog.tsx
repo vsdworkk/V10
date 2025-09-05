@@ -61,7 +61,8 @@ type LowRatingReasonKey =
   | "other"
 
 const REASON_LABELS: Record<LowRatingReasonKey, string> = {
-  questionnaire_unclear: "The questionnaire was unclear or difficult to complete.",
+  questionnaire_unclear:
+    "The questionnaire was unclear or difficult to complete.",
   word_count_mismatch: "Did not meet the required word count.",
   robotic_or_generic: "Content sounded robotic or generic.",
   other: "Other"
@@ -105,8 +106,14 @@ export default function FeedbackDialog({
   })
   const [otherText, setOtherText] = useState<string>("")
 
-  const isLowRating = useMemo(() => typeof rating === "number" && rating <= 2, [rating])
-  const canSubmit = useMemo(() => typeof rating === "number" && rating >= 1 && rating <= 5, [rating])
+  const isLowRating = useMemo(
+    () => typeof rating === "number" && rating <= 2,
+    [rating]
+  )
+  const canSubmit = useMemo(
+    () => typeof rating === "number" && rating >= 1 && rating <= 5,
+    [rating]
+  )
 
   /**
    * Reset internal state when dialog closes.
@@ -149,7 +156,9 @@ export default function FeedbackDialog({
         ratingReason: string | null
       } = {
         pitchRating: rating as number,
-        ratingReason: isLowRating ? buildRatingReasonPayload(reasons, otherText) : null
+        ratingReason: isLowRating
+          ? buildRatingReasonPayload(reasons, otherText)
+          : null
       }
 
       const response = await fetch(`/api/pitches/${pitchId}`, {
@@ -183,7 +192,8 @@ export default function FeedbackDialog({
           <DialogTitle>What would you rate this pitch?</DialogTitle>
 
           <DialogDescription>
-            Select from 1 to 5 stars. Low ratings will ask for reasons to help improve results.
+            Select from 1 to 5 stars. Low ratings will ask for reasons to help
+            improve results.
           </DialogDescription>
         </DialogHeader>
 
@@ -194,7 +204,7 @@ export default function FeedbackDialog({
             role="radiogroup"
             aria-label="Pitch rating from 1 to 5 stars"
           >
-            {Array.from({ length: 5 }, (_, i) => i + 1).map((value) => {
+            {Array.from({ length: 5 }, (_, i) => i + 1).map(value => {
               const display = hovered ?? rating ?? 0
               const active = value <= display
               return (
@@ -208,24 +218,26 @@ export default function FeedbackDialog({
                   onMouseEnter={() => setHovered(value)}
                   onMouseLeave={() => setHovered(null)}
                   onClick={() => setRating(value)}
-                  onKeyDown={(e) => {
+                  onKeyDown={e => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault()
                       setRating(value)
                     }
                     if (e.key === "ArrowRight" || e.key === "ArrowUp") {
                       e.preventDefault()
-                      setRating((prev) => Math.min(5, (prev || 0) + 1))
+                      setRating(prev => Math.min(5, (prev || 0) + 1))
                     }
                     if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
                       e.preventDefault()
-                      setRating((prev) => Math.max(1, (prev || 1) - 1))
+                      setRating(prev => Math.max(1, (prev || 1) - 1))
                     }
                   }}
                 >
                   <Star
                     className={`size-7 transition ${
-                      active ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                      active
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-muted-foreground"
                     }`}
                   />
                 </button>
@@ -236,7 +248,9 @@ export default function FeedbackDialog({
           {/* Low-rating conditional follow-up */}
           {isLowRating && (
             <div className="mt-2 flex flex-col gap-3">
-              <div className="text-sm font-medium">Help us understand the issue</div>
+              <div className="text-sm font-medium">
+                Help us understand the issue
+              </div>
 
               <div className="flex flex-col gap-2">
                 {(
@@ -246,13 +260,16 @@ export default function FeedbackDialog({
                     "robotic_or_generic",
                     "other"
                   ] as LowRatingReasonKey[]
-                ).map((key) => (
+                ).map(key => (
                   <div key={key} className="flex items-start gap-2">
                     <Checkbox
                       id={key}
                       checked={reasons[key]}
-                      onCheckedChange={(checked) =>
-                        setReasons((prev) => ({ ...prev, [key]: Boolean(checked) }))
+                      onCheckedChange={checked =>
+                        setReasons(prev => ({
+                          ...prev,
+                          [key]: Boolean(checked)
+                        }))
                       }
                     />
                     <Label htmlFor={key} className="text-sm leading-5">
@@ -265,15 +282,17 @@ export default function FeedbackDialog({
               {/* Other text input */}
               {reasons.other && (
                 <div className="flex flex-col gap-1">
-                  <Label htmlFor="otherText" className="text-sm">Please specify</Label>
+                  <Label htmlFor="otherText" className="text-sm">
+                    Please specify
+                  </Label>
                   <Textarea
                     id="otherText"
                     value={otherText}
                     placeholder="Briefly describe the issue"
                     maxLength={2000}
-                    onChange={(e) => setOtherText(e.target.value)}
+                    onChange={e => setOtherText(e.target.value)}
                   />
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-muted-foreground text-xs">
                     {otherText.length}/2000
                   </div>
                 </div>

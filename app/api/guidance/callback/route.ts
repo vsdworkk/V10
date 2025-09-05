@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
       ""
 
     if (!uniqueId) {
-      return NextResponse.json({ error: "No unique ID provided in callback" }, { status: 400 })
+      return NextResponse.json(
+        { error: "No unique ID provided in callback" },
+        { status: 400 }
+      )
     }
 
     // Guidance text from various shapes: PromptLayer or n8n
@@ -41,7 +44,10 @@ export async function POST(req: NextRequest) {
       ""
 
     if (!albertGuidance) {
-      return NextResponse.json({ error: "No guidance text found in callback" }, { status: 400 })
+      return NextResponse.json(
+        { error: "No guidance text found in callback" },
+        { status: 400 }
+      )
     }
 
     const res = await updatePitchByExecutionId(uniqueId, { albertGuidance })
@@ -50,8 +56,14 @@ export async function POST(req: NextRequest) {
     }
 
     debugLog(`Guidance saved for ${uniqueId} (${albertGuidance.length} chars)`)
-    return NextResponse.json({ success: true, message: "Guidance saved successfully" })
+    return NextResponse.json({
+      success: true,
+      message: "Guidance saved successfully"
+    })
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

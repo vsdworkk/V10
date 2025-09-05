@@ -44,7 +44,7 @@ export default function ClassificationSelect({
           <SelectValue placeholder={placeholder || "Select classification"} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((opt) => (
+          {options.map(opt => (
             <SelectItem key={opt} value={opt}>
               {opt}
             </SelectItem>

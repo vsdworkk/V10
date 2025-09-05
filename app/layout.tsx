@@ -33,16 +33,16 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: {
       index: true,
-      follow: true,
-    },
+      follow: true
+    }
   },
   openGraph: {
     title: "APSPitchPro",
     description: "3X Your Interview Chances With AI-Powered Pitches",
     url: "https://www.apspitchpro.com",
     siteName: "APSPitchPro",
-    type: "website",
-  },
+    type: "website"
+  }
 }
 
 export default async function RootLayout({

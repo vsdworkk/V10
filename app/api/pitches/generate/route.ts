@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   updatePitchByExecutionId,
-  getPitchByExecutionIdAction,
+  getPitchByExecutionIdAction
 } from "@/actions/db/pitches-actions"
 import { getAvailableCreditsAction } from "@/actions/db/profiles-actions"
 import { PitchRequestSchema } from "@/lib/schemas/pitchSchemas"
@@ -28,13 +28,13 @@ const formatStarExamples = (examples: any[]) =>
     id: String(idx + 1),
     situation: [
       ex.situation?.["where-and-when-did-this-experience-occur"],
-      ex.situation?.["briefly-describe-the-situation-or-challenge-you-faced"],
+      ex.situation?.["briefly-describe-the-situation-or-challenge-you-faced"]
     ]
       .filter(Boolean)
       .join("\n"),
     task: [
       ex.task?.["what-was-your-responsibility-in-addressing-this-issue"],
-      ex.task?.["what-constraints-or-requirements-did-you-need-to-consider"],
+      ex.task?.["what-constraints-or-requirements-did-you-need-to-consider"]
     ]
       .filter(Boolean)
       .join("\n"),
@@ -50,7 +50,7 @@ const formatStarExamples = (examples: any[]) =>
     result:
       ex.result?.[
         "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"
-      ] || "",
+      ] || ""
   }))
 
 // === Main Handler ===
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       relevantExperience,
       starExamples,
       starExamplesCount,
-      albertGuidance,
+      albertGuidance
     } = parsed.data
 
     requestId = pitchId
@@ -103,7 +103,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: creditRes.message }, { status: 500 })
     }
     if (creditRes.data < 1) {
-      return NextResponse.json({ error: "Insufficient credits" }, { status: 402 })
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      )
     }
 
     // Mark in-progress
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest) {
       const res = await updatePitchByExecutionId(pitchId, {
         agentExecutionId: pitchId,
         status: "draft",
-        userId,
+        userId
       })
       if (!res.isSuccess) {
         return NextResponse.json(
@@ -137,13 +140,20 @@ export async function POST(req: NextRequest) {
     // Build payload
     const formattedStarExamples = formatStarExamples(starExamples)
     const jobDescriptionParts = [`Role: ${roleName}`, `Level: ${roleLevel}`]
-    if (roleDescription) jobDescriptionParts.push(`Description: ${roleDescription}`)
+    if (roleDescription)
+      jobDescriptionParts.push(`Description: ${roleDescription}`)
     const numExamples = starExamplesCount || starExamples.length || 1
     const introWordCount = Math.round(pitchWordLimit * INTRO_CONCLUSION_RATIO)
-    const conclusionWordCount = Math.round(pitchWordLimit * INTRO_CONCLUSION_RATIO)
-    const starWordCount = Math.round((pitchWordLimit * STAR_RATIO) / numExamples)
+    const conclusionWordCount = Math.round(
+      pitchWordLimit * INTRO_CONCLUSION_RATIO
+    )
+    const starWordCount = Math.round(
+      (pitchWordLimit * STAR_RATIO) / numExamples
+    )
 
-    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json"
+    }
     const upstream = await fetch(webhookUrl, {
       method: "POST",
       headers,
@@ -164,9 +174,9 @@ export async function POST(req: NextRequest) {
         Conclusion_Word_Count: conclusionWordCount,
         Star_Word_Count: starWordCount,
         callback_url: callbackUrl,
-        source: "webapp",
+        source: "webapp"
       }),
-      signal: controller.signal,
+      signal: controller.signal
     })
 
     if (!upstream.ok) {
@@ -174,17 +184,21 @@ export async function POST(req: NextRequest) {
         await updatePitchByExecutionId(pitchId, { agentExecutionId: null })
       } catch {}
       const text = await upstream.text()
-      return NextResponse.json({ error: `n8n webhook error: ${text}` }, { status: 500 })
+      return NextResponse.json(
+        { error: `n8n webhook error: ${text}` },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
       success: true,
       requestId: pitchId,
-      message: "Pitch generation request initiated",
+      message: "Pitch generation request initiated"
     })
   } catch (error: any) {
     try {
-      if (requestId) await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+      if (requestId)
+        await updatePitchByExecutionId(requestId, { agentExecutionId: null })
     } catch {}
     if (error?.name === "AbortError") {
       return NextResponse.json({ error: "Request timeout" }, { status: 504 })

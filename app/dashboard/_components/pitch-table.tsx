@@ -1,8 +1,18 @@
+/**
+ * app/dashboard/_components/pitch-table.tsx
+ * Lists pitches with search and filters. Provides Actions menu to export as PDF or DOCX.
+ */
 "use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useUser } from "@clerk/nextjs"
+import { SelectPitch } from "@/db/schema/pitches-schema"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Popover,
   PopoverTrigger,
@@ -21,8 +31,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { SelectPitch } from "@/db/schema/pitches-schema"
 import {
   Download,
   Filter,
@@ -31,9 +39,6 @@ import {
   Building,
   User
 } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
-import Link from "next/link"
-import { useState } from "react"
 
 interface PitchTableProps {
   pitches: SelectPitch[]
@@ -48,10 +53,9 @@ export default function PitchTable({ pitches }: PitchTableProps) {
 
   async function handleExport(pitch: SelectPitch, format: "pdf" | "doc") {
     const content = pitch.pitchContent || ""
-
     if (!content.trim()) {
       alert(
-        "No content available to export. Please ensure the pitch has content."
+        "No content available to export. Please ensure the pitch has\ncontent."
       )
       return
     }
@@ -59,10 +63,8 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     if (format === "pdf") {
       try {
         const html2pdf = (await import("html2pdf.js")).default
-
         const el = document.createElement("div")
         el.innerHTML = content
-
         el.style.fontFamily = "Arial, sans-serif"
         el.style.lineHeight = "1.6"
         el.style.padding = "20px"
@@ -84,22 +86,118 @@ export default function PitchTable({ pitches }: PitchTableProps) {
       }
     } else {
       try {
-        const { saveAs } = await import("file-saver")
-        const { Document, Packer, Paragraph } = await import("docx")
+        const fileSaverModule = await import("file-saver")
+        const { Document, Packer, Paragraph, TextRun } = await import("docx")
+        const saveAs =
+          (fileSaverModule as any).default || (fileSaverModule as any).saveAs
+        if (typeof saveAs !== "function") {
+          throw new Error("file-saver saveAs not available")
+        }
 
         const tempDiv = document.createElement("div")
         tempDiv.innerHTML = content
 
-        const textContent = tempDiv.textContent || tempDiv.innerText || ""
+        // Build DOCX content from basic HTML structure
+        const docParagraphs: any[] = []
 
-        if (!textContent.trim()) {
-          alert("No text content found to export.")
-          return
+        const processElement = (element: Element): void => {
+          const tagName = element.tagName.toLowerCase()
+          const text = element.textContent?.trim() || ""
+          if (!text) return
+
+          switch (tagName) {
+            case "h1":
+            case "h2":
+            case "h3":
+              docParagraphs.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text,
+                      bold: true,
+                      size: tagName === "h1" ? 32 : tagName === "h2" ? 28 : 24
+                    })
+                  ],
+                  spacing: { after: 200 }
+                })
+              )
+              break
+            case "p": {
+              const children: any[] = []
+              if (element.querySelector("strong, b")) {
+                element.childNodes.forEach(node => {
+                  if ((node as any).nodeType === Node.TEXT_NODE) {
+                    const nodeText = node.textContent?.trim()
+                    if (nodeText) children.push(new TextRun(nodeText))
+                  } else if ((node as any).nodeType === Node.ELEMENT_NODE) {
+                    const el = node as Element
+                    const nodeText = el.textContent?.trim()
+                    if (nodeText) {
+                      const isBold =
+                        el.tagName.toLowerCase() === "strong" ||
+                        el.tagName.toLowerCase() === "b"
+                      const isItalic =
+                        el.tagName.toLowerCase() === "em" ||
+                        el.tagName.toLowerCase() === "i"
+                      children.push(
+                        new TextRun({
+                          text: nodeText,
+                          bold: isBold,
+                          italics: isItalic
+                        })
+                      )
+                    }
+                  }
+                })
+              } else {
+                children.push(new TextRun(text))
+              }
+
+              if (children.length > 0) {
+                docParagraphs.push(
+                  new Paragraph({ children, spacing: { after: 120 } })
+                )
+              }
+              break
+            }
+            case "li":
+              docParagraphs.push(
+                new Paragraph({
+                  children: [new TextRun(`• ${text}`)],
+                  spacing: { after: 80 }
+                })
+              )
+              break
+            default:
+              if (text && !["ul", "ol", "div"].includes(tagName)) {
+                docParagraphs.push(
+                  new Paragraph({
+                    children: [new TextRun(text)],
+                    spacing: { after: 120 }
+                  })
+                )
+              }
+          }
         }
 
-        const paragraphs = textContent.split(/\n\s*\n/).filter(p => p.trim())
+        Array.from(tempDiv.children).forEach(processElement)
 
-        const docParagraphs = paragraphs.map(text => new Paragraph(text.trim()))
+        if (docParagraphs.length === 0) {
+          const plainText = tempDiv.textContent || tempDiv.innerText || ""
+          if (plainText.trim()) {
+            const paragraphs = plainText
+              .split(/\n\s*\n|\. (?=[A-Z])/)
+              .filter(p => p.trim())
+            paragraphs.forEach(t => {
+              docParagraphs.push(
+                new Paragraph({
+                  children: [new TextRun(t.trim())],
+                  spacing: { after: 120 }
+                })
+              )
+            })
+          }
+        }
 
         const doc = new Document({
           sections: [
@@ -108,7 +206,11 @@ export default function PitchTable({ pitches }: PitchTableProps) {
               children:
                 docParagraphs.length > 0
                   ? docParagraphs
-                  : [new Paragraph(textContent)]
+                  : [
+                      new Paragraph({
+                        children: [new TextRun("No content available")]
+                      })
+                    ]
             }
           ]
         })
@@ -122,7 +224,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     }
   }
 
-  // Filter pitches based on search query and selected filters
+  // Filters
   const filteredPitches = pitches.filter(pitch => {
     const searchMatch =
       pitch.roleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -135,11 +237,13 @@ export default function PitchTable({ pitches }: PitchTableProps) {
     const roleMatch = roleFilter
       ? pitch.roleName.toLowerCase().includes(roleFilter.toLowerCase())
       : true
+
     const orgMatch = orgFilter
       ? (pitch.organisationName || "")
           .toLowerCase()
           .includes(orgFilter.toLowerCase())
       : true
+
     const statusMatch =
       statusFilter === "all"
         ? true
@@ -184,17 +288,18 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         </p>
       </div>
 
-      {/* Search and Filter Controls */}
+      {/* Search and Filters */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="flex-1">
           <Input
             type="text"
-            placeholder="Search pitches..."
+            placeholder="Search pitches."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full shadow-sm"
           />
         </div>
+
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -250,7 +355,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         </div>
       ) : (
         <>
-          {/* Mobile Card View - Hidden on md and up */}
+          {/* Mobile cards */}
           <div className="space-y-4 md:hidden">
             {filteredPitches.map(pitch => (
               <Card
@@ -320,7 +425,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                             onClick={() => handleExport(pitch, "doc")}
                           >
                             <Download className="mr-2 size-4" />
-                            Export as DOC
+                            Export as DOCX
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -331,7 +436,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
             ))}
           </div>
 
-          {/* Desktop Table View - Hidden on mobile */}
+          {/* Desktop table */}
           <div className="hidden overflow-x-auto rounded-md border bg-white md:block">
             <table className="w-full">
               <thead>
@@ -407,7 +512,7 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                             onClick={() => handleExport(pitch, "doc")}
                           >
                             <Download className="mr-2 size-4" />
-                            Export as DOC
+                            Export as DOCX
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

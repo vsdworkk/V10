@@ -1,4 +1,3 @@
-
 /**
  * @file use-wizard.tsx
  * @description
@@ -85,7 +84,9 @@ export function useWizard({
     }
     return pitchData?.currentStep || 1
   })
-  const [pitchId, setPitchId] = useState<string | undefined>(pitchData?.id || undefined)
+  const [pitchId, setPitchId] = useState<string | undefined>(
+    pitchData?.id || undefined
+  )
   const [isPitchLoading, setIsPitchLoading] = useState(false)
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
@@ -96,7 +97,8 @@ export function useWizard({
   const pendingFormDataRef = useRef<PitchWizardFormData | null>(null)
 
   // Once generation is confirmed, disallow going back to mutate inputs.
-  const [isPitchGenerationConfirmed, setIsPitchGenerationConfirmed] = useState(false)
+  const [isPitchGenerationConfirmed, setIsPitchGenerationConfirmed] =
+    useState(false)
 
   // NEW (Step 5): Feedback dialog state
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
@@ -117,10 +119,8 @@ export function useWizard({
   const totalSteps = 4 + 1 + starCount * 4 + 1
 
   // Current section and header for layout sync
-  const { section: currentSection, header: currentHeader } = computeSectionAndHeader(
-    currentStep,
-    starCount
-  )
+  const { section: currentSection, header: currentHeader } =
+    computeSectionAndHeader(currentStep, starCount)
 
   // Track previous step to know forward/back for animations and layout reset
   const prevStepRef = useRef(1)
@@ -154,7 +154,10 @@ export function useWizard({
           if (section && section !== "FINAL") {
             link.classList.add("opacity-50", "pointer-events-none")
             link.setAttribute("aria-disabled", "true")
-            link.setAttribute("title", "Navigation locked: Pitch generation has started")
+            link.setAttribute(
+              "title",
+              "Navigation locked: Pitch generation has started"
+            )
           }
         }
       })
@@ -183,18 +186,26 @@ export function useWizard({
         if (isPitchGenerationConfirmed && targetSection !== "FINAL") {
           toast({
             title: "Navigation locked",
-            description: "You can't go back after pitch generation has started.",
+            description:
+              "You can't go back after pitch generation has started.",
             variant: "destructive"
           })
           return
         }
         const targetStep = firstStepOfSection(targetSection, starCount)
-        savePitchData(methods.getValues(), pitchId, setPitchId, toast, targetStep)
+        savePitchData(
+          methods.getValues(),
+          pitchId,
+          setPitchId,
+          toast,
+          targetStep
+        )
         setCurrentStep(targetStep)
       }
     }
     window.addEventListener("sectionNavigate", handleSectionNavigate)
-    return () => window.removeEventListener("sectionNavigate", handleSectionNavigate)
+    return () =>
+      window.removeEventListener("sectionNavigate", handleSectionNavigate)
   }, [starCount, isPitchGenerationConfirmed, toast, methods, pitchId])
 
   // Debounced background save when step changes
@@ -202,9 +213,13 @@ export function useWizard({
     if (!pitchId || currentStep <= 1) return
     const timeout = setTimeout(() => {
       setIsSavingInBackground(true)
-      savePitchData(methods.getValues(), pitchId, setPitchId, toast, currentStep).finally(() =>
-        setIsSavingInBackground(false)
-      )
+      savePitchData(
+        methods.getValues(),
+        pitchId,
+        setPitchId,
+        toast,
+        currentStep
+      ).finally(() => setIsSavingInBackground(false))
     }, 1000)
     return () => clearTimeout(timeout)
   }, [currentStep, pitchId, methods, toast])
@@ -242,8 +257,14 @@ export function useWizard({
       if (targetStep <= currentStep) {
         setCurrentStep(targetStep)
         setIsSavingInBackground(true)
-        savePitchData(methods.getValues(), pitchId, setPitchId, toast, targetStep)
-          .catch((error) => {
+        savePitchData(
+          methods.getValues(),
+          pitchId,
+          setPitchId,
+          toast,
+          targetStep
+        )
+          .catch(error => {
             console.error("Section navigation save failed:", error)
             toast({
               title: "Save Warning",
@@ -256,7 +277,14 @@ export function useWizard({
           })
       }
     },
-    [currentStep, starCount, isPitchGenerationConfirmed, toast, methods, pitchId]
+    [
+      currentStep,
+      starCount,
+      isPitchGenerationConfirmed,
+      toast,
+      methods,
+      pitchId
+    ]
   )
 
   /**
@@ -304,8 +332,8 @@ export function useWizard({
     if (isNavigating) return
 
     // First, flush any unsaved data from ActionStep components
-    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
-    
+    window.dispatchEvent(new CustomEvent("flushUnsavedData"))
+
     // Give a brief moment for the flush to complete
     await new Promise(resolve => setTimeout(resolve, 10))
 
@@ -344,11 +372,12 @@ export function useWizard({
       const formData = methods.getValues()
       setIsSavingInBackground(true)
       savePitchData(formData, pitchId, setPitchId, toast, nextStep)
-        .catch((error) => {
+        .catch(error => {
           console.error("Background save failed:", error)
           toast({
             title: "Save Warning",
-            description: "Your progress will be saved automatically. You can continue working.",
+            description:
+              "Your progress will be saved automatically. You can continue working.",
             variant: "default"
           })
         })
@@ -363,7 +392,16 @@ export function useWizard({
     } finally {
       setIsNavigating(false)
     }
-  }, [currentStep, starCount, totalSteps, methods, pitchId, setPitchId, toast, isNavigating])
+  }, [
+    currentStep,
+    starCount,
+    totalSteps,
+    methods,
+    pitchId,
+    setPitchId,
+    toast,
+    isNavigating
+  ])
 
   /** Navigate back one step; blocked after generation confirmation */
   const handleBack = useCallback(() => {
@@ -376,7 +414,7 @@ export function useWizard({
       })
       return
     }
-    setCurrentStep((s) => Math.max(s - 1, 1))
+    setCurrentStep(s => Math.max(s - 1, 1))
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
   /**
@@ -385,11 +423,11 @@ export function useWizard({
    */
   const handleSaveAndClose = useCallback(async () => {
     // First, flush any unsaved data from ActionStep components
-    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
-    
+    window.dispatchEvent(new CustomEvent("flushUnsavedData"))
+
     // Give a brief moment for the flush to complete
     await new Promise(resolve => setTimeout(resolve, 10))
-    
+
     const { isDirty } = methods.formState
     if (!isDirty) {
       clearCachedPitchId()
@@ -418,11 +456,11 @@ export function useWizard({
    */
   const handleSubmitFinal = useCallback(async () => {
     // First, flush any unsaved data from ActionStep components
-    window.dispatchEvent(new CustomEvent('flushUnsavedData'))
-    
+    window.dispatchEvent(new CustomEvent("flushUnsavedData"))
+
     // Give a brief moment for the flush to complete
     await new Promise(resolve => setTimeout(resolve, 10))
-    
+
     const data = methods.getValues()
 
     // Branch: treat as draft save if final generation failed

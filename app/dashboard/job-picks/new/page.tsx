@@ -78,7 +78,9 @@ async function createPick(formData: FormData) {
   const res = await createJobPickAction({ ...payload, userId }) // Action overwrites userId anyway. :contentReference[oaicite:7]{index=7}
 
   if (!res.isSuccess) {
-    redirect(`/dashboard/job-picks/new?error=${encodeURIComponent(res.message)}`)
+    redirect(
+      `/dashboard/job-picks/new?error=${encodeURIComponent(res.message)}`
+    )
   }
 
   // Success
@@ -107,7 +109,9 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">New Job Pick</h2>
-          <div className="text-sm text-muted-foreground">Add a curated APS job listing.</div>
+          <div className="text-muted-foreground text-sm">
+            Add a curated APS job listing.
+          </div>
         </div>
 
         <Button variant="outline" asChild>
@@ -123,15 +127,28 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
           <CardTitle className="text-base">Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={createPick} className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="col-span-1 md:col-span-2 space-y-2">
+          <form
+            action={createPick}
+            className="grid grid-cols-1 gap-6 md:grid-cols-2"
+          >
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="title">Job title</Label>
-              <Input id="title" name="title" placeholder="e.g., Policy Officer" required />
+              <Input
+                id="title"
+                name="title"
+                placeholder="e.g., Policy Officer"
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="agency">Agency</Label>
-              <Input id="agency" name="agency" placeholder="e.g., Department of Finance" required />
+              <Input
+                id="agency"
+                name="agency"
+                placeholder="e.g., Department of Finance"
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -150,7 +167,11 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
 
             <div className="space-y-2">
               <Label htmlFor="location">Location (optional)</Label>
-              <Input id="location" name="location" placeholder="e.g., Canberra, ACT" />
+              <Input
+                id="location"
+                name="location"
+                placeholder="e.g., Canberra, ACT"
+              />
             </div>
 
             <div className="space-y-2">
@@ -158,7 +179,7 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
               <Input id="closingDate" name="closingDate" type="date" />
             </div>
 
-            <div className="col-span-1 md:col-span-2 space-y-2">
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="apsJobsUrl">APS Jobs URL</Label>
               <Input
                 id="apsJobsUrl"
@@ -167,10 +188,12 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
                 placeholder="https://www.apsjobs.gov.au/some/job/path"
                 required
               />
-              <p className="text-xs text-muted-foreground">Must be an APS Jobs link (apsjobs.gov.au).</p>
+              <p className="text-muted-foreground text-xs">
+                Must be an APS Jobs link (apsjobs.gov.au).
+              </p>
             </div>
 
-            <div className="col-span-1 md:col-span-2 space-y-2">
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="highlightNote">Highlight note (optional)</Label>
               <Textarea
                 id="highlightNote"
@@ -189,10 +212,12 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
                 defaultValue={defaultMonthTag}
                 required
               />
-              <p className="text-xs text-muted-foreground">Used for grouping and SEO. Example: {defaultMonthTag}</p>
+              <p className="text-muted-foreground text-xs">
+                Used for grouping and SEO. Example: {defaultMonthTag}
+              </p>
             </div>
 
-            <div className="col-span-1 md:col-span-2 flex items-center justify-end gap-3">
+            <div className="col-span-1 flex items-center justify-end gap-3 md:col-span-2">
               <Button type="submit">
                 <Save className="mr-2 size-4" />
                 Create

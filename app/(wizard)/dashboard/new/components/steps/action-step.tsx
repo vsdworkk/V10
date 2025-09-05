@@ -163,8 +163,9 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
       flushUnsavedChanges()
     }
 
-    window.addEventListener('flushUnsavedData', handleFlushEvent)
-    return () => window.removeEventListener('flushUnsavedData', handleFlushEvent)
+    window.addEventListener("flushUnsavedData", handleFlushEvent)
+    return () =>
+      window.removeEventListener("flushUnsavedData", handleFlushEvent)
   }, [flushUnsavedChanges])
 
   // Save step changes
@@ -366,7 +367,12 @@ interface StepItemProps {
 /**
  * Renders a single collapsible step item.
  */
-function StepItem({ step, onSave, exampleIndex, pendingChangesRef }: StepItemProps) {
+function StepItem({
+  step,
+  onSave,
+  exampleIndex,
+  pendingChangesRef
+}: StepItemProps) {
   const {
     formState: { errors }
   } = useFormContext<PitchWizardFormData>()

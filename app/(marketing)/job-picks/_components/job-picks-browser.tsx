@@ -31,14 +31,17 @@ interface JobPicksBrowserProps {
   children: React.ReactNode
 }
 
-export default function JobPicksBrowser({ picks, children }: JobPicksBrowserProps) {
+export default function JobPicksBrowser({
+  picks,
+  children
+}: JobPicksBrowserProps) {
   const nodes = React.Children.toArray(children)
   const [visibleIds, setVisibleIds] = React.useState<Set<string>>(
-    () => new Set(picks.map((p) => p.id))
+    () => new Set(picks.map(p => p.id))
   )
 
   const handleFilterChange = React.useCallback((filtered: SelectJobPick[]) => {
-    setVisibleIds(new Set(filtered.map((p) => p.id)))
+    setVisibleIds(new Set(filtered.map(p => p.id)))
   }, [])
 
   const total = picks.length

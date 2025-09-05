@@ -56,13 +56,18 @@ function formatMonthTag(tag: string): string {
 /**
  * Groups job picks by monthTag.
  */
-function groupByMonthTag(picks: SelectJobPick[]): Record<string, SelectJobPick[]> {
-  return picks.reduce((acc, p) => {
-    const key = p.monthTag
-    if (!acc[key]) acc[key] = []
-    acc[key].push(p)
-    return acc
-  }, {} as Record<string, SelectJobPick[]>)
+function groupByMonthTag(
+  picks: SelectJobPick[]
+): Record<string, SelectJobPick[]> {
+  return picks.reduce(
+    (acc, p) => {
+      const key = p.monthTag
+      if (!acc[key]) acc[key] = []
+      acc[key].push(p)
+      return acc
+    },
+    {} as Record<string, SelectJobPick[]>
+  )
 }
 
 /**
@@ -73,7 +78,9 @@ async function JobPicksFetcher() {
   if (!res.isSuccess) {
     return (
       <div className="container mx-auto py-12">
-        <div className="text-center text-sm text-red-600">Failed to load job picks.</div>
+        <div className="text-center text-sm text-red-600">
+          Failed to load job picks.
+        </div>
       </div>
     )
   }
@@ -99,7 +106,8 @@ async function JobPicksFetcher() {
         <div className="text-3xl font-bold">APS Job Picks</div>
 
         <div className="text-muted-foreground mt-3">
-          Handpicked APS roles with key details and direct APS Jobs links. Generate a tailored APS pitch in minutes.
+          Handpicked APS roles with key details and direct APS Jobs links.
+          Generate a tailored APS pitch in minutes.
         </div>
       </div>
 
@@ -118,8 +126,8 @@ export default async function JobPicksPage() {
       fallback={
         <div className="container mx-auto py-12">
           <div className="mx-auto max-w-2xl animate-pulse text-center">
-            <div className="mb-2 h-7 w-64 rounded bg-muted mx-auto" />
-            <div className="mx-auto h-4 w-80 rounded bg-muted" />
+            <div className="bg-muted mx-auto mb-2 h-7 w-64 rounded" />
+            <div className="bg-muted mx-auto h-4 w-80 rounded" />
           </div>
         </div>
       }

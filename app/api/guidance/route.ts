@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   updatePitchByExecutionId,
-  getPitchByIdAction,
+  getPitchByIdAction
 } from "@/actions/db/pitches-actions"
 import { debugLog } from "@/lib/debug"
 import { auth } from "@clerk/nextjs/server"
@@ -15,14 +15,20 @@ export async function POST(req: NextRequest) {
     const { jobDescription, experience, userId, pitchId } = await req.json()
 
     if (!jobDescription || !experience || !userId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      )
     }
     if (currentUserId !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     if (!pitchId) {
       return NextResponse.json(
-        { error: "Missing pitchId - a pitch must be created before requesting guidance" },
+        {
+          error:
+            "Missing pitchId - a pitch must be created before requesting guidance"
+        },
         { status: 400 }
       )
     }
@@ -38,14 +44,14 @@ export async function POST(req: NextRequest) {
           success: true,
           requestId: existing.data.agentExecutionId || requestId,
           message: "Guidance already generated",
-          guidance: existing.data.albertGuidance,
+          guidance: existing.data.albertGuidance
         })
       }
       if (existing.data.agentExecutionId) {
         return NextResponse.json({
           success: true,
           requestId: existing.data.agentExecutionId,
-          message: "Guidance request already in progress",
+          message: "Guidance request already in progress"
         })
       }
     }
@@ -55,7 +61,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request ID" }, { status: 400 })
     }
     {
-      const res = await updatePitchByExecutionId(requestId, { agentExecutionId: requestId })
+      const res = await updatePitchByExecutionId(requestId, {
+        agentExecutionId: requestId
+      })
       if (!res.isSuccess) {
         return NextResponse.json(
           { error: `Failed to update pitch: ${res.message}` },
@@ -71,7 +79,10 @@ export async function POST(req: NextRequest) {
       try {
         await updatePitchByExecutionId(requestId, { agentExecutionId: null })
       } catch {}
-      return NextResponse.json({ error: "N8N webhook URL not configured" }, { status: 500 })
+      return NextResponse.json(
+        { error: "N8N webhook URL not configured" },
+        { status: 500 }
+      )
     }
 
     const callbackUrl = `${
@@ -82,7 +93,9 @@ export async function POST(req: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 30000)
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+      }
       // Optional: bearer/basic token for protected n8n webhook
       if (process.env.N8N_WEBHOOK_AUTH) {
         headers.Authorization = process.env.N8N_WEBHOOK_AUTH
@@ -98,9 +111,9 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           pitch_id: pitchId,
           callback_url: callbackUrl,
-          source: "webapp",
+          source: "webapp"
         }),
-        signal: controller.signal,
+        signal: controller.signal
       })
 
       clearTimeout(timeoutId)
@@ -110,14 +123,17 @@ export async function POST(req: NextRequest) {
           await updatePitchByExecutionId(requestId, { agentExecutionId: null })
         } catch {}
         const text = await upstream.text()
-        return NextResponse.json({ error: `n8n webhook error: ${text}` }, { status: 500 })
+        return NextResponse.json(
+          { error: `n8n webhook error: ${text}` },
+          { status: 500 }
+        )
       }
 
       // Success: keep agentExecutionId set; callback will populate albertGuidance
       return NextResponse.json({
         success: true,
         requestId,
-        message: "Guidance request initiated",
+        message: "Guidance request initiated"
       })
     } catch (error: any) {
       clearTimeout(timeoutId)
@@ -134,7 +150,8 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: any) {
     try {
-      if (requestId) await updatePitchByExecutionId(requestId, { agentExecutionId: null })
+      if (requestId)
+        await updatePitchByExecutionId(requestId, { agentExecutionId: null })
     } catch {}
     return NextResponse.json(
       { error: error?.message || "Internal server error" },

@@ -40,10 +40,7 @@ export type APSClassification = (typeof APS_CLASSIFICATIONS)[number]
  * Host allowlist for APS Jobs links.
  * Accept common host variants for safety.
  */
-const APS_JOBS_HOSTS = new Set([
-  "www.apsjobs.gov.au",
-  "apsjobs.gov.au"
-])
+const APS_JOBS_HOSTS = new Set(["www.apsjobs.gov.au", "apsjobs.gov.au"])
 
 /**
  * Returns true if the URL is on an allowed APS Jobs host.
@@ -72,11 +69,7 @@ export const jobPickFormSchema = z.object({
   classification: z.enum(APS_CLASSIFICATIONS, {
     errorMap: () => ({ message: "Select a valid APS classification" })
   }),
-  salary: z
-    .string()
-    .max(120, "Salary too long")
-    .optional()
-    .or(z.literal("")),
+  salary: z.string().max(120, "Salary too long").optional().or(z.literal("")),
   location: z
     .string()
     .max(160, "Location too long")
@@ -91,7 +84,10 @@ export const jobPickFormSchema = z.object({
   apsJobsUrl: z
     .string()
     .url("Enter a valid URL")
-    .refine(isAllowedApsJobsUrl, "URL must be an APS Jobs link (apsjobs.gov.au)"),
+    .refine(
+      isAllowedApsJobsUrl,
+      "URL must be an APS Jobs link (apsjobs.gov.au)"
+    ),
   highlightNote: z
     .string()
     .max(10000, "Highlight note too long")
@@ -128,7 +124,11 @@ export function assertClosingDateNotPast(values: JobPickFormValues): void {
   // Normalize to date-only comparison using local timezone.
   const [y, m, d] = values.closingDate.split("-").map(Number)
   const input = new Date(y, (m as number) - 1, d)
-  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const todayOnly = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  )
   if (input < todayOnly) {
     throw new z.ZodError([
       {

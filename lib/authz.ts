@@ -1,4 +1,3 @@
-
 /**
  * @file lib/authz.ts
  * @description
@@ -35,7 +34,7 @@ export async function getAdminEmails(): Promise<Set<string>> {
   return new Set(
     raw
       .split(",")
-      .map((s) => s.trim().toLowerCase())
+      .map(s => s.trim().toLowerCase())
       .filter(Boolean)
   )
 }
@@ -79,7 +78,7 @@ export async function isAdmin(): Promise<boolean> {
   if (!user) return false
   const allow = await getAdminEmails()
   const userEmails = emailsFromUser(user)
-  return userEmails.some((e) => allow.has(e))
+  return userEmails.some(e => allow.has(e))
 }
 
 /**
@@ -96,7 +95,7 @@ export async function requireAdmin(): Promise<string> {
 
   const allow = await getAdminEmails()
   const userEmails = emailsFromUser(user)
-  const allowed = userEmails.some((e) => allow.has(e))
+  const allowed = userEmails.some(e => allow.has(e))
   if (!allowed) redirect("/dashboard")
 
   return user!.id

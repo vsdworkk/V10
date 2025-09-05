@@ -1,4 +1,3 @@
-
 /**
  * @file lib/schemas/pitchSchemas.ts
  * @description
@@ -40,10 +39,13 @@ function wordRange(min: number, max: number) {
   return z
     .string()
     .min(1)
-    .refine((val) => {
-      const n = countWords(val)
-      return n >= min && n <= max
-    }, { message: `Must be between ${min} and ${max} words` })
+    .refine(
+      val => {
+        const n = countWords(val)
+        return n >= min && n <= max
+      },
+      { message: `Must be between ${min} and ${max} words` }
+    )
 }
 
 /* -----------------------------------------------------------------------------
@@ -69,13 +71,17 @@ export const starSchema = z.object({
   }),
   task: z.object({
     "what-was-your-responsibility-in-addressing-this-issue": wordRange(20, 150),
-    "what-constraints-or-requirements-did-you-need-to-consider": wordRange(20, 150).optional()
+    "what-constraints-or-requirements-did-you-need-to-consider": wordRange(
+      20,
+      150
+    ).optional()
   }),
   action: z.object({
     steps: z.array(actionStepSchema).min(1)
   }),
   result: z.object({
-    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization": wordRange(20, 150)
+    "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
+      wordRange(20, 150)
   })
 })
 

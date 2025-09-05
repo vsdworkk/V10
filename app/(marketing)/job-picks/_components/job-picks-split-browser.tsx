@@ -4,7 +4,7 @@
  * Split-view client component that renders a left panel with job cards
  * and a right panel with detailed job view. Manages selection state.
  * Filtering is now handled at the parent level for a cleaner interface.
- * 
+ *
  * Layout:
  * - Left panel: List of compact job cards
  * - Right panel: Detailed view of selected job
@@ -25,38 +25,50 @@ interface JobPicksSplitBrowserProps {
   picks: SelectJobPick[]
 }
 
-export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProps) {
+export default function JobPicksSplitBrowser({
+  picks
+}: JobPicksSplitBrowserProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  
-  const [selectedJobId, setSelectedJobId] = React.useState<string | null>(() => {
-    // Initialize from URL search params if valid job ID exists
-    const jobId = searchParams?.get('job')
-    return jobId && picks.some(p => p.id === jobId) ? jobId : null
-  })
+
+  const [selectedJobId, setSelectedJobId] = React.useState<string | null>(
+    () => {
+      // Initialize from URL search params if valid job ID exists
+      const jobId = searchParams?.get("job")
+      return jobId && picks.some(p => p.id === jobId) ? jobId : null
+    }
+  )
   const [showMobileDetail, setShowMobileDetail] = React.useState(() => {
     // Show mobile detail if we have a selected job from URL
-    const jobId = searchParams?.get('job')
+    const jobId = searchParams?.get("job")
     return jobId && picks.some(p => p.id === jobId)
   })
 
-  const updateURLWithJobId = React.useCallback((jobId: string | null) => {
-    const newSearchParams = new URLSearchParams(searchParams?.toString() || '')
-    if (jobId) {
-      newSearchParams.set('job', jobId)
-    } else {
-      newSearchParams.delete('job')
-    }
-    const newURL = `${pathname}?${newSearchParams.toString()}`
-    router.replace(newURL, { scroll: false })
-  }, [searchParams, pathname, router])
+  const updateURLWithJobId = React.useCallback(
+    (jobId: string | null) => {
+      const newSearchParams = new URLSearchParams(
+        searchParams?.toString() || ""
+      )
+      if (jobId) {
+        newSearchParams.set("job", jobId)
+      } else {
+        newSearchParams.delete("job")
+      }
+      const newURL = `${pathname}?${newSearchParams.toString()}`
+      router.replace(newURL, { scroll: false })
+    },
+    [searchParams, pathname, router]
+  )
 
-  const handleJobSelect = React.useCallback((jobId: string) => {
-    setSelectedJobId(jobId)
-    setShowMobileDetail(true)
-    updateURLWithJobId(jobId)
-  }, [updateURLWithJobId])
+  const handleJobSelect = React.useCallback(
+    (jobId: string) => {
+      setSelectedJobId(jobId)
+      setShowMobileDetail(true)
+      updateURLWithJobId(jobId)
+    },
+    [updateURLWithJobId]
+  )
 
   const handleBackToList = React.useCallback(() => {
     setShowMobileDetail(false)
@@ -64,13 +76,14 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
   }, [])
 
   const selectedJob = React.useMemo(
-    () => selectedJobId ? picks.find((p) => p.id === selectedJobId) || null : null,
+    () =>
+      selectedJobId ? picks.find(p => p.id === selectedJobId) || null : null,
     [picks, selectedJobId]
   )
 
   // Effect to handle URL changes and validate job ID on mount/picks change
   React.useEffect(() => {
-    const jobId = searchParams?.get('job')
+    const jobId = searchParams?.get("job")
     if (jobId && picks.length > 0) {
       const jobExists = picks.some(p => p.id === jobId)
       if (jobExists && jobId !== selectedJobId) {
@@ -88,12 +101,12 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
   const total = picks.length
 
   return (
-    <div className="h-[800px] rounded-lg overflow-hidden bg-background">
+    <div className="bg-background h-[800px] overflow-hidden rounded-lg">
       {/* Mobile view */}
-      <div className="block lg:hidden h-full">
+      <div className="block h-full lg:hidden">
         {!showMobileDetail ? (
           // Mobile list view
-          <div className="h-full flex flex-col">
+          <div className="flex h-full flex-col">
             <ScrollArea className="flex-1">
               <div className="p-4">
                 {total === 0 ? (
@@ -102,7 +115,7 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {picks.map((pick) => (
+                    {picks.map(pick => (
                       <JobPickCardCompact
                         key={pick.id}
                         {...pick}
@@ -117,11 +130,11 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
           </div>
         ) : (
           // Mobile detail view
-          <div className="h-full flex flex-col">
-            <div className="p-4 border-b bg-white/50 shrink-0">
+          <div className="flex h-full flex-col">
+            <div className="shrink-0 border-b bg-white/50 p-4">
               <button
                 onClick={handleBackToList}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm font-medium text-blue-600 hover:text-blue-800"
               >
                 ← Back to jobs
               </button>
@@ -134,9 +147,9 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
       </div>
 
       {/* Desktop view */}
-      <div className="hidden lg:flex h-full">
+      <div className="hidden h-full lg:flex">
         {/* Left panel */}
-        <div className="w-1/2 bg-white/30 flex flex-col">
+        <div className="flex w-1/2 flex-col bg-white/30">
           <ScrollArea className="flex-1">
             <div className="p-4">
               {total === 0 ? (
@@ -145,7 +158,7 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {picks.map((pick) => (
+                  {picks.map(pick => (
                     <JobPickCardCompact
                       key={pick.id}
                       {...pick}
@@ -166,4 +179,4 @@ export default function JobPicksSplitBrowser({ picks }: JobPicksSplitBrowserProp
       </div>
     </div>
   )
-} 
+}

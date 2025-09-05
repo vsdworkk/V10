@@ -45,7 +45,13 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import ClassificationSelect from "../../_components/classification-select"
-import { Save, ArrowLeft, Upload, Archive as ArchiveIcon, Trash2 } from "lucide-react"
+import {
+  Save,
+  ArrowLeft,
+  Upload,
+  Archive as ArchiveIcon,
+  Trash2
+} from "lucide-react"
 import Link from "next/link"
 
 /**
@@ -125,7 +131,9 @@ async function updatePick(formData: FormData) {
 
   const res = await updateJobPickAction(id, payload)
   if (!res.isSuccess) {
-    redirect(`/dashboard/job-picks/${id}/edit?error=${encodeURIComponent(res.message)}`)
+    redirect(
+      `/dashboard/job-picks/${id}/edit?error=${encodeURIComponent(res.message)}`
+    )
   }
 
   // Refresh admin list and public page
@@ -185,7 +193,10 @@ interface PageProps {
 /**
  * Admin Edit Page
  */
-export default async function EditJobPickPage({ params, searchParams }: PageProps) {
+export default async function EditJobPickPage({
+  params,
+  searchParams
+}: PageProps) {
   await requireAdmin()
 
   const { id } = await params
@@ -202,7 +213,9 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
       <div className="space-y-6">
         <Alert>
           <AlertTitle>Not found</AlertTitle>
-          <AlertDescription>{res.message || "Job Pick not found."}</AlertDescription>
+          <AlertDescription>
+            {res.message || "Job Pick not found."}
+          </AlertDescription>
         </Alert>
 
         <div>
@@ -232,7 +245,11 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
         <Alert>
           <AlertTitle>Status changed</AlertTitle>
           <AlertDescription>
-            {statusMsg === "published" ? "Published" : statusMsg === "archived" ? "Archived" : statusMsg}
+            {statusMsg === "published"
+              ? "Published"
+              : statusMsg === "archived"
+                ? "Archived"
+                : statusMsg}
           </AlertDescription>
         </Alert>
       )}
@@ -246,7 +263,7 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Edit Job Pick</h2>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             {pick.title} — <span className="font-medium">{pick.agency}</span>
           </div>
         </div>
@@ -297,17 +314,30 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
         </CardHeader>
 
         <CardContent>
-          <form action={updatePick} className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <form
+            action={updatePick}
+            className="grid grid-cols-1 gap-6 md:grid-cols-2"
+          >
             <input type="hidden" name="id" value={pick.id} />
 
-            <div className="col-span-1 md:col-span-2 space-y-2">
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="title">Job title</Label>
-              <Input id="title" name="title" defaultValue={pick.title || ""} required />
+              <Input
+                id="title"
+                name="title"
+                defaultValue={pick.title || ""}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="agency">Agency</Label>
-              <Input id="agency" name="agency" defaultValue={pick.agency || ""} required />
+              <Input
+                id="agency"
+                name="agency"
+                defaultValue={pick.agency || ""}
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -322,20 +352,35 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
 
             <div className="space-y-2">
               <Label htmlFor="salary">Salary (optional)</Label>
-              <Input id="salary" name="salary" defaultValue={pick.salary || ""} placeholder="e.g. A$82k–$96k" />
+              <Input
+                id="salary"
+                name="salary"
+                defaultValue={pick.salary || ""}
+                placeholder="e.g. A$82k–$96k"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="location">Location (optional)</Label>
-              <Input id="location" name="location" defaultValue={pick.location || ""} placeholder="e.g. Canberra, ACT" />
+              <Input
+                id="location"
+                name="location"
+                defaultValue={pick.location || ""}
+                placeholder="e.g. Canberra, ACT"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="closingDate">Closing date (optional)</Label>
-              <Input id="closingDate" name="closingDate" type="date" defaultValue={closingDefault} />
+              <Input
+                id="closingDate"
+                name="closingDate"
+                type="date"
+                defaultValue={closingDefault}
+              />
             </div>
 
-            <div className="col-span-1 md:col-span-2 space-y-2">
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="apsJobsUrl">APS Jobs URL</Label>
               <Input
                 id="apsJobsUrl"
@@ -345,10 +390,12 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
                 placeholder="https://www.apsjobs.gov.au/some/job/path"
                 required
               />
-              <p className="text-xs text-muted-foreground">Must be an APS Jobs link (apsjobs.gov.au).</p>
+              <p className="text-muted-foreground text-xs">
+                Must be an APS Jobs link (apsjobs.gov.au).
+              </p>
             </div>
 
-            <div className="col-span-1 md:col-span-2 space-y-2">
+            <div className="col-span-1 space-y-2 md:col-span-2">
               <Label htmlFor="highlightNote">Highlight note (optional)</Label>
               <Textarea
                 id="highlightNote"
@@ -368,10 +415,12 @@ export default async function EditJobPickPage({ params, searchParams }: PageProp
                 placeholder="YYYY-MM"
                 required
               />
-              <p className="text-xs text-muted-foreground">Used for grouping and SEO (e.g., 2025-08).</p>
+              <p className="text-muted-foreground text-xs">
+                Used for grouping and SEO (e.g., 2025-08).
+              </p>
             </div>
 
-            <div className="col-span-1 md:col-span-2 flex items-center justify-end gap-3">
+            <div className="col-span-1 flex items-center justify-end gap-3 md:col-span-2">
               <Button type="submit">
                 <Save className="mr-2 size-4" />
                 Update

@@ -50,39 +50,41 @@ export default function JobPickCardCompact({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-sm border-gray-100 bg-white",
-        isSelected ? "border-blue-200 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "hover:border-gray-200 hover:bg-gray-50/50"
+        "cursor-pointer border-gray-100 bg-white transition-all duration-200 hover:shadow-sm",
+        isSelected
+          ? "border-blue-200 bg-blue-50 shadow-sm ring-1 ring-blue-100"
+          : "hover:border-gray-200 hover:bg-gray-50/50"
       )}
       onClick={onClick}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base leading-tight line-clamp-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 text-base font-semibold leading-tight">
               {title}
             </h3>
-            <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-2 flex items-center gap-1 text-sm">
               <Building2 className="size-4" />
               <span className="truncate">{agency}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <Badge variant="secondary" className="text-sm px-2 py-1">
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge variant="secondary" className="px-2 py-1 text-sm">
               {classification}
             </Badge>
-            <div onClick={(e) => e.stopPropagation()}>
-              <JobPickShareButton 
-                job={{ 
-                  title, 
-                  agency, 
-                  classification, 
-                  location, 
-                  closingDate, 
-                  salary, 
-                  ...pick 
+            <div onClick={e => e.stopPropagation()}>
+              <JobPickShareButton
+                job={{
+                  title,
+                  agency,
+                  classification,
+                  location,
+                  closingDate,
+                  salary,
+                  ...pick
                 }}
-                variant="ghost" 
-                size="icon" 
+                variant="ghost"
+                size="icon"
                 className="size-7"
               />
             </div>
@@ -91,7 +93,7 @@ export default function JobPickCardCompact({
       </CardHeader>
 
       <CardContent className="pt-0">
-        <div className="space-y-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground space-y-2 text-sm">
           {location && (
             <div className="flex items-center gap-1">
               <MapPin className="size-4" />
@@ -103,7 +105,7 @@ export default function JobPickCardCompact({
             <span>Closes: {formatCompactDate(closingDate)}</span>
           </div>
           {salary && (
-            <div className="text-sm font-medium text-foreground truncate">
+            <div className="text-foreground truncate text-sm font-medium">
               {salary}
             </div>
           )}
@@ -111,4 +113,4 @@ export default function JobPickCardCompact({
       </CardContent>
     </Card>
   )
-} 
+}

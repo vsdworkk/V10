@@ -37,7 +37,13 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Plus, Edit2, Upload, Archive as ArchiveIcon, Trash2 } from "lucide-react"
+import {
+  Plus,
+  Edit2,
+  Upload,
+  Archive as ArchiveIcon,
+  Trash2
+} from "lucide-react"
 
 /**
  * Validate UUID server-side for action payloads.
@@ -88,7 +94,11 @@ function fmt(date?: Date | string | null) {
   if (!date) return "—"
   const d = typeof date === "string" ? new Date(date) : date
   if (isNaN(d.getTime())) return "—"
-  return d.toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })
+  return d.toLocaleDateString("en-AU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  })
 }
 
 /**
@@ -126,7 +136,9 @@ export default async function JobPicksAdminPage({ searchParams }: PageProps) {
       {created && (
         <Alert>
           <AlertTitle>Created</AlertTitle>
-          <AlertDescription>Job Pick was created successfully.</AlertDescription>
+          <AlertDescription>
+            Job Pick was created successfully.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -140,14 +152,18 @@ export default async function JobPicksAdminPage({ searchParams }: PageProps) {
       {!listRes.isSuccess && (
         <Alert>
           <AlertTitle>Failed to load</AlertTitle>
-          <AlertDescription>{listRes.message || "Unable to load job picks."}</AlertDescription>
+          <AlertDescription>
+            {listRes.message || "Unable to load job picks."}
+          </AlertDescription>
         </Alert>
       )}
 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Job Picks</h2>
-          <div className="text-sm text-muted-foreground">Add, publish, archive, or delete curated listings.</div>
+          <div className="text-muted-foreground text-sm">
+            Add, publish, archive, or delete curated listings.
+          </div>
         </div>
 
         <Button asChild>
@@ -186,7 +202,7 @@ export default async function JobPicksAdminPage({ searchParams }: PageProps) {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rows.map((r) => (
+                  rows.map(r => (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.title}</TableCell>
                       <TableCell>{r.agency}</TableCell>
@@ -196,7 +212,9 @@ export default async function JobPicksAdminPage({ searchParams }: PageProps) {
                       <TableCell>{fmt(r.closingDate)}</TableCell>
                       <TableCell>{r.monthTag}</TableCell>
                       <TableCell>
-                        <Badge className={statusBadge(r.status)}>{r.status}</Badge>
+                        <Badge className={statusBadge(r.status)}>
+                          {r.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>{fmt(r.updatedAt)}</TableCell>
                       <TableCell className="space-x-2 text-right">

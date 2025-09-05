@@ -36,7 +36,13 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card"
-import { Building2, MapPin, CalendarDays, ExternalLink, Wand2 } from "lucide-react"
+import {
+  Building2,
+  MapPin,
+  CalendarDays,
+  ExternalLink,
+  Wand2
+} from "lucide-react"
 import type { SelectJobPick } from "@/types"
 
 /**
@@ -65,7 +71,9 @@ function formatAUSDate(date?: Date | string | null): string {
 function withUTM(href: string, utm: Record<string, string>): string {
   try {
     const url = new URL(href)
-    Object.entries(utm).forEach(([key, value]) => url.searchParams.set(key, value))
+    Object.entries(utm).forEach(([key, value]) =>
+      url.searchParams.set(key, value)
+    )
     return url.toString()
   } catch {
     return href
@@ -172,7 +180,10 @@ export default async function JobPickCard(pick: SelectJobPick) {
         </Button>
 
         <Button asChild className="w-full sm:w-auto">
-          <Link href={targetHref} aria-label="Generate your pitch for this role">
+          <Link
+            href={targetHref}
+            aria-label="Generate your pitch for this role"
+          >
             <Wand2 className="mr-2 size-4" />
             Generate your Pitch
           </Link>

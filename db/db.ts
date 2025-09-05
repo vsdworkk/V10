@@ -38,8 +38,8 @@ const schema = {
  */
 const client = postgres(DB_URL, {
   // Connection pooling
-  max: 10,            // max connections
-  idle_timeout: 20,   // seconds
+  max: 10, // max connections
+  idle_timeout: 20, // seconds
   connect_timeout: 5, // seconds
 
   // Performance

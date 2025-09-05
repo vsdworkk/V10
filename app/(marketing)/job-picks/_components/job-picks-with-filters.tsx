@@ -29,17 +29,25 @@ function formatMonthTag(tag: string): string {
 /**
  * Groups job picks by monthTag.
  */
-function groupByMonthTag(picks: SelectJobPick[]): Record<string, SelectJobPick[]> {
-  return picks.reduce((acc, p) => {
-    const key = p.monthTag
-    if (!acc[key]) acc[key] = []
-    acc[key].push(p)
-    return acc
-  }, {} as Record<string, SelectJobPick[]>)
+function groupByMonthTag(
+  picks: SelectJobPick[]
+): Record<string, SelectJobPick[]> {
+  return picks.reduce(
+    (acc, p) => {
+      const key = p.monthTag
+      if (!acc[key]) acc[key] = []
+      acc[key].push(p)
+      return acc
+    },
+    {} as Record<string, SelectJobPick[]>
+  )
 }
 
-export default function JobPicksWithFilters({ picks }: JobPicksWithFiltersProps) {
-  const [filteredPicks, setFilteredPicks] = React.useState<SelectJobPick[]>(picks)
+export default function JobPicksWithFilters({
+  picks
+}: JobPicksWithFiltersProps) {
+  const [filteredPicks, setFilteredPicks] =
+    React.useState<SelectJobPick[]>(picks)
 
   const handleFilterChange = React.useCallback((filtered: SelectJobPick[]) => {
     setFilteredPicks(filtered)
@@ -50,9 +58,12 @@ export default function JobPicksWithFilters({ picks }: JobPicksWithFiltersProps)
     setFilteredPicks(picks)
   }, [picks])
 
-  const groups = React.useMemo(() => groupByMonthTag(filteredPicks), [filteredPicks])
-  const monthKeys = React.useMemo(() => 
-    Object.keys(groups).sort((a, b) => b.localeCompare(a)), // latest first
+  const groups = React.useMemo(
+    () => groupByMonthTag(filteredPicks),
+    [filteredPicks]
+  )
+  const monthKeys = React.useMemo(
+    () => Object.keys(groups).sort((a, b) => b.localeCompare(a)), // latest first
     [groups]
   )
 
@@ -63,28 +74,29 @@ export default function JobPicksWithFilters({ picks }: JobPicksWithFiltersProps)
     <div className="space-y-8">
       {/* Global filter bar with search-like styling */}
       <div className="mx-auto max-w-4xl">
-        <JobPickFilters 
-          picks={picks} 
+        <JobPickFilters
+          picks={picks}
           onChange={handleFilterChange}
           className="shadow-sm"
         />
-        
+
         {/* Results count */}
-        <div className="mt-4 text-center text-muted-foreground text-sm">
-          Showing {totalVisible} of {totalOriginal} role{totalOriginal === 1 ? "" : "s"}
+        <div className="text-muted-foreground mt-4 text-center text-sm">
+          Showing {totalVisible} of {totalOriginal} role
+          {totalOriginal === 1 ? "" : "s"}
         </div>
       </div>
 
       {/* Filtered results grouped by month */}
       <div className="space-y-12">
         {totalVisible === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-muted-foreground rounded-md border p-8 mx-auto max-w-md">
+          <div className="py-12 text-center">
+            <div className="text-muted-foreground mx-auto max-w-md rounded-md border p-8">
               No roles match your filters. Try adjusting your search criteria.
             </div>
           </div>
         ) : (
-          monthKeys.map((key) => {
+          monthKeys.map(key => {
             const monthPicks = groups[key]
             return (
               <div key={key} className="space-y-6">
@@ -97,4 +109,4 @@ export default function JobPicksWithFilters({ picks }: JobPicksWithFiltersProps)
       </div>
     </div>
   )
-} 
+}

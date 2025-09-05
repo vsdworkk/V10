@@ -33,10 +33,14 @@ interface DashboardSidebarProps {
   userId: string
 }
 
-export default async function DashboardSidebar({ userId }: DashboardSidebarProps) {
+export default async function DashboardSidebar({
+  userId
+}: DashboardSidebarProps) {
   // Credits
   const profileResult = await getProfileByUserIdAction(userId)
-  const credits = profileResult.isSuccess ? (profileResult.data?.credits ?? 0) : 0
+  const credits = profileResult.isSuccess
+    ? (profileResult.data?.credits ?? 0)
+    : 0
 
   // Admin check for conditional links
   const admin = await isAdmin()
@@ -53,12 +57,19 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
               <div className="flex items-center gap-2">
                 <CreditCard className="text-muted-foreground size-4" />
                 <span className="text-muted-foreground text-sm">Credits</span>
-                <Badge variant="secondary" className="ml-auto text-sm font-medium">
+                <Badge
+                  variant="secondary"
+                  className="ml-auto text-sm font-medium"
+                >
                   {credits}
                 </Badge>
               </div>
               <div className="mt-3">
-                <Button asChild variant="outline" className="h-8 w-full text-xs">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-8 w-full text-xs"
+                >
                   <Link href="/#pricing">+ More Credits</Link>
                 </Button>
               </div>
@@ -112,7 +123,9 @@ export default async function DashboardSidebar({ userId }: DashboardSidebarProps
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">{/* Reserved for future items */}</SidebarFooter>
+      <SidebarFooter className="p-4">
+        {/* Reserved for future items */}
+      </SidebarFooter>
     </Sidebar>
   )
 }

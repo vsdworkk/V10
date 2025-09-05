@@ -36,7 +36,11 @@ interface PitchWizardProps {
   initialStep?: number
 }
 
-export default function PitchWizard({ userId, pitchData, initialStep }: PitchWizardProps) {
+export default function PitchWizard({
+  userId,
+  pitchData,
+  initialStep
+}: PitchWizardProps) {
   const router = useRouter()
   const {
     methods,
@@ -78,7 +82,8 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
       const stepInStar = currentStep - firstActualStarStep
       const exampleIndex = Math.floor(stepInStar / 4)
       const subStepIndex = stepInStar % 4
-      if (subStepIndex === 0) return <SituationStep exampleIndex={exampleIndex} />
+      if (subStepIndex === 0)
+        return <SituationStep exampleIndex={exampleIndex} />
       if (subStepIndex === 1) return <TaskStep exampleIndex={exampleIndex} />
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
@@ -97,7 +102,11 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
   // Step 2 (Role Details): only if dirty. Steps >2: enable if pitch exists or dirty. Step 1 stays disabled.
   const isDirty = methods.formState.isDirty
   const canSaveAndClose =
-    currentStep === 2 ? isDirty : currentStep > 2 ? !!pitchId || isDirty : isDirty
+    currentStep === 2
+      ? isDirty
+      : currentStep > 2
+        ? !!pitchId || isDirty
+        : isDirty
 
   return (
     <FormProvider {...methods}>
@@ -132,7 +141,7 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
           <FeedbackDialog
             pitchId={pitchId}
             open={showFeedbackDialog}
-            onOpenChange={(v) => {
+            onOpenChange={v => {
               setShowFeedbackDialog(v)
               if (!v) router.push("/dashboard")
             }}
@@ -141,7 +150,10 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
 
         {/* Desktop header */}
         <div className="mb-6 hidden shrink-0 lg:block">
-          <WizardHeader header={currentHeader} isIntro={currentSection === "INTRO"} />
+          <WizardHeader
+            header={currentHeader}
+            isIntro={currentSection === "INTRO"}
+          />
         </div>
 
         {/* Mobile header */}
@@ -151,7 +163,9 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
               {currentHeader}
             </h1>
             {currentSection !== "INTRO" && (
-              <p className="mt-1 text-sm text-gray-600">Complete the fields below to continue</p>
+              <p className="mt-1 text-sm text-gray-600">
+                Complete the fields below to continue
+              </p>
             )}
           </div>
         </div>
@@ -197,7 +211,9 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
               onClick={handleBack}
               disabled={isNavigating || isPitchGenerationConfirmed}
               className={`group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                isPitchGenerationConfirmed ? "cursor-not-allowed opacity-50" : ""
+                isPitchGenerationConfirmed
+                  ? "cursor-not-allowed opacity-50"
+                  : ""
               }`}
             >
               <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />
@@ -266,7 +282,9 @@ export default function PitchWizard({ userId, pitchData, initialStep }: PitchWiz
                 onClick={handleBack}
                 disabled={isNavigating || isPitchGenerationConfirmed}
                 className={`group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800 ${
-                  isPitchGenerationConfirmed ? "cursor-not-allowed opacity-50" : ""
+                  isPitchGenerationConfirmed
+                    ? "cursor-not-allowed opacity-50"
+                    : ""
                 }`}
               >
                 <ArrowLeft className="mr-2 size-4 group-hover:-translate-x-1" />

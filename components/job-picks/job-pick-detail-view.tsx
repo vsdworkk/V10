@@ -11,9 +11,23 @@ import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Building2, MapPin, CalendarDays, ExternalLink, Wand2, DollarSign, Clock } from "lucide-react"
+import {
+  Building2,
+  MapPin,
+  CalendarDays,
+  ExternalLink,
+  Wand2,
+  DollarSign,
+  Clock
+} from "lucide-react"
 import type { SelectJobPick } from "@/types"
 
 /**
@@ -40,7 +54,9 @@ function formatAUSDate(date?: Date | string | null): string {
 function withUTM(href: string, utm: Record<string, string>): string {
   try {
     const url = new URL(href)
-    Object.entries(utm).forEach(([key, value]) => url.searchParams.set(key, value))
+    Object.entries(utm).forEach(([key, value]) =>
+      url.searchParams.set(key, value)
+    )
     return url.toString()
   } catch {
     return href
@@ -218,4 +234,4 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
       </div>
     </div>
   )
-} 
+}

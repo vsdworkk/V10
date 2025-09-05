@@ -1,4 +1,3 @@
-
 /**
  * @file db/schema/pitches-schema.ts
  * @description Drizzle schema for APSPitchPro "pitches".
