@@ -79,20 +79,42 @@ function Meta({ t }: { t: Testimonial }) {
   )
 }
 
-function EmphasizeProduct({ text }: { text: string }) {
-  const parts = text.split(/APSPitchPro/g)
+function EmphasizeHighlight({ text }: { text: string }) {
+  // Define phrases to highlight
+  const highlightPhrases = [
+    "Two applications, two interviews",
+    "APSPitchPro is in a different league.",
+    "I've applied for three roles in the time it used to take me to write one. A massive time-saver.",
+    "it sounded like me, was totally compliant, and was just as good as a pitch I paid $750 for a few years back."
+  ]
+
+  let result = text
+
+  // Replace each phrase with a marked version
+  highlightPhrases.forEach(phrase => {
+    const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
+    result = result.replace(regex, `<HIGHLIGHT>${phrase}</HIGHLIGHT>`)
+  })
+
+  // Split by highlight markers and render
+  const parts = result.split(/(<HIGHLIGHT>.*?<\/HIGHLIGHT>)/g)
+
   return (
     <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          {part}
-          {i < parts.length - 1 ? (
-            <mark className="bg-primary/10 text-primary rounded px-1 py-0.5">
-              APSPitchPro
+      {parts.map((part, i) => {
+        if (part.startsWith("<HIGHLIGHT>") && part.endsWith("</HIGHLIGHT>")) {
+          const highlightText = part.replace(/<\/?HIGHLIGHT>/g, "")
+          return (
+            <mark
+              key={i}
+              className="bg-primary/10 text-primary rounded px-1 py-0.5"
+            >
+              {highlightText}
             </mark>
-          ) : null}
-        </span>
-      ))}
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
     </>
   )
 }
@@ -289,7 +311,7 @@ export function SocialProofRailVariantE() {
                 <CardContent className="p-6">
                   <div className="grid h-full grid-rows-[1fr_auto] gap-6">
                     <p className="text-pretty text-[1.05rem] leading-7 md:text-lg md:leading-8">
-                      <EmphasizeProduct text={t.quote} />
+                      <EmphasizeHighlight text={t.quote} />
                     </p>
                     <Meta t={t} />
                   </div>
