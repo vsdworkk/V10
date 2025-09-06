@@ -19,7 +19,7 @@ export async function requestGuidance(
     if (!request.pitchId) {
       return {
         isSuccess: false,
-        message: "A pitch must be created before requesting guidance",
+        message: "A pitch must be created before requesting guidance"
       }
     }
 
@@ -31,7 +31,7 @@ export async function requestGuidance(
       return {
         isSuccess: true,
         message: "Guidance request already in progress",
-        data: requestId,
+        data: requestId
       }
     }
 
@@ -44,8 +44,8 @@ export async function requestGuidance(
         jobDescription: request.jobDescription,
         experience: request.experience,
         userId: request.userId,
-        pitchId: request.pitchId,
-      }),
+        pitchId: request.pitchId
+      })
     })
 
     if (!response.ok) {
@@ -58,13 +58,14 @@ export async function requestGuidance(
     return {
       isSuccess: true,
       message: data.message || "Guidance request initiated",
-      data: requestId, // Return the pitchId as the requestId
+      data: requestId // Return the pitchId as the requestId
     }
   } catch (error) {
     console.error("Guidance request error:", error)
     return {
       isSuccess: false,
-      message: error instanceof Error ? error.message : "Failed to request guidance",
+      message:
+        error instanceof Error ? error.message : "Failed to request guidance"
     }
   } finally {
     if (request.pitchId) inFlightRequests.delete(request.pitchId)
@@ -86,13 +87,13 @@ export async function checkGuidanceStatus(
       return {
         isSuccess: true,
         message: "Guidance generated",
-        data: data.guidance,
+        data: data.guidance
       }
     }
 
     return {
       isSuccess: false,
-      message: "Guidance still processing",
+      message: "Guidance still processing"
     }
   } catch (error) {
     console.error("Guidance status check error:", error)
@@ -101,7 +102,7 @@ export async function checkGuidanceStatus(
       message:
         error instanceof Error
           ? error.message
-          : "Failed to check guidance status",
+          : "Failed to check guidance status"
     }
   }
 }

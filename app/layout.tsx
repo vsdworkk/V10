@@ -9,6 +9,8 @@ import type { Metadata } from "next"
 import { cn } from "@/lib/utils"
 
 import "./globals.css"
+import Script from "next/script"
+import Analytics from "@/components/seo/analytics"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -26,7 +28,10 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "APSPitchPro",
-  description: "3X Your Interview Chances With AI-Powered Pitches"
+  description: "3X Your Interview Chances With AI-Powered Pitches",
+  verification: {
+    google: "sApD36Oz-lEo2szSB7pik9OsJ0uKY0q5Gb1iyIqNLJw"
+  }
 }
 
 export default async function RootLayout({
@@ -35,6 +40,10 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   const { userId } = await auth()
+  const GA_ID = process.env.NEXT_PUBLIC_GA_ID
+  if (!GA_ID) {
+    console.error("Missing NEXT_PUBLIC_GA_ID environment variable")
+  }
 
   return (
     <ClerkProvider>
@@ -43,6 +52,24 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={cn(poppins.className, playfair.variable)}
       >
+        <head>
+          {/* Google Analytics */}
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga-init" strategy="afterInteractive">
+            {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}', {
+              page_path: window.location.pathname,
+            });
+          `}
+          </Script>
+        </head>
+
         <body
           className={cn(
             "bg-background mx-auto min-h-screen w-full scroll-smooth antialiased"
@@ -56,8 +83,8 @@ export default async function RootLayout({
           >
             {children}
 
+            <Analytics />
             <TailwindIndicator />
-
             <Toaster />
           </Providers>
         </body>

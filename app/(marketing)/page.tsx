@@ -13,6 +13,13 @@ import { SocialProofSection } from "@/components/landing/social-proof-section"
 import NewPricingSection from "@/components/landing/new-pricing-section"
 import { FAQSection } from "@/components/landing/faq-section"
 import BlogSection from "@/components/landing/blog-section"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "APSPitchPro: AI APS Pitch Writer | Australian Public Service Jobs",
+  description:
+    "Stop struggling with APS selection criteria. Our AI creates personalised, compliant job pitches in minutes. Covers APS1-EL1 levels with guaranteed framework alignment and STAR structure."
+}
 
 export default async function HomePage() {
   const { userId } = await auth()
