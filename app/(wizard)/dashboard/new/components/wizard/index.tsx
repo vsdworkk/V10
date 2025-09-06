@@ -1,10 +1,9 @@
+"use client"
 /**
  * @file app/(wizard)/dashboard/new/components/wizard/index.tsx
  * Wizard UI shell. Renders steps, navigation, and Save/Close controls.
- * Change: make Save & Close enabled on steps > Role Details whenever a pitch exists.
+ * Final-step fix: disable “Save and Close” until the pitch is displayed.
  */
-"use client"
-
 import { FormProvider } from "react-hook-form"
 import { motion } from "framer-motion"
 import { Save, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
@@ -42,6 +41,7 @@ export default function PitchWizard({
   initialStep
 }: PitchWizardProps) {
   const router = useRouter()
+
   const {
     methods,
     currentStep,
@@ -88,6 +88,7 @@ export default function PitchWizard({
       if (subStepIndex === 2) return <ActionStep exampleIndex={exampleIndex} />
       if (subStepIndex === 3) return <ResultStep exampleIndex={exampleIndex} />
     }
+
     return (
       <ReviewStep
         isPitchLoading={isPitchLoading}
@@ -98,7 +99,7 @@ export default function PitchWizard({
     )
   }
 
-  // New: precise enablement for Save & Close (bug fix).
+  // Enablement for non-final Save & Close.
   // Step 2 (Role Details): only if dirty. Steps >2: enable if pitch exists or dirty. Step 1 stays disabled.
   const isDirty = methods.formState.isDirty
   const canSaveAndClose =
@@ -107,6 +108,14 @@ export default function PitchWizard({
       : currentStep > 2
         ? !!pitchId || isDirty
         : isDirty
+
+  // Final step enablement: block until pitch is displayed in UI.
+  // Allow if generation error is present (user can save draft).
+  const watchedContent = (methods.watch("pitchContent") || "") as string
+  const hasPitchContent = watchedContent.trim().length > 0
+  const canSubmitFinal = finalPitchError
+    ? true
+    : !isPitchLoading && hasPitchContent
 
   return (
     <FormProvider {...methods}>
@@ -224,7 +233,7 @@ export default function PitchWizard({
           )}
 
           <div className="flex items-center space-x-4">
-            {/* Save & Close (bug fix: conditional enablement) */}
+            {/* Save & Close (non-final) */}
             {currentStep < totalSteps && (
               <Button
                 variant="outline"
@@ -264,6 +273,16 @@ export default function PitchWizard({
                 type="button"
                 variant="outline"
                 onClick={handleSubmitFinal}
+                disabled={!canSubmitFinal}
+                title={
+                  !canSubmitFinal
+                    ? finalPitchError
+                      ? undefined
+                      : isPitchLoading
+                        ? "Pitch is still generating"
+                        : "Pitch not yet displayed"
+                    : undefined
+                }
                 className="group flex items-center px-6 py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />
@@ -273,7 +292,7 @@ export default function PitchWizard({
           </div>
         </div>
 
-        {/* Mobile navigation - fixed at bottom */}
+        {/* Mobile navigation */}
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-4 lg:hidden">
           <div className="flex items-center justify-between gap-3">
             {currentStep > 1 && currentStep < totalSteps ? (
@@ -330,6 +349,16 @@ export default function PitchWizard({
                 type="button"
                 variant="outline"
                 onClick={handleSubmitFinal}
+                disabled={!canSubmitFinal}
+                title={
+                  !canSubmitFinal
+                    ? finalPitchError
+                      ? undefined
+                      : isPitchLoading
+                        ? "Pitch is still generating"
+                        : "Pitch not yet displayed"
+                    : undefined
+                }
                 className="group flex flex-1 items-center justify-center py-3 font-normal text-gray-600 transition-all duration-200 hover:text-gray-800"
               >
                 <Save className="mr-2 size-4 group-hover:scale-110" />

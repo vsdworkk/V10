@@ -204,8 +204,8 @@ export default function ReviewStep({
     return (
       <div className="space-y-4">
         <div className="rounded-md border border-green-200 bg-green-50 p-3 text-center font-medium text-green-800">
-          <strong>Generating your pitch...</strong> The content will appear
-          below as soon as it's ready.
+          <strong>Generating your pitch...</strong> Please keep this page open
+          and avoid refreshing to prevent losing your progress.
         </div>
 
         {/* Editor toolbar (disabled during loading) */}
