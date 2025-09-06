@@ -6,6 +6,7 @@ Hero section component for the landing page with call-to-action.
 
 import Link from "next/link"
 import Image from "next/image"
+import { useEffect, useRef } from "react"
 
 import { Icons } from "@/components/icons"
 import { buttonVariants } from "@/components/ui/button"
@@ -81,18 +82,106 @@ function HeroCTA() {
   )
 }
 
-function HeroImage() {
+function HeroVideo() {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    // Ensure video plays on component mount
+    const playVideo = async () => {
+      try {
+        await video.play()
+      } catch (error) {
+        console.log("Autoplay was prevented:", error)
+        // Fallback: show poster and controls
+        video.controls = true
+      }
+    }
+
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+    if (prefersReducedMotion) {
+      video.pause()
+      video.controls = true
+      return
+    }
+
+    playVideo()
+
+    // Pause video when tab is not visible to save bandwidth
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        video.pause()
+      } else if (!prefersReducedMotion) {
+        playVideo()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
+
   return (
     <div className="relative mx-auto flex w-full items-center justify-center">
-      <Image
-        src="/hero-placeholder-image.png"
-        alt="APSPitchPro Dashboard"
-        width={1920}
-        height={1080}
-        priority
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-        className="mt-16 max-w-screen-lg rounded-lg border shadow-lg"
-      />
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        disablePictureInPicture
+        preload="metadata"
+        poster="/hero-placeholder-image.png"
+        className="mt-16 h-auto w-full max-w-screen-lg rounded-lg border object-cover shadow-lg transition-opacity duration-300 sm:rounded-xl"
+        style={{
+          maxWidth: "1200px",
+          aspectRatio: "16/9",
+          width: "100%",
+          height: "auto"
+        }}
+        aria-label="APSPitchPro platform demonstration video"
+        onLoadedData={() => {
+          // Ensure smooth transition from poster to video
+          if (videoRef.current) {
+            videoRef.current.style.opacity = "1"
+          }
+        }}
+        onError={e => {
+          console.error("Video failed to load, falling back to image")
+          // Fallback to poster image if video fails to load
+          const target = e.currentTarget
+          const container = target.parentNode as HTMLDivElement
+          if (container) {
+            container.innerHTML = `
+              <img 
+                src="/hero-placeholder-image.png" 
+                alt="APSPitchPro Dashboard" 
+                class="mt-16 max-w-screen-lg rounded-lg border shadow-lg w-full h-auto"
+                style="max-width: 1200px"
+              />
+            `
+          }
+        }}
+      >
+        <source src="/hero-demo-video.mp4" type="video/mp4" />
+        {/* Fallback content for browsers that don't support video */}
+        <Image
+          src="/hero-placeholder-image.png"
+          alt="APSPitchPro Dashboard"
+          width={1920}
+          height={1080}
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+          className="mt-16 max-w-screen-lg rounded-lg border shadow-lg"
+        />
+      </video>
     </div>
   )
 }
@@ -104,8 +193,7 @@ export function HeroSection() {
         <HeroPill />
         <HeroTitles />
         <HeroCTA />
-        <HeroImage />
-        <div className="from-background via-background pointer-events-none absolute inset-x-0 -bottom-12 h-1/3 bg-gradient-to-t to-transparent lg:h-1/4"></div>
+        <HeroVideo />
       </div>
     </section>
   )
