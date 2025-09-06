@@ -2,8 +2,6 @@
 This server page displays the main features and capabilities of the product.
 */
 
-"use server"
-
 import { Card, CardContent } from "@/components/ui/card"
 import { BarChart, Clock, Settings, Shield, Users, Zap } from "lucide-react"
 

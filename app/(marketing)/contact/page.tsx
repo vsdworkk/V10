@@ -2,8 +2,6 @@
 This server page displays a contact form for users to get in touch.
 */
 
-"use server"
-
 import {
   Card,
   CardContent,

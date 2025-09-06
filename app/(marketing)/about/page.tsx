@@ -2,8 +2,6 @@
 This server page displays information about the company, mission, and team.
 */
 
-"use server"
-
 import { Card, CardContent } from "@/components/ui/card"
 
 export default async function AboutPage() {

@@ -19,8 +19,6 @@
  * - If the pitch is not found or doesn't belong to the user, redirects to /dashboard
  */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getPitchByIdAction } from "@/actions/db/pitches-actions"

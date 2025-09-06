@@ -1,5 +1,3 @@
-"use server"
-
 import { notFound } from "next/navigation"
 import { getPost, getBlogPosts } from "@/lib/blog"
 import { formatDate } from "@/lib/utils"

@@ -2,8 +2,6 @@
 This server page is the marketing homepage.
 */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import { HeroSection } from "@/components/landing/hero"
 import { ProblemSection } from "@/components/landing/problem-section"

@@ -2,8 +2,6 @@
 This server page displays pricing options for the product, integrating Stripe payment links.
 */
 
-"use server"
-
 import { auth } from "@clerk/nextjs/server"
 import NewPricingSection from "@/components/landing/new-pricing-section"
 
