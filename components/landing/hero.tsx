@@ -138,7 +138,6 @@ function HeroVideo() {
         playsInline
         disablePictureInPicture
         preload="metadata"
-        poster="/hero-placeholder-image.png"
         className="mt-16 h-auto w-full max-w-screen-lg rounded-lg border object-cover shadow-lg transition-opacity duration-300 sm:rounded-xl"
         style={{
           maxWidth: "1200px",
@@ -160,27 +159,21 @@ function HeroVideo() {
           const container = target.parentNode as HTMLDivElement
           if (container) {
             container.innerHTML = `
-              <img 
-                src="/hero-placeholder-image.png" 
-                alt="APSPitchPro Dashboard" 
-                class="mt-16 max-w-screen-lg rounded-lg border shadow-lg w-full h-auto"
-                style="max-width: 1200px"
-              />
+              <div class="mt-16 max-w-screen-lg rounded-lg border shadow-lg w-full h-auto bg-gray-200 flex items-center justify-center" style="max-width: 1200px; aspect-ratio: 16/9;">
+                <p class="text-gray-500">Video unavailable</p>
+              </div>
             `
           }
         }}
       >
         <source src="/hero-demo-video.mp4" type="video/mp4" />
         {/* Fallback content for browsers that don't support video */}
-        <Image
-          src="/hero-placeholder-image.png"
-          alt="APSPitchPro Dashboard"
-          width={1920}
-          height={1080}
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-          className="mt-16 max-w-screen-lg rounded-lg border shadow-lg"
-        />
+        <div
+          className="mt-16 flex h-auto w-full max-w-screen-lg items-center justify-center rounded-lg border bg-gray-200 shadow-lg"
+          style={{ maxWidth: "1200px", aspectRatio: "16/9" }}
+        >
+          <p className="text-gray-500">Video not supported</p>
+        </div>
       </video>
     </div>
   )

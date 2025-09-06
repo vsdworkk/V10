@@ -13,9 +13,9 @@ export default async function MarketingLayout({
     <>
       <link
         rel="preload"
-        as="image"
-        href="/hero-placeholder-image.png"
-        imageSizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+        as="video"
+        href="/hero-demo-video.mp4"
+        type="video/mp4"
       />
       <div className="relative flex min-h-screen flex-col bg-white">
         <Header />
