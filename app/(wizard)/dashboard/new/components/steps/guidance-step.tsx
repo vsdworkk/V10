@@ -194,7 +194,7 @@ export default function GuidanceStep({
         {/* STAR examples count chooser */}
         <div className="space-y-4">
           <p className="font-medium text-gray-700">
-            How many STAR examples do you want to include?
+            How many examples would you like to include?
           </p>
           <div className="grid grid-cols-3 gap-4">
             {possibleStarCounts.map(val => (

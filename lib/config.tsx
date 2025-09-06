@@ -1,7 +1,20 @@
-/*
-Site configuration for APSPitchPro - AI-Powered Pitch Generation SaaS
-*/
+/**
+ * @file lib/config.tsx
+ * @description
+ * Site-wide configuration for APSPitchPro. Centralizes marketing navigation,
+ * pricing, FAQs, and basic site metadata. The header items power the top
+ * navigation via components/menu.tsx which reads `siteConfig.header`.
+ *
+ * Change in this step:
+ * - Added a new public navigation link `{ href: "/job-picks", label: "APS Job Picks" }`
+ *   to expose the SEO-friendly public page implemented in Step 7.
+ *
+ * Notes:
+ * - Menu expects simple link items to follow the `{ href, label }` shape.
+ * - Keep this file free of runtime secrets. Only NEXT_PUBLIC_* vars may appear here.
+ */
 
+import type React from "react"
 import { Icons } from "@/components/icons"
 
 export const BLUR_FADE_DELAY = 0.15
@@ -11,7 +24,6 @@ interface NavigationLink {
   href: string
   label: string
 }
-
 interface NavigationDropdown {
   trigger: string
   content: {
@@ -28,7 +40,6 @@ interface NavigationDropdown {
     }>
   }
 }
-
 type NavigationItem = NavigationLink | NavigationDropdown
 
 export const siteConfig = {
@@ -53,6 +64,11 @@ export const siteConfig = {
     {
       href: "/#the-solution",
       label: "Features"
+    },
+    // Added in Step 8: public marketing page for curated APS roles
+    {
+      href: "/job-picks",
+      label: "APS Job Picks"
     },
     {
       href: "/#pricing",

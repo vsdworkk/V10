@@ -130,14 +130,17 @@ function formatPitchAsHtml(text: any): string {
   }
 
   if (json && (json.introduction || json.starExamples || json.conclusion)) {
+    const para = (s: unknown) =>
+      `<p>${escape(String(s ?? "")).replace(/\r?\n/g, "<br>")}</p>`
     let html = ""
-    if (json.introduction) html += `<p>${escape(json.introduction)}</p>`
+    if (json.introduction) html += para(json.introduction)
     if (Array.isArray(json.starExamples)) {
       for (const ex of json.starExamples) {
-        if (ex?.content) html += `<p>${escape(ex.content)}</p>`
+        const content = typeof ex === "string" ? ex : (ex?.content ?? "")
+        if (content) html += para(content)
       }
     }
-    if (json.conclusion) html += `<p>${escape(json.conclusion)}</p>`
+    if (json.conclusion) html += para(json.conclusion)
     return html
   }
 

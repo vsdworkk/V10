@@ -82,7 +82,7 @@ export const pitchWizardSchema = z.object({
   userId: z.string().optional(),
   roleName: z
     .string()
-    .min(10, "Role name must be at least 10 characters")
+    .min(1, "Role name must be at least 1 character")
     .max(150, "Role name must be 150 characters or fewer"),
   organisationName: z
     .string()

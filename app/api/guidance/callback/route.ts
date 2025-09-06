@@ -5,64 +5,62 @@ import { debugLog } from "@/lib/debug"
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json()
-
-    // Extract the unique ID (pitch ID) from common locations
-    let uniqueId = ""
-    if (data.input_variables?.id_unique) {
-      uniqueId = data.input_variables.id_unique
-    } else if (data.output?.data?.id_unique) {
-      uniqueId = data.output.data.id_unique
-    } else if (data.id_unique) {
-      uniqueId = data.id_unique
-    } else if (data.data?.id_unique) {
-      uniqueId = data.data.id_unique
+    // Optional: require shared secret for n8n callbacks
+    const expectedAuth = process.env.N8N_CALLBACK_AUTH
+    if (expectedAuth) {
+      const sent = req.headers.get("authorization")
+      if (sent !== expectedAuth) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
     }
 
+    const data = await req.json()
+
+    // Correlation id / pitch id
+    const uniqueId =
+      data?.input_variables?.id_unique ??
+      data?.output?.data?.id_unique ??
+      data?.id_unique ??
+      data?.data?.id_unique ??
+      data?.requestId ??
+      data?.pitch_id ??
+      ""
+
     if (!uniqueId) {
-      console.error("No unique ID found in callback data", data)
       return NextResponse.json(
         { error: "No unique ID provided in callback" },
         { status: 400 }
       )
     }
 
-    // Extract the guidance text
-    let albertGuidance = ""
-    if (data.output?.data?.["AI Guidance"]) {
-      albertGuidance = data.output.data["AI Guidance"]
-    } else if (data.data?.["AI Guidance"]) {
-      albertGuidance = data.data["AI Guidance"]
-    }
+    // Guidance text from various shapes: PromptLayer or n8n
+    const albertGuidance =
+      data?.output?.data?.["AI Guidance"] ??
+      data?.data?.["AI Guidance"] ??
+      data?.output?.data?.guidance ??
+      data?.data?.guidance ??
+      data?.guidance ??
+      data?.albertGuidance ??
+      ""
 
     if (!albertGuidance) {
-      console.error("No guidance text found in callback data", data)
       return NextResponse.json(
         { error: "No guidance text found in callback" },
         { status: 400 }
       )
     }
 
-    // Update the database
-    debugLog(
-      `Updating pitch with execution ID ${uniqueId} and guidance text (${albertGuidance.length} chars)`
-    )
-    const updateResult = await updatePitchByExecutionId(uniqueId, {
-      albertGuidance
-    })
-
-    if (!updateResult.isSuccess) {
-      console.error(`Failed to update pitch: ${updateResult.message}`)
-      return NextResponse.json({ error: updateResult.message }, { status: 500 })
+    const res = await updatePitchByExecutionId(uniqueId, { albertGuidance })
+    if (!res.isSuccess) {
+      return NextResponse.json({ error: res.message }, { status: 500 })
     }
 
-    debugLog("Guidance saved successfully")
+    debugLog(`Guidance saved for ${uniqueId} (${albertGuidance.length} chars)`)
     return NextResponse.json({
       success: true,
       message: "Guidance saved successfully"
     })
   } catch (error) {
-    console.error("Error processing guidance callback:", error)
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

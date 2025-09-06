@@ -102,6 +102,7 @@ export default function Features({
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
   const carouselRef = useRef<HTMLUListElement>(null)
   const ref = useRef(null)
+  const isProgrammaticScroll = useRef(false)
   const isInView = useInView(ref, {
     once: true,
     amount: 0.5
@@ -123,6 +124,7 @@ export default function Features({
     if (carouselRef.current) {
       const card = carouselRef.current.querySelectorAll(".card")[index]
       if (card) {
+        isProgrammaticScroll.current = true
         const cardRect = card.getBoundingClientRect()
         const carouselRect = carouselRef.current.getBoundingClientRect()
         const offset =
@@ -134,6 +136,11 @@ export default function Features({
           left: carouselRef.current.scrollLeft + offset,
           behavior: "smooth"
         })
+
+        // Reset the flag after scroll animation completes
+        setTimeout(() => {
+          isProgrammaticScroll.current = false
+        }, 500)
       }
     }
   }
@@ -164,6 +171,11 @@ export default function Features({
     const carousel = carouselRef.current
     if (carousel) {
       const handleScroll = () => {
+        // Don't update currentIndex during programmatic scrolling
+        if (isProgrammaticScroll.current) {
+          return
+        }
+
         const scrollLeft = carousel.scrollLeft
         const cardWidth = carousel.querySelector(".card")?.clientWidth || 0
         const newIndex = Math.min(
