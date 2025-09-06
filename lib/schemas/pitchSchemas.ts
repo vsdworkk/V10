@@ -98,7 +98,7 @@ export const updatePitchSchema = z
     userId: z.string(),
 
     // Role details
-    roleName: z.string().min(10).max(150),
+    roleName: z.string().min(1).max(150),
     roleLevel: z.string().nonempty(),
 
     // Meta

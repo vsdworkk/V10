@@ -63,12 +63,12 @@ export default function ExperienceStep() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="mb-4 block text-sm font-medium text-gray-700">
-                  Relevant Experience (Copy and Paste Your Resume Here)
+                  Relevant Experience
                 </FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
-                    placeholder="Paste your resume, CV, or describe your relevant work experience here..."
+                    placeholder="Paste your resume ,old pitches or any past work experience information here."
                     className="min-h-[300px] w-full resize-none rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200"
                     style={
                       {
