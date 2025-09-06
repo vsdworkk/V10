@@ -14,7 +14,7 @@ const data = [
     title: "1. Complete Guided Questions",
     content:
       "Sign up, open your dashboard, and hit create pitch. The wizard asks super simple questions to gather information about your experience ~ 10 minutes.",
-    image: "/First-step-image.png",
+    image: "/first-step-image-new.png",
     icon: <MessageSquare className="text-primary size-6" />
   },
   {
@@ -22,14 +22,14 @@ const data = [
     title: "2. AI Crafts Your Personalised Pitch",
     content:
       "Our specialised APS-focused AI takes your unique information, aligns it precisely with relevant APS frameworks, addresses key selection criteria using the STAR structure, and crafts a personalised pitch that resonates with APS recruiters.",
-    image: "/Second-step-image.png",
+    image: "/second-step-image-new.png",
     icon: <Zap className="text-primary size-6" />
   },
   {
     id: 3,
     title: "3. Download & Submit",
     content: "Export your ready to submit pitch in pdf/doc and submit. Done.",
-    image: "/Third-step-image.png",
+    image: "/third-step-image-new.png",
     icon: <Download className="text-primary size-6" />
   }
 ]
