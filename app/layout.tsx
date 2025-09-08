@@ -28,10 +28,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: "APSPitchPro",
-  description: "3X Your Interview Chances With AI-Powered Pitches",
-  verification: {
-    google: "sApD36Oz-lEo2szSB7pik9OsJ0uKY0q5Gb1iyIqNLJw"
-  }
+  description: "3X Your Interview Chances With AI-Powered Pitches"
 }
 
 export default async function RootLayout({
