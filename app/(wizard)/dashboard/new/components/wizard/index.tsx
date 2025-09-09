@@ -66,14 +66,16 @@ export default function PitchWizard({
     retryPitchGeneration,
     // Feedback dialog control
     showFeedbackDialog,
-    setShowFeedbackDialog
+    setShowFeedbackDialog,
+    aiGuidance
   } = useWizard({ userId, pitchData, initialStep })
 
   function renderStep() {
     if (currentStep === 1) return <WizardIntroStep />
     if (currentStep === 2) return <RoleStep />
     if (currentStep === 3) return <ExperienceStep />
-    if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
+    if (currentStep === 4)
+      return <GuidanceStep pitchId={pitchId} aiGuidance={aiGuidance} />
     if (currentStep === 5) return <StarExamplesIntroStep />
 
     const firstActualStarStep = 6

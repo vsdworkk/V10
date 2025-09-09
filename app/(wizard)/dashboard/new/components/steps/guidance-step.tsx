@@ -2,20 +2,32 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { useState, useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { RefreshCw } from "lucide-react"
-import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
 import { debugLog } from "@/lib/debug"
 import { PitchWizardFormData } from "../wizard/schema"
 import { useParams } from "next/navigation"
 
 interface GuidanceStepProps {
-  pitchId?: string // Accept pitchId as an optional prop
+  pitchId?: string
+  aiGuidance: {
+    isLoading: boolean
+    guidance: string | null
+    error: string | null
+    requestId: string | null
+    fetchGuidance: (
+      jobDescription: string,
+      experience: string,
+      userId: string,
+      pitchId?: string
+    ) => Promise<void>
+  }
 }
 
 export default function GuidanceStep({
-  pitchId: pitchIdFromProp
+  pitchId: pitchIdFromProp,
+  aiGuidance
 }: GuidanceStepProps) {
   const { watch, setValue, getValues, formState } =
     useFormContext<PitchWizardFormData>()
@@ -33,51 +45,7 @@ export default function GuidanceStep({
 
   const definitivePitchId = pitchIdFromProp || (params?.pitchId as string)
 
-  const { isLoading, guidance, error, requestId, fetchGuidance } =
-    useAiGuidance()
-
-  const hasRequestedRef = useRef(false)
-
-  // Initial fetch of guidance if conditions are met (guarded to one fire)
-  useEffect(() => {
-    debugLog(
-      "[GuidanceStep] Initial guidance check - albertGuidance:",
-      albertGuidance ? "present" : "not present",
-      "definitivePitchId:",
-      definitivePitchId
-    )
-
-    if (
-      !albertGuidance &&
-      roleDescription &&
-      relevantExperience &&
-      userId &&
-      definitivePitchId &&
-      !hasRequestedRef.current
-    ) {
-      debugLog(
-        "[GuidanceStep] Conditions met for initial guidance request, calling fetchGuidance"
-      )
-      hasRequestedRef.current = true
-      fetchGuidance(
-        roleDescription,
-        relevantExperience,
-        userId,
-        definitivePitchId
-      )
-    } else if (albertGuidance) {
-      debugLog(
-        "[GuidanceStep] Not fetching guidance as it already exists in form state"
-      )
-    }
-  }, [
-    albertGuidance,
-    roleDescription,
-    relevantExperience,
-    userId,
-    definitivePitchId,
-    fetchGuidance
-  ])
+  const { isLoading, guidance, error, requestId, fetchGuidance } = aiGuidance
 
   // Update form when guidance is received, only if different from current value
   useEffect(() => {
@@ -94,8 +62,6 @@ export default function GuidanceStep({
   // Manual retry handler
   const handleRefetchGuidance = () => {
     if (roleDescription && relevantExperience && userId && definitivePitchId) {
-      // Reset the request flag to allow a controlled retry later if needed
-      hasRequestedRef.current = false
       fetchGuidance(
         roleDescription,
         relevantExperience,
