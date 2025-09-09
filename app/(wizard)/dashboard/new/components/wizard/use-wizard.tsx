@@ -18,6 +18,7 @@ import {
   firstStepOfSection,
   mapExistingDataToDefaults
 } from "./helpers"
+import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
 
 interface UseWizardOptions {
   userId: string
@@ -63,6 +64,8 @@ export function useWizard({
 
   // Feedback dialog
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
+
+  const aiGuidance = useAiGuidance()
 
   // React Hook Form
   const methods = useForm<PitchWizardFormData>({
@@ -292,16 +295,42 @@ export function useWizard({
       setCurrentStep(nextStep)
       const formData = methods.getValues()
       setIsSavingInBackground(true)
-      savePitchData(formData, pitchId, setPitchId, toast, nextStep)
-        .catch(() => {
-          toast({
-            title: "Save Warning",
-            description:
-              "Your progress will be saved automatically. You can continue working.",
-            variant: "default"
-          })
+      try {
+        const saved = await savePitchData(
+          formData,
+          pitchId,
+          setPitchId,
+          toast,
+          nextStep
+        )
+
+        if (
+          currentStep === 3 &&
+          !formData.albertGuidance &&
+          formData.roleDescription &&
+          formData.relevantExperience &&
+          formData.userId
+        ) {
+          const definitivePitchId = saved?.id || pitchId
+          if (definitivePitchId) {
+            aiGuidance.fetchGuidance(
+              formData.roleDescription,
+              formData.relevantExperience,
+              formData.userId,
+              definitivePitchId
+            )
+          }
+        }
+      } catch {
+        toast({
+          title: "Save Warning",
+          description:
+            "Your progress will be saved automatically. You can continue working.",
+          variant: "default"
         })
-        .finally(() => setIsSavingInBackground(false))
+      } finally {
+        setIsSavingInBackground(false)
+      }
     } catch {
       toast({
         title: "Validation Error",
@@ -319,7 +348,8 @@ export function useWizard({
     pitchId,
     setPitchId,
     toast,
-    isNavigating
+    isNavigating,
+    aiGuidance
   ])
 
   const handleBack = useCallback(() => {
@@ -467,6 +497,8 @@ export function useWizard({
     // Feedback dialog control
     showFeedbackDialog,
     setShowFeedbackDialog,
+
+    aiGuidance,
 
     // Actions
     handleNext,
