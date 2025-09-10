@@ -1,5 +1,5 @@
 // lib/hooks/use-ai-guidance.ts
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   requestGuidance,
   checkGuidanceStatus
@@ -14,71 +14,78 @@ export function useAiGuidance() {
   const [triggerTimestamp, setTriggerTimestamp] = useState<string | null>(null)
 
   // Request guidance (idempotent at service & server)
-  const fetchGuidance = async (
-    jobDescription: string,
-    experience: string,
-    userId: string,
-    pitchId?: string
-  ) => {
-    debugLog("[useAiGuidance] fetchGuidance called - setting isLoading to true")
-    setIsLoading(true)
-    setError(null)
-    setGuidance(null) // reset guidance on retry
-
-    try {
-      const result = await requestGuidance({
-        jobDescription,
-        experience,
-        userId,
-        pitchId
-      })
-
-      if (!result.isSuccess) {
-        debugLog(
-          "[useAiGuidance] fetchGuidance received error:",
-          result.message
-        )
-        throw new Error(result.message)
-      }
-
+  const fetchGuidance = useCallback(
+    async (
+      jobDescription: string,
+      experience: string,
+      userId: string,
+      pitchId?: string
+    ) => {
       debugLog(
-        "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
-        result.data
+        "[useAiGuidance] fetchGuidance called - setting isLoading to true"
       )
-      setTriggerTimestamp(new Date().toString())
-      setRequestId(result.data) // triggers polling useEffect
+      setIsLoading(true)
+      setError(null)
+      setGuidance(null) // reset guidance on retry
 
-      // Immediate status check after a slight delay to catch fast callbacks
-      setTimeout(() => {
-        debugLog("[useAiGuidance] Immediate check for existing guidance")
-        checkGuidanceStatus(result.data)
-          .then(statusResult => {
-            if (statusResult.isSuccess && statusResult.data) {
-              debugLog(
-                "[useAiGuidance] Found guidance immediately:",
-                statusResult.data.substring(0, 20) + "."
-              )
-              setGuidance(statusResult.data)
-              setIsLoading(false)
-            } else {
-              debugLog("[useAiGuidance] No immediate guidance found, will poll")
-            }
-          })
-          .catch(err =>
-            console.error(
-              "[useAiGuidance] Error checking immediate guidance:",
-              err
-            )
+      try {
+        const result = await requestGuidance({
+          jobDescription,
+          experience,
+          userId,
+          pitchId
+        })
+
+        if (!result.isSuccess) {
+          debugLog(
+            "[useAiGuidance] fetchGuidance received error:",
+            result.message
           )
-      }, 100)
-    } catch (err) {
-      console.error("[useAiGuidance] fetchGuidance error:", err)
-      setError(
-        err instanceof Error ? err.message : "Failed to request guidance"
-      )
-      setIsLoading(false)
-    }
-  }
+          throw new Error(result.message)
+        }
+
+        debugLog(
+          "[useAiGuidance] fetchGuidance succeeded, setting requestId:",
+          result.data
+        )
+        setTriggerTimestamp(new Date().toString())
+        setRequestId(result.data) // triggers polling useEffect
+
+        // Immediate status check after a slight delay to catch fast callbacks
+        setTimeout(() => {
+          debugLog("[useAiGuidance] Immediate check for existing guidance")
+          checkGuidanceStatus(result.data)
+            .then(statusResult => {
+              if (statusResult.isSuccess && statusResult.data) {
+                debugLog(
+                  "[useAiGuidance] Found guidance immediately:",
+                  statusResult.data.substring(0, 20) + "."
+                )
+                setGuidance(statusResult.data)
+                setIsLoading(false)
+              } else {
+                debugLog(
+                  "[useAiGuidance] No immediate guidance found, will poll"
+                )
+              }
+            })
+            .catch(err =>
+              console.error(
+                "[useAiGuidance] Error checking immediate guidance:",
+                err
+              )
+            )
+        }, 100)
+      } catch (err) {
+        console.error("[useAiGuidance] fetchGuidance error:", err)
+        setError(
+          err instanceof Error ? err.message : "Failed to request guidance"
+        )
+        setIsLoading(false)
+      }
+    },
+    []
+  ) // Empty dependency array - function doesn't depend on any props/state
 
   // Poll for guidance status when requestId changes
   useEffect(() => {

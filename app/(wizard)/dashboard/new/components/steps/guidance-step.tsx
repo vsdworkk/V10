@@ -75,8 +75,9 @@ export default function GuidanceStep({
     roleDescription,
     relevantExperience,
     userId,
-    definitivePitchId,
-    fetchGuidance
+    definitivePitchId
+    // fetchGuidance is now memoized and doesn't need to be in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ])
 
   // Update form when guidance is received, only if different from current value
