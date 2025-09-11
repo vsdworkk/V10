@@ -9,9 +9,98 @@ import { useAiGuidance } from "@/lib/hooks/use-ai-guidance"
 import { debugLog } from "@/lib/debug"
 import { PitchWizardFormData } from "../wizard/schema"
 import { useParams } from "next/navigation"
+import { EditorContent, useEditor } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import BoldExtension from "@tiptap/extension-bold"
+import BulletListExtension from "@tiptap/extension-bullet-list"
+import OrderedListExtension from "@tiptap/extension-ordered-list"
+import ListItemExtension from "@tiptap/extension-list-item"
 
 interface GuidanceStepProps {
   pitchId?: string // Accept pitchId as an optional prop
+}
+
+// Component to display guidance content with TipTap formatting
+function GuidanceDisplay({ content }: { content: string }) {
+  // Parse content - handle both old plain text and new JSON
+  let editorContent
+  try {
+    editorContent = JSON.parse(content)
+  } catch {
+    // Fallback for old plain text format
+    editorContent = `<div class="whitespace-pre-wrap">${content}</div>`
+  }
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      BoldExtension,
+      BulletListExtension,
+      OrderedListExtension,
+      ListItemExtension
+    ],
+    content: editorContent,
+    editable: false, // Read-only
+    editorProps: {
+      attributes: {
+        class: "text-sm focus:outline-none"
+      }
+    }
+  })
+
+  return (
+    <div className="guidance-content">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+          .guidance-content p {
+            margin-bottom: 1rem;
+          }
+          .guidance-content p:last-child {
+            margin-bottom: 0;
+          }
+          .guidance-content ul {
+            margin-bottom: 1rem;
+            list-style-type: disc;
+            padding-left: 1.5rem;
+          }
+          .guidance-content ul:last-child {
+            margin-bottom: 0;
+          }
+          .guidance-content li {
+            margin-bottom: 0.5rem;
+            display: list-item;
+          }
+          .guidance-content li:last-child {
+            margin-bottom: 0;
+          }
+          .guidance-content ul ul {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            list-style-type: disc;
+            padding-left: 1.5rem;
+          }
+          .guidance-content h1, .guidance-content h2, .guidance-content h3 {
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+          }
+          .guidance-content h1:first-child, .guidance-content h2:first-child, .guidance-content h3:first-child {
+            margin-top: 0;
+          }
+          .guidance-content ol {
+            margin-bottom: 1rem;
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+          }
+          .guidance-content ol li {
+            display: list-item;
+          }
+        `
+        }}
+      />
+      <EditorContent editor={editor} />
+    </div>
+  )
 }
 
 export default function GuidanceStep({
@@ -185,9 +274,7 @@ export default function GuidanceStep({
         {!isLoading && !error && albertGuidance && (
           <Card className="rounded-xl border border-gray-200 bg-gray-50">
             <CardContent className="pt-6">
-              <div className="whitespace-pre-wrap text-sm">
-                {albertGuidance}
-              </div>
+              <GuidanceDisplay content={albertGuidance} />
             </CardContent>
           </Card>
         )}
