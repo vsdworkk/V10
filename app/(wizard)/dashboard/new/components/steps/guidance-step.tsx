@@ -237,6 +237,9 @@ export default function GuidanceStep({
               style={{ color: "#444ec1" }}
             />
             <p>Generating AI Guidance...</p>
+            <p className="text-xs text-gray-500">
+              This can take up to 2 minutes, please do not refresh.
+            </p>
           </div>
         )}
 
