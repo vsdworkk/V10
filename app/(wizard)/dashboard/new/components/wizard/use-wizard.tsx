@@ -18,6 +18,11 @@ import {
   firstStepOfSection,
   mapExistingDataToDefaults
 } from "./helpers"
+import {
+  requestGuidance,
+  checkGuidanceStatus
+} from "@/lib/services/ai-guidance-service"
+import { debugLog } from "@/lib/debug"
 
 interface UseWizardOptions {
   userId: string
@@ -54,6 +59,18 @@ export function useWizard({
   const [finalPitchError, setFinalPitchError] = useState<string | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
   const [isSavingInBackground, setIsSavingInBackground] = useState(false)
+
+  // AI Guidance state - moved from individual GuidanceStep instances
+  const [isGuidanceLoading, setIsGuidanceLoading] = useState(false)
+  const [guidanceData, setGuidanceData] = useState<string | null>(null)
+  const [guidanceError, setGuidanceError] = useState<string | null>(null)
+  const [guidanceRequestId, setGuidanceRequestId] = useState<string | null>(
+    null
+  )
+  const hasRequestedGuidanceRef = useRef(false)
+  const [guidanceTriggerTimestamp, setGuidanceTriggerTimestamp] = useState<
+    string | null
+  >(null)
 
   // Generation confirmation and state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -335,6 +352,188 @@ export function useWizard({
     setCurrentStep(s => Math.max(s - 1, 1))
   }, [isPitchGenerationConfirmed, toast, isNavigating])
 
+  // AI Guidance functions - moved from individual GuidanceStep instances
+  const fetchGuidance = useCallback(
+    async (
+      jobDescription: string,
+      experience: string,
+      userId: string,
+      pitchId?: string
+    ) => {
+      debugLog(
+        "[useWizard] fetchGuidance called - setting isGuidanceLoading to true"
+      )
+      setIsGuidanceLoading(true)
+      setGuidanceError(null)
+      setGuidanceData(null) // reset guidance on retry
+
+      try {
+        const result = await requestGuidance({
+          jobDescription,
+          experience,
+          userId,
+          pitchId
+        })
+
+        if (!result.isSuccess) {
+          debugLog("[useWizard] fetchGuidance received error:", result.message)
+          throw new Error(result.message)
+        }
+
+        debugLog(
+          "[useWizard] fetchGuidance succeeded, setting requestId:",
+          result.data
+        )
+        setGuidanceTriggerTimestamp(new Date().toString())
+        setGuidanceRequestId(result.data) // triggers polling useEffect
+
+        // Immediate status check after a slight delay to catch fast callbacks
+        setTimeout(() => {
+          debugLog("[useWizard] Immediate check for existing guidance")
+          checkGuidanceStatus(result.data)
+            .then(statusResult => {
+              if (statusResult.isSuccess && statusResult.data) {
+                debugLog(
+                  "[useWizard] Found guidance immediately:",
+                  statusResult.data.substring(0, 20) + "."
+                )
+                setGuidanceData(statusResult.data)
+                setIsGuidanceLoading(false)
+              } else {
+                debugLog("[useWizard] No immediate guidance found, will poll")
+              }
+            })
+            .catch(err =>
+              console.error(
+                "[useWizard] Error checking immediate guidance:",
+                err
+              )
+            )
+        }, 100)
+      } catch (err) {
+        console.error("[useWizard] fetchGuidance error:", err)
+        setGuidanceError(
+          err instanceof Error ? err.message : "Failed to request guidance"
+        )
+        setIsGuidanceLoading(false)
+      }
+    },
+    []
+  )
+
+  // Poll for guidance status when guidanceRequestId changes
+  useEffect(() => {
+    if (!guidanceRequestId) return
+
+    let isPolling = true
+    let attempts = 0
+    const maxAttempts = 20
+    const pollInterval = 3000
+
+    const checkStatus = async () => {
+      if (!isPolling) return true
+      try {
+        const result = await checkGuidanceStatus(guidanceRequestId)
+        if (result.isSuccess && result.data) {
+          if (isPolling) {
+            setGuidanceData(result.data)
+            setIsGuidanceLoading(false)
+            isPolling = false
+          }
+          return true
+        }
+
+        attempts++
+        if (attempts >= maxAttempts) {
+          if (isPolling) {
+            setGuidanceError("Guidance generation timed out. Please try again.")
+            setIsGuidanceLoading(false)
+            isPolling = false
+          }
+          return true
+        }
+
+        return false
+      } catch (err) {
+        if (isPolling) {
+          setGuidanceError(
+            err instanceof Error
+              ? err.message
+              : "Failed to check guidance status"
+          )
+          setIsGuidanceLoading(false)
+          isPolling = false
+        }
+        return true // stop polling on error
+      }
+    }
+
+    const poll = async () => {
+      const shouldStop = await checkStatus()
+      if (!shouldStop && isPolling) {
+        setTimeout(poll, pollInterval)
+      }
+    }
+
+    setIsGuidanceLoading(true)
+    poll()
+
+    return () => {
+      debugLog("[useWizard] Guidance polling cleanup called, stopping polling")
+      isPolling = false
+    }
+  }, [guidanceRequestId, guidanceTriggerTimestamp])
+
+  // Auto-trigger guidance when step 4 is reached and conditions are met
+  useEffect(() => {
+    if (currentStep !== 4 || hasRequestedGuidanceRef.current) return
+
+    const formData = methods.getValues()
+    const { roleDescription, relevantExperience, albertGuidance } = formData
+
+    debugLog(
+      "[useWizard] Step 4 guidance check - albertGuidance:",
+      albertGuidance ? "present" : "not present",
+      "pitchId:",
+      pitchId
+    )
+
+    if (
+      !albertGuidance &&
+      roleDescription &&
+      relevantExperience &&
+      userId &&
+      pitchId
+    ) {
+      debugLog(
+        "[useWizard] Conditions met for guidance request, calling fetchGuidance"
+      )
+      hasRequestedGuidanceRef.current = true
+      fetchGuidance(roleDescription, relevantExperience, userId, pitchId)
+    } else if (albertGuidance) {
+      debugLog(
+        "[useWizard] Not fetching guidance as it already exists in form state"
+      )
+      setGuidanceData(albertGuidance)
+    }
+  }, [currentStep, methods, userId, pitchId, fetchGuidance])
+
+  // Update form when guidance is received
+  useEffect(() => {
+    if (guidanceData && currentStep === 4) {
+      const currentGuidance = methods.getValues("albertGuidance")
+      if (guidanceData !== currentGuidance) {
+        debugLog("[useWizard] Updating form with new guidance", guidanceData)
+        methods.setValue("albertGuidance", guidanceData, { shouldDirty: true })
+        if (guidanceRequestId) {
+          methods.setValue("agentExecutionId", guidanceRequestId, {
+            shouldDirty: true
+          })
+        }
+      }
+    }
+  }, [guidanceData, guidanceRequestId, currentStep, methods])
+
   const handleSaveAndClose = useCallback(async () => {
     window.dispatchEvent(new CustomEvent("flushUnsavedData"))
     await new Promise(resolve => setTimeout(resolve, 10))
@@ -463,6 +662,13 @@ export function useWizard({
 
     // Generation state
     isPitchGenerationConfirmed,
+
+    // AI Guidance state and actions
+    isGuidanceLoading,
+    guidanceData,
+    guidanceError,
+    guidanceRequestId,
+    fetchGuidance,
 
     // Feedback dialog control
     showFeedbackDialog,
