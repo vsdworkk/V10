@@ -79,19 +79,6 @@ export default function AIThinkingLoader({
             role="status"
             aria-live="polite"
           >
-            {/* Close */}
-            {onCancel && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-muted-foreground absolute right-2 top-2 size-7"
-                onClick={onCancel}
-                aria-label="Cancel generation"
-              >
-                <X className="size-4" />
-              </Button>
-            )}
-
             {errorMessage ? (
               <div className="space-y-2 py-2 text-center">
                 <p className="text-destructive font-medium">Error occurred</p>

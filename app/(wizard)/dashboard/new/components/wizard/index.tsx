@@ -184,14 +184,9 @@ export default function PitchWizard({
         {/* Mobile header */}
         <div className="mb-4 shrink-0 lg:hidden">
           <div className="px-2">
-            <h1 className="text-lg font-semibold leading-tight text-gray-900 sm:text-xl">
+            <h1 className="text-center text-xl font-semibold leading-tight text-gray-900 sm:text-2xl">
               {currentHeader}
             </h1>
-            {currentSection !== "INTRO" && (
-              <p className="mt-1 text-sm text-gray-600">
-                Complete the fields below to continue
-              </p>
-            )}
           </div>
         </div>
 

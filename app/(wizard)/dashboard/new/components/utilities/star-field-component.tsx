@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 
 interface StarFieldComponentProps {
   name: string
-  label: React.ReactNode
+  label: string
   placeholder: string
   schema: ZodTypeAny
   text: string
@@ -36,14 +36,16 @@ export default function StarFieldComponent({
       name={name as any}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="mb-2 block font-medium text-gray-700">
+          {/* Mobile-optimized label typography */}
+          <FormLabel className="mb-2 block text-sm font-medium text-gray-700 sm:text-base">
             {label}
           </FormLabel>
           <FormControl>
+            {/* Mobile-optimized textarea with responsive sizing */}
             <Textarea
               {...field}
               placeholder={placeholder}
-              className="min-h-48 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300 sm:min-h-24"
+              className="min-h-32 w-full resize-none rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 transition-all duration-300 focus:outline-none sm:min-h-48 sm:p-4 sm:text-base"
               style={
                 {
                   "--focus-ring-color": "#444ec1",
@@ -60,6 +62,7 @@ export default function StarFieldComponent({
               }}
             />
           </FormControl>
+          {/* Word count indicator */}
           <WordCountIndicator schema={schema} text={text} fieldName={name} />
         </FormItem>
       )}

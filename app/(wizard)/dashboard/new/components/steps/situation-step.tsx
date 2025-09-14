@@ -25,45 +25,52 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
     ) || ""
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
-      {/* Card layout with "Situation" heading inside */}
-      <div className="w-full sm:px-8">
-        {/* Card starts directly with Situation heading */}
-        <div className="mb-8 rounded-2xl bg-white p-3 shadow-sm sm:p-6">
-          {/* Bold "Situation" heading */}
-          <h2 className="mb-5 text-xl font-bold text-gray-800">Situation</h2>
+    <div className="px-2 py-1 sm:p-6">
+      {/* Mobile-optimized scrollable container with proper bottom padding for mobile nav */}
+      <div className="flex h-[calc(100vh-200px)] flex-col overflow-y-auto pb-20 sm:h-auto sm:pb-2">
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center">
+          {/* Mobile-optimized container with proper spacing */}
+          <div className="w-full sm:px-8">
+            {/* Card with responsive padding and mobile-optimized spacing */}
+            <div className="mb-6 rounded-xl bg-white p-4 shadow-sm sm:mb-8 sm:rounded-2xl sm:p-6">
+              {/* Mobile-optimized "Situation" heading */}
+              <h2 className="mb-4 text-lg font-bold text-gray-800 sm:mb-5 sm:text-xl">
+                Situation
+              </h2>
 
-          {/* Field 1: Where and when */}
-          <div className="mb-6">
-            <StarFieldComponent
-              name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
-              label="Where and when did this experience occur?"
-              placeholder="Describe the situation, context, and any challenges you faced..."
-              schema={
-                starExampleSchema.shape.situation.shape[
-                  "where-and-when-did-this-experience-occur"
-                ]
-              }
-              text={whereAndWhen}
-            />
+              {/* Field 1: Where and when - Mobile optimized spacing */}
+              <div className="mb-5 sm:mb-6">
+                <StarFieldComponent
+                  name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
+                  label="Where and when did this experience occur?"
+                  placeholder="Describe the situation, context, and any challenges you faced..."
+                  schema={
+                    starExampleSchema.shape.situation.shape[
+                      "where-and-when-did-this-experience-occur"
+                    ]
+                  }
+                  text={whereAndWhen}
+                />
+              </div>
+
+              {/* Field 2: Situation/Challenge - Mobile optimized spacing */}
+              <div className="mb-2">
+                <StarFieldComponent
+                  name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
+                  label="What was the problem faced by your team or workplace?"
+                  placeholder="Provide additional context or background information..."
+                  schema={
+                    starExampleSchema.shape.situation.shape[
+                      "briefly-describe-the-situation-or-challenge-you-faced"
+                    ]
+                  }
+                  text={situationOrChallenge}
+                />
+              </div>
+
+              {/* No extra bottom border or total words row */}
+            </div>
           </div>
-
-          {/* Field 2: Situation/Challenge */}
-          <div className="mb-2">
-            <StarFieldComponent
-              name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
-              label="What was the problem faced by your team or workplace?"
-              placeholder="Provide additional context or background information..."
-              schema={
-                starExampleSchema.shape.situation.shape[
-                  "briefly-describe-the-situation-or-challenge-you-faced"
-                ]
-              }
-              text={situationOrChallenge}
-            />
-          </div>
-
-          {/* No extra bottom border or total words row */}
         </div>
       </div>
     </div>

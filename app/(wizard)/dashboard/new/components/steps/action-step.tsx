@@ -39,7 +39,7 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
 
   const [steps, setSteps] = useState<ActionStepType[]>([])
   const [openStep, setOpenStep] = useState<string | undefined>(undefined)
-  const [tipsOpen, setTipsOpen] = useState<string | undefined>("tips-panel")
+  const [tipsOpen, setTipsOpen] = useState<string | undefined>(undefined) // Tips closed by default
   // Track unsaved changes for each step by step ID
   const pendingChangesRef = useRef<Map<string, string>>(new Map())
 
@@ -217,138 +217,151 @@ export default function ActionStep({ exampleIndex }: ActionStepProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col space-y-6">
-      {/* Action Header */}
-      <h2 className="text-2xl font-semibold text-gray-900">Action</h2>
+    <div className="px-2 py-1 sm:p-6">
+      {/* Mobile-optimized scrollable container with proper bottom padding for mobile nav */}
+      <div className="flex h-[calc(100vh-200px)] flex-col overflow-y-auto pb-20 sm:h-auto sm:pb-2">
+        <div className="mx-auto flex w-full max-w-4xl flex-col space-y-4 sm:space-y-6">
+          {/* Action Header - Mobile optimized */}
+          <h2 className="text-xl font-semibold text-gray-900 sm:text-2xl">
+            Action
+          </h2>
 
-      {/* Tips Accordion */}
-      <Accordion
-        type="single"
-        collapsible
-        value={tipsOpen}
-        onValueChange={setTipsOpen}
-        className="w-full"
-      >
-        <AccordionItem
-          value="tips-panel"
-          className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-        >
-          <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
-            <div className="flex items-center">
-              <div className="mr-3 flex size-8 items-center justify-center rounded-full border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 shadow-md">
-                <div className="relative">
-                  <Lightbulb
-                    className="size-5 text-amber-500 drop-shadow-sm"
-                    strokeWidth={2.5}
-                  />
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/30 to-amber-300/0" />
+          {/* Tips Accordion - Mobile optimized */}
+          <Accordion
+            type="single"
+            collapsible
+            value={tipsOpen}
+            onValueChange={setTipsOpen}
+            className="w-full"
+          >
+            <AccordionItem
+              value="tips-panel"
+              className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm sm:rounded-xl"
+            >
+              <AccordionTrigger className="px-4 py-3 transition-all hover:no-underline sm:px-6 sm:py-4">
+                <div className="flex items-center">
+                  <div className="mr-2 flex size-6 items-center justify-center rounded-full border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 shadow-md sm:mr-3 sm:size-8">
+                    <div className="relative">
+                      <Lightbulb
+                        className="size-3 text-amber-500 drop-shadow-sm sm:size-5"
+                        strokeWidth={2.5}
+                      />
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/30 to-amber-300/0" />
+                    </div>
+                  </div>
+                  <span className="text-base font-medium text-gray-900 sm:text-lg">
+                    Tips
+                  </span>
                 </div>
-              </div>
-              <span className="text-lg font-medium text-gray-900">Tips</span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-6 pt-2">
-            <div className="space-y-5 text-gray-700">
-              <p className="text-base text-gray-900">
-                Think about the overarching steps you took to complete the
-                assigned task, for example:
-              </p>
-              <div className="ml-6 space-y-4">
-                <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 1:</span> Consulting
-                  stakeholders or researching the issue.
-                </p>
-                <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 2:</span> Developing
-                  solutions or implementing actions.
-                </p>
-                <p className="text-base text-gray-700">
-                  <span className="font-bold">Step 3:</span> Presenting results
-                  or gathering feedback.
-                </p>
-              </div>
-              <p className="text-base text-gray-900">
-                Don't worry about formal or perfect wording, instead focus on
-                clearly explaining what you did and how you did it in each step.
-              </p>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+                <div className="space-y-3 text-gray-700 sm:space-y-5">
+                  <p className="text-sm text-gray-900 sm:text-base">
+                    Think about the overarching steps you took to complete the
+                    assigned task, for example:
+                  </p>
+                  <div className="ml-4 space-y-3 sm:ml-6 sm:space-y-4">
+                    <p className="text-sm text-gray-700 sm:text-base">
+                      <span className="font-bold">Step 1:</span> Consulting
+                      stakeholders or researching the issue.
+                    </p>
+                    <p className="text-sm text-gray-700 sm:text-base">
+                      <span className="font-bold">Step 2:</span> Developing
+                      solutions or implementing actions.
+                    </p>
+                    <p className="text-sm text-gray-700 sm:text-base">
+                      <span className="font-bold">Step 3:</span> Presenting
+                      results or gathering feedback.
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-900 sm:text-base">
+                    Don't worry about formal or perfect wording, instead focus
+                    on clearly explaining what you did and how you did it in
+                    each step.
+                  </p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-      {/* Action Section */}
-      <div className="w-full">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="px-6 py-4">
-            <div className="flex items-center">
-              <div
-                className="mr-3 flex size-8 items-center justify-center rounded-full shadow-md"
-                style={{
-                  background:
-                    "linear-gradient(to bottom right, #eef2ff, #ddd6fe)",
-                  borderColor: "#c7d2fe",
-                  borderWidth: "1px"
-                }}
-              >
-                <div className="relative">
-                  <Check
-                    className="size-5 drop-shadow-sm"
-                    style={{
-                      color: "#444ec1",
-                      filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
-                    }}
-                  />
+          {/* Action Section - Mobile optimized */}
+          <div className="w-full">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm sm:rounded-xl">
+              <div className="px-4 py-3 sm:px-6 sm:py-4">
+                <div className="flex items-center">
                   <div
-                    className="absolute inset-0 rounded-full"
+                    className="mr-2 flex size-6 items-center justify-center rounded-full shadow-md sm:mr-3 sm:size-8"
                     style={{
                       background:
-                        "linear-gradient(to top right, rgba(68, 78, 193, 0.3), rgba(68, 78, 193, 0))"
+                        "linear-gradient(to bottom right, #eef2ff, #ddd6fe)",
+                      borderColor: "#c7d2fe",
+                      borderWidth: "1px"
                     }}
-                  />
+                  >
+                    <div className="relative">
+                      <Check
+                        className="size-3 drop-shadow-sm sm:size-5"
+                        style={{
+                          color: "#444ec1",
+                          filter: "drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))"
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                          background:
+                            "linear-gradient(to top right, rgba(68, 78, 193, 0.3), rgba(68, 78, 193, 0))"
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-base font-medium text-gray-900 sm:text-lg">
+                    Your Steps
+                  </span>
                 </div>
               </div>
-              <span className="text-lg font-medium text-gray-900">
-                Your Steps
-              </span>
-            </div>
-          </div>
 
-          <div className="px-6 pb-6">
-            <div className="space-y-4">
-              <Accordion
-                type="single"
-                collapsible
-                value={openStep}
-                onValueChange={handleValueChange}
-                className="space-y-3"
-              >
-                {steps.map(step => (
-                  <StepItem
-                    key={step.id}
-                    step={step}
-                    onSave={handleSaveStep}
-                    exampleIndex={exampleIndex}
-                    pendingChangesRef={pendingChangesRef}
-                  />
-                ))}
-              </Accordion>
+              <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <Accordion
+                    type="single"
+                    collapsible
+                    value={openStep}
+                    onValueChange={handleValueChange}
+                    className="space-y-2 sm:space-y-3"
+                  >
+                    {steps.map(step => (
+                      <StepItem
+                        key={step.id}
+                        step={step}
+                        onSave={handleSaveStep}
+                        exampleIndex={exampleIndex}
+                        pendingChangesRef={pendingChangesRef}
+                      />
+                    ))}
+                  </Accordion>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddStep}
-                disabled={hasReachedMaxSteps}
-                className="group mt-4 flex w-full items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 py-4 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:text-gray-700"
-              >
-                <Plus className="mr-2 size-4 transition-transform group-hover:scale-110" />
-                Add Step {steps.length + 1}
-              </Button>
-              {hasReachedMaxSteps && (
-                <p className="text-xs text-gray-500">
-                  You've reached the maximum number of steps ({MAX_STEPS}).
-                </p>
-              )}
+                  {/* Add Step Button - Mobile optimized */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddStep}
+                    disabled={hasReachedMaxSteps}
+                    className="group mt-3 flex w-full items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-3 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:text-gray-700 active:scale-95 sm:mt-4 sm:rounded-2xl sm:py-4"
+                  >
+                    <Plus className="mr-2 size-4 transition-transform group-hover:scale-110" />
+                    <span className="text-sm sm:text-base">
+                      Add Step {steps.length + 1}
+                    </span>
+                  </Button>
+                  {hasReachedMaxSteps && (
+                    <p className="text-center text-xs text-gray-500">
+                      You've reached the maximum number of steps ({MAX_STEPS}).
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -398,54 +411,39 @@ function StepItem({
     return { min: 20, max: 150 } // Default fallback
   }
 
-  const whatLimits = getWordLimits(
-    actionStepSchema.shape["what-did-you-specifically-do-in-this-step"]
-  )
-
   const [what, setWhat] = useState<string>(
     step["what-did-you-specifically-do-in-this-step"] || ""
   )
 
-  // Track pending changes in parent ref
+  // Update pending changes tracker
   const updatePendingChange = (value: string) => {
-    pendingChangesRef.current.set(step.id, value)
+    if (value !== step["what-did-you-specifically-do-in-this-step"]) {
+      pendingChangesRef.current.set(step.id, value)
+    } else {
+      pendingChangesRef.current.delete(step.id)
+    }
   }
 
+  // Sync local state when step changes
   useEffect(() => {
     setWhat(step["what-did-you-specifically-do-in-this-step"] || "")
-    // Clear any pending changes when step data changes from external source
-    pendingChangesRef.current.delete(step.id)
-  }, [step, pendingChangesRef])
+  }, [step["what-did-you-specifically-do-in-this-step"]])
 
-  // Check if current values meet validation requirements
-  const isValidStep = () => {
-    const whatWords = what.trim().split(/\s+/).filter(Boolean).length
-
-    // "What" field is required and must meet schema requirements
-    if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
-      return false
-    }
-
-    return true
-  }
-
-  const canSave = isValidStep()
+  // Word count validation
+  const wordCount = (what || "").trim().split(/\s+/).filter(Boolean).length
+  const limits = getWordLimits(
+    actionStepSchema.shape["what-did-you-specifically-do-in-this-step"]
+  )
+  const isWordCountValid = wordCount >= limits.min && wordCount <= limits.max
+  const canSave = Boolean(what?.trim()) && isWordCountValid
 
   const handleSave = () => {
-    // Validate word counts before saving
-    const whatWords = what.trim().split(/\s+/).filter(Boolean).length
-
-    const failedFields: string[] = []
-
-    // Validate "what" field (required)
-    if (whatWords < whatLimits.min || whatWords > whatLimits.max) {
-      failedFields.push(
+    if (!canSave) {
+      // Trigger word count shake animation for validation feedback
+      const fieldNames = [
         `starExamples.${exampleIndex}.action.steps.${stepIndex}.what-did-you-specifically-do-in-this-step`
-      )
-    }
-
-    // If validation failed, trigger shake animation and don't save
-    if (failedFields.length > 0) {
+      ]
+      const failedFields = fieldNames.filter(() => !isWordCountValid)
       window.dispatchEvent(
         new CustomEvent("wordCountShake", {
           detail: { fieldNames: failedFields }
@@ -464,7 +462,7 @@ function StepItem({
     <AccordionItem
       value={step.id}
       className={cn(
-        "overflow-hidden rounded-xl border transition-colors duration-200",
+        "overflow-hidden rounded-lg border transition-colors duration-200 sm:rounded-xl",
         step.isCompleted
           ? "bg-gray-50"
           : "border-gray-200 hover:border-gray-300"
@@ -478,12 +476,12 @@ function StepItem({
           : {}
       }
     >
-      <AccordionTrigger className="px-6 py-4 transition-all hover:no-underline">
+      <AccordionTrigger className="px-4 py-3 transition-all hover:no-underline sm:px-6 sm:py-4">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center">
             <div
               className={cn(
-                "flex size-8 items-center justify-center rounded-full text-sm font-medium shadow-sm",
+                "flex size-6 items-center justify-center rounded-full text-xs font-medium shadow-sm sm:size-8 sm:text-sm",
                 step.isCompleted ? "text-white" : "bg-gray-100 text-gray-600"
               )}
               style={step.isCompleted ? { backgroundColor: "#444ec1" } : {}}
@@ -492,7 +490,7 @@ function StepItem({
             </div>
             <span
               className={cn(
-                "ml-3 text-lg font-medium",
+                "ml-2 text-sm font-medium sm:ml-3 sm:text-lg",
                 step.isCompleted ? "text-gray-900" : "text-gray-700"
               )}
             >
@@ -504,13 +502,13 @@ function StepItem({
         </div>
       </AccordionTrigger>
 
-      <AccordionContent className="px-6 pb-5 pt-3">
-        <div className="space-y-4">
-          {/* WHAT */}
+      <AccordionContent className="px-4 pb-4 pt-2 sm:px-6 sm:pb-5 sm:pt-3">
+        <div className="space-y-3 sm:space-y-4">
+          {/* WHAT - Mobile optimized */}
           <div className="space-y-2">
             <FormLabel
               htmlFor={`step-${step.id}-what`}
-              className="block font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 sm:text-base"
             >
               What did you specifically do in this step?
             </FormLabel>
@@ -523,7 +521,7 @@ function StepItem({
                   updatePendingChange(e.target.value)
                 }}
                 placeholder="Describe the steps you took to address the situation..."
-                className="min-h-24 w-full resize-none rounded-lg border border-gray-200 bg-white p-4 text-gray-700 transition-all duration-300"
+                className="min-h-20 w-full resize-none rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 transition-all duration-300 focus:outline-none sm:min-h-24 sm:p-4 sm:text-base"
                 style={
                   {
                     "--focus-ring-color": "#444ec1",
@@ -551,9 +549,10 @@ function StepItem({
             </div>
           </div>
 
+          {/* Save Button - Mobile optimized */}
           <Button
             type="button"
-            className={`mt-2 rounded-xl px-6 py-3 font-medium text-white shadow-sm transition-all duration-200 ${
+            className={`mt-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 active:scale-95 sm:rounded-xl sm:px-6 sm:py-3 sm:text-base ${
               canSave
                 ? "cursor-pointer hover:brightness-110"
                 : "cursor-not-allowed opacity-50"
