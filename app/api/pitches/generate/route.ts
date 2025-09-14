@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     if (roleDescription)
       jobDescriptionParts.push(`Description: ${roleDescription}`)
     const numExamples = starExamplesCount || starExamples.length || 1
-    // Only increase STAR word limits by 13% to compensate for agent under-generation
+    // Only increase STAR word limits by 8% to compensate for agent under-generation
     const introWordCount = Math.round(pitchWordLimit * INTRO_CONCLUSION_RATIO)
     const conclusionWordCount = Math.round(
       pitchWordLimit * INTRO_CONCLUSION_RATIO
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     const baseStarWordCount = Math.round(
       (pitchWordLimit * STAR_RATIO) / numExamples
     )
-    const starWordCount = Math.round(baseStarWordCount * 1.13)
+    const starWordCount = Math.round(baseStarWordCount * 1.08)
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json"
