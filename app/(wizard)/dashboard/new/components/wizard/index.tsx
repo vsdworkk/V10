@@ -64,6 +64,12 @@ export default function PitchWizard({
     handleSubmitFinal,
     handlePitchLoaded,
     retryPitchGeneration,
+    // AI Guidance
+    isGuidanceLoading,
+    guidanceData,
+    guidanceError,
+    guidanceRequestId,
+    fetchGuidance,
     // Feedback dialog control
     showFeedbackDialog,
     setShowFeedbackDialog
@@ -73,7 +79,17 @@ export default function PitchWizard({
     if (currentStep === 1) return <WizardIntroStep />
     if (currentStep === 2) return <RoleStep />
     if (currentStep === 3) return <ExperienceStep />
-    if (currentStep === 4) return <GuidanceStep pitchId={pitchId} />
+    if (currentStep === 4)
+      return (
+        <GuidanceStep
+          pitchId={pitchId}
+          isGuidanceLoading={isGuidanceLoading}
+          guidanceData={guidanceData}
+          guidanceError={guidanceError}
+          guidanceRequestId={guidanceRequestId}
+          fetchGuidance={fetchGuidance}
+        />
+      )
     if (currentStep === 5) return <StarExamplesIntroStep />
 
     const firstActualStarStep = 6
@@ -181,8 +197,8 @@ export default function PitchWizard({
 
         {/* Main content */}
         <div className="min-h-0 flex-1 lg:mb-6">
-          {/* Desktop */}
-          <div className="hidden h-full overflow-hidden lg:block">
+          {/* Single render with responsive styling */}
+          <div className="h-full overflow-hidden">
             <div className="h-full overflow-y-auto">
               <motion.div
                 key={currentStep}
@@ -190,24 +206,11 @@ export default function PitchWizard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
+                className="h-full"
               >
                 {renderStep()}
               </motion.div>
             </div>
-          </div>
-
-          {/* Mobile */}
-          <div className="h-full lg:hidden">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="h-full"
-            >
-              {renderStep()}
-            </motion.div>
           </div>
         </div>
 
