@@ -115,11 +115,11 @@ export async function generateAgentPitchAction(
         4: "v1.4"
       }[numExamples] ?? "v1.2"
 
-    /* Calculate word limits - increased by 10% to compensate for agent under-generation */
-    const adjustedWordLimit = Math.round(pitchWordLimit * 1.1)
-    const introWordCount = Math.round(adjustedWordLimit * 0.1)
-    const conclusionWordCount = Math.round(adjustedWordLimit * 0.1)
-    const starWordCount = Math.round((adjustedWordLimit * 0.8) / numExamples)
+    /* Calculate word limits - only STAR examples increased by 13% to compensate for agent under-generation */
+    const introWordCount = Math.round(pitchWordLimit * 0.1)
+    const conclusionWordCount = Math.round(pitchWordLimit * 0.1)
+    const baseStarWordCount = Math.round((pitchWordLimit * 0.8) / numExamples)
+    const starWordCount = Math.round(baseStarWordCount * 1.13)
 
     const body = {
       workflow_label_name: workflowVersion,
