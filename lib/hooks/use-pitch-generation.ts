@@ -115,7 +115,7 @@ export function usePitchGeneration() {
 
     const pollInterval = 3000 // 3 seconds
     let attempts = 0
-    const maxAttempts = 60 // Timeout after ~3 minutes (pitch generation might take longer than guidance)
+    const maxAttempts = 100 // Timeout after ~5 minutes (pitch generation might take longer than guidance)
     let isPolling = true // Flag to track if polling is active
 
     const checkStatus = async () => {
