@@ -11,7 +11,7 @@ import { debugLog } from "@/lib/debug"
 
 const REQUEST_TIMEOUT_MS = 60_000
 const INTRO_RATIO = 0.1
-const STAR_RATIO = 0.75
+const STAR_RATIO = 0.78
 const CONCLUSION_RATIO = 0.07
 
 // === BASE URL + callback ===
