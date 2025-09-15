@@ -76,7 +76,8 @@ export default function PitchWizard({
   } = useWizard({ userId, pitchData, initialStep })
 
   function renderStep() {
-    if (currentStep === 1) return <WizardIntroStep />
+    if (currentStep === 1)
+      return <WizardIntroStep onBackToDashboard={handleSaveAndClose} />
     if (currentStep === 2) return <RoleStep />
     if (currentStep === 3) return <ExperienceStep />
     if (currentStep === 4)
