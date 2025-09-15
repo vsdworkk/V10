@@ -10,8 +10,9 @@ import { PitchRequestSchema } from "@/lib/schemas/pitchSchemas"
 import { debugLog } from "@/lib/debug"
 
 const REQUEST_TIMEOUT_MS = 60_000
-const INTRO_CONCLUSION_RATIO = 0.1
-const STAR_RATIO = 0.8
+const INTRO_RATIO = 0.1
+const STAR_RATIO = 0.75
+const CONCLUSION_RATIO = 0.07
 
 // === BASE URL + callback ===
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/+$/, "")
@@ -143,15 +144,11 @@ export async function POST(req: NextRequest) {
     if (roleDescription)
       jobDescriptionParts.push(`Description: ${roleDescription}`)
     const numExamples = starExamplesCount || starExamples.length || 1
-    // Only increase STAR word limits by 8% to compensate for agent under-generation
-    const introWordCount = Math.round(pitchWordLimit * INTRO_CONCLUSION_RATIO)
-    const conclusionWordCount = Math.round(
-      pitchWordLimit * INTRO_CONCLUSION_RATIO
-    )
-    const baseStarWordCount = Math.round(
+    const introWordCount = Math.round(pitchWordLimit * INTRO_RATIO)
+    const conclusionWordCount = Math.round(pitchWordLimit * CONCLUSION_RATIO)
+    const starWordCount = Math.round(
       (pitchWordLimit * STAR_RATIO) / numExamples
     )
-    const starWordCount = Math.round(baseStarWordCount * 1.08)
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json"
