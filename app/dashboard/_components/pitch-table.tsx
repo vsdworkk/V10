@@ -417,12 +417,6 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleExport(pitch, "pdf")}
-                          >
-                            <Download className="mr-2 size-4" />
-                            Export as PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             onClick={() => handleExport(pitch, "doc")}
                           >
                             <Download className="mr-2 size-4" />
@@ -503,12 +497,6 @@ export default function PitchTable({ pitches }: PitchTableProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleExport(pitch, "pdf")}
-                          >
-                            <Download className="mr-2 size-4" />
-                            Export as PDF
-                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleExport(pitch, "doc")}
                           >
