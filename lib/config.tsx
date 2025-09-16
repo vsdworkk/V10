@@ -61,14 +61,10 @@ export const siteConfig = {
     linkedin: "https://linkedin.com/company/apspitchpro"
   },
   header: [
-    {
-      href: "/#the-solution",
-      label: "Features"
-    },
     // Added in Step 8: public marketing page for curated APS roles
     {
       href: "/job-picks",
-      label: "APS Job Picks"
+      label: "Job Picks"
     },
     {
       href: "/#pricing",
@@ -77,6 +73,10 @@ export const siteConfig = {
     {
       href: "/#faq",
       label: "FAQ"
+    },
+    {
+      href: "/#faq",
+      label: "Contact"
     }
   ] as NavigationItem[],
   pricing: [

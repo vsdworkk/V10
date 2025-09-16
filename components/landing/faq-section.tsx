@@ -36,7 +36,7 @@ export function FAQSection() {
           ))}
         </Accordion>
       </div>
-      <h4 className="text-foreground/80 mb-12 text-center text-sm font-medium tracking-tight">
+      <h4 className="text-foreground/80 mb-12 text-center text-base font-semibold tracking-tight">
         Still have questions? Email us at{" "}
         <a href={`mailto:${siteConfig.links.email}`} className="underline">
           {siteConfig.links.email}

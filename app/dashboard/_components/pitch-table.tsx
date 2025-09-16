@@ -283,8 +283,9 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         <h2 className="text-xl font-semibold md:text-2xl">
           {`Welcome ${user?.firstName ?? ""}`}
         </h2>
-        <p className="text-sm text-gray-600">
-          View and manage your pitches below
+        <p className="text-sm text-gray-800">
+          We're committed to helping you create the best pitch. For questions or
+          help using the wizard, contact support@apspitchpro.com
         </p>
       </div>
 
