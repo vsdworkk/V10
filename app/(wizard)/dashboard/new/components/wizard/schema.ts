@@ -31,13 +31,13 @@ function wordRange(min: number, max: number, label: string) {
 export const actionStepSchema = z.object({
   stepNumber: z.number(),
   "what-did-you-specifically-do-in-this-step": wordRange(
-    20,
-    150,
+    10,
+    100,
     "Action step description"
   ),
   "what-was-the-outcome-of-this-step-optional": wordRange(
     10,
-    150,
+    100,
     "Outcome of this step"
   ).optional()
 })
@@ -45,25 +45,25 @@ export const actionStepSchema = z.object({
 export const starExampleSchema = z.object({
   situation: z.object({
     "where-and-when-did-this-experience-occur": wordRange(
-      15,
-      150,
+      10,
+      100,
       "Experience context"
     ),
     "briefly-describe-the-situation-or-challenge-you-faced": wordRange(
-      20,
-      150,
+      10,
+      100,
       "Situation or challenge"
     )
   }),
   task: z.object({
     "what-was-your-responsibility-in-addressing-this-issue": wordRange(
-      20,
-      150,
+      10,
+      100,
       "Your responsibility"
     ),
     "what-constraints-or-requirements-did-you-need-to-consider": wordRange(
-      20,
-      150,
+      10,
+      100,
       "Constraints or requirements"
     ).optional()
   }),
@@ -74,7 +74,7 @@ export const starExampleSchema = z.object({
   }),
   result: z.object({
     "how-did-this-outcome-benefit-your-team-stakeholders-or-organization":
-      wordRange(20, 150, "Outcome benefits")
+      wordRange(10, 100, "Outcome benefits")
   })
 })
 

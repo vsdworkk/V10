@@ -520,7 +520,7 @@ function StepItem({
                   setWhat(e.target.value)
                   updatePendingChange(e.target.value)
                 }}
-                placeholder="Describe the steps you took to address the situation..."
+                placeholder="E.g., I researched best practices, scheduled team meetings, created a new process document..."
                 className="min-h-20 w-full resize-none rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 transition-all duration-300 focus:outline-none sm:min-h-24 sm:p-4 sm:text-base"
                 style={
                   {

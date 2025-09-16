@@ -281,7 +281,7 @@ export default function RoleStep() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Describe your role and key responsibilities..."
+                        placeholder="Copy and Paste the Role Description Here"
                         className="min-h-[80px] w-full resize-none rounded-lg border border-gray-200 bg-white p-3 text-sm transition-all duration-200 focus:outline-none sm:min-h-[100px] sm:p-4 sm:text-base lg:min-h-[120px]"
                         style={
                           {

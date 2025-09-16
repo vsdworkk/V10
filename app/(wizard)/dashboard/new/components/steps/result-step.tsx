@@ -39,7 +39,7 @@ export default function ResultStep({ exampleIndex }: ResultStepProps) {
                 <StarFieldComponent
                   name={`starExamples.${exampleIndex}.result.how-did-this-outcome-benefit-your-team-stakeholders-or-organization`}
                   label="How did this outcome benefit your team, stakeholders, or organisation?"
-                  placeholder="Describe how these results impacted your organization or project..."
+                  placeholder="E.g., Reduced processing time by 30%, saved $50K annually, improved team morale, increased client satisfaction..."
                   schema={
                     starExampleSchema.shape.result.shape[
                       "how-did-this-outcome-benefit-your-team-stakeholders-or-organization"

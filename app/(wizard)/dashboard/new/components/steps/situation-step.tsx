@@ -42,8 +42,8 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               <div className="mb-5 sm:mb-6">
                 <StarFieldComponent
                   name={`starExamples.${exampleIndex}.situation.where-and-when-did-this-experience-occur`}
-                  label="Where and when did this experience occur?"
-                  placeholder="Describe the situation, context, and any challenges you faced..."
+                  label="Context: Where and when did this happen?"
+                  placeholder="E.g., At the Department of Finance in 2023, during the budget planning process..."
                   schema={
                     starExampleSchema.shape.situation.shape[
                       "where-and-when-did-this-experience-occur"
@@ -57,8 +57,8 @@ export default function SituationStep({ exampleIndex }: SituationStepProps) {
               <div className="mb-2">
                 <StarFieldComponent
                   name={`starExamples.${exampleIndex}.situation.briefly-describe-the-situation-or-challenge-you-faced`}
-                  label="What was the problem faced by your team or workplace?"
-                  placeholder="Provide additional context or background information..."
+                  label="Problem: What specific issue needed solving?"
+                  placeholder="E.g., The team was missing budget deadlines due to unclear processes and poor communication..."
                   schema={
                     starExampleSchema.shape.situation.shape[
                       "briefly-describe-the-situation-or-challenge-you-faced"
