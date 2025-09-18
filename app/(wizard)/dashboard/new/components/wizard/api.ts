@@ -42,9 +42,10 @@ export async function savePitchData(
   pitchId: string | undefined,
   setPitchId: (id: string) => void,
   toast: ToastFunction,
-  currentStep = 1
+  currentStep = 1,
+  status: "draft" | "final" = "draft"
 ) {
-  const payload = createPitchPayload(data, pitchId, currentStep)
+  const payload = createPitchPayload(data, pitchId, currentStep, status)
 
   debugLog(`[savePitchData] Saving step ${currentStep}`, {
     pitchId,
