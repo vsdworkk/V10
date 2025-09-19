@@ -72,7 +72,7 @@ export const jobPicksTable = pgTable(
     /** Display fields */
     title: text("title").notNull(),
     agency: text("agency").notNull(),
-    classification: apsClassificationEnum("classification").notNull(),
+    classification: text("classification").array().notNull(),
     salary: text("salary"),
     location: text("location"),
     closingDate: timestamp("closing_date"),

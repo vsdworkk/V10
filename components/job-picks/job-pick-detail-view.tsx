@@ -29,6 +29,7 @@ import {
   Clock
 } from "lucide-react"
 import type { SelectJobPick } from "@/types"
+import { getHighlightNoteHTML } from "@/lib/highlight-note-utils"
 
 /**
  * Safely formats a date value to a human-readable AU-style date.
@@ -206,8 +207,22 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
                     <Building2 className="text-muted-foreground size-4" />
                     <span className="font-medium">Classification</span>
                   </div>
-                  <div className="text-lg font-semibold">
-                    {job.classification}
+                  <div className="flex flex-wrap gap-1">
+                    {Array.isArray(job.classification) ? (
+                      job.classification.map((cls, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-sm"
+                        >
+                          {cls}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Badge variant="secondary" className="text-sm">
+                        {job.classification}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -219,14 +234,14 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">About this role</CardTitle>
-                <CardDescription>
-                  Our expert insights on what makes this role special
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-sm leading-relaxed">
-                  {job.highlightNote}
-                </div>
+                <div
+                  className="text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={getHighlightNoteHTML(
+                    job.highlightNote
+                  )}
+                />
               </CardContent>
             </Card>
           )}
