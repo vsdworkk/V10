@@ -66,9 +66,10 @@ function isAllowedApsJobsUrl(u: string): boolean {
 export const jobPickFormSchema = z.object({
   title: z.string().min(3, "Title is required").max(200, "Title too long"),
   agency: z.string().min(2, "Agency is required").max(200, "Agency too long"),
-  classification: z.enum(APS_CLASSIFICATIONS, {
-    errorMap: () => ({ message: "Select a valid APS classification" })
-  }),
+  classification: z
+    .array(z.enum(APS_CLASSIFICATIONS))
+    .min(1, "Select at least one APS classification")
+    .max(5, "Select no more than 5 classifications"),
   salary: z.string().max(120, "Salary too long").optional().or(z.literal("")),
   location: z
     .string()

@@ -96,7 +96,11 @@ export default function JobPickFilters({
   React.useEffect(() => {
     const filtered = picks.filter(p => {
       const matchesClass =
-        classification === "all" ? true : p.classification === classification
+        classification === "all"
+          ? true
+          : Array.isArray(p.classification)
+            ? p.classification.includes(classification)
+            : p.classification === classification
       const matchesAgency = agency === "all" ? true : p.agency === agency
 
       // Text search across multiple fields

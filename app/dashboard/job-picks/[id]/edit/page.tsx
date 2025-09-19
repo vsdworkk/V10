@@ -44,7 +44,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import ClassificationSelect from "../../_components/classification-select"
+import ClassificationMultiSelect from "../../_components/classification-multi-select"
 import {
   Save,
   ArrowLeft,
@@ -102,10 +102,20 @@ async function updatePick(formData: FormData) {
   const id = String(formData.get("id") || "")
   uuidSchema.parse(id)
 
+  // Parse classification array from JSON
+  const classificationStr = String(formData.get("classification") || "[]")
+  let classification: string[] = []
+  try {
+    classification = JSON.parse(classificationStr)
+    if (!Array.isArray(classification)) classification = []
+  } catch {
+    classification = []
+  }
+
   const raw = {
     title: String(formData.get("title") || ""),
     agency: String(formData.get("agency") || ""),
-    classification: String(formData.get("classification") || ""),
+    classification,
     salary: String(formData.get("salary") || ""),
     location: String(formData.get("location") || ""),
     closingDate: String(formData.get("closingDate") || ""),
@@ -342,11 +352,11 @@ export default async function EditJobPickPage({
 
             <div className="space-y-2">
               <Label>Classification</Label>
-              <ClassificationSelect
+              <ClassificationMultiSelect
                 name="classification"
                 options={[...APS_CLASSIFICATIONS]}
                 defaultValue={pick.classification}
-                placeholder="Select APS classification"
+                placeholder="Select APS classifications"
               />
             </div>
 
@@ -404,6 +414,10 @@ export default async function EditJobPickPage({
                 placeholder="Why this role is notable, target audience, impact, etc."
                 rows={4}
               />
+              <p className="text-muted-foreground text-xs">
+                Use **bold text**, *italic text*, `inline code`, or create
+                bullet points with - or * at the start of lines.
+              </p>
             </div>
 
             <div className="space-y-2">

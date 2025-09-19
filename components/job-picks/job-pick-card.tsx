@@ -44,6 +44,7 @@ import {
   Wand2
 } from "lucide-react"
 import type { SelectJobPick } from "@/types"
+import { getHighlightNoteHTML } from "@/lib/highlight-note-utils"
 
 /**
  * Safely formats a date value to a human-readable AU-style date.
@@ -106,9 +107,19 @@ export default async function JobPickCard(pick: SelectJobPick) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{pick.title}</CardTitle>
 
-          <Badge variant="secondary" className="shrink-0">
-            {pick.classification}
-          </Badge>
+          <div className="flex shrink-0 flex-wrap gap-1">
+            {Array.isArray(pick.classification) ? (
+              pick.classification.map((cls, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {cls}
+                </Badge>
+              ))
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                {pick.classification}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <CardDescription className="flex items-center gap-2">
@@ -160,7 +171,9 @@ export default async function JobPickCard(pick: SelectJobPick) {
         {pick.highlightNote && (
           <div className="rounded-md border p-3 text-sm">
             <div className="text-muted-foreground mb-1">About this role</div>
-            <div>{pick.highlightNote}</div>
+            <div
+              dangerouslySetInnerHTML={getHighlightNoteHTML(pick.highlightNote)}
+            />
           </div>
         )}
       </CardContent>

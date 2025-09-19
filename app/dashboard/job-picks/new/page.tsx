@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import ClassificationSelect from "../_components/classification-select"
+import ClassificationMultiSelect from "../_components/classification-multi-select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Save, ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -46,11 +46,20 @@ async function createPick(formData: FormData) {
   "use server"
   const userId = await requireAdmin() // Will redirect non-admins. :contentReference[oaicite:6]{index=6}
 
-  // Collect raw values as strings for validation
+  // Collect raw values for validation
+  const classificationStr = String(formData.get("classification") || "[]")
+  let classification: string[] = []
+  try {
+    classification = JSON.parse(classificationStr)
+    if (!Array.isArray(classification)) classification = []
+  } catch {
+    classification = []
+  }
+
   const raw = {
     title: String(formData.get("title") || ""),
     agency: String(formData.get("agency") || ""),
-    classification: String(formData.get("classification") || ""),
+    classification,
     salary: String(formData.get("salary") || ""),
     location: String(formData.get("location") || ""),
     closingDate: String(formData.get("closingDate") || ""),
@@ -153,10 +162,10 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
 
             <div className="space-y-2">
               <Label>Classification</Label>
-              <ClassificationSelect
+              <ClassificationMultiSelect
                 name="classification"
                 options={[...APS_CLASSIFICATIONS]}
-                placeholder="Select APS classification"
+                placeholder="Select APS classifications"
               />
             </div>
 
@@ -201,6 +210,10 @@ export default async function NewJobPickPage({ searchParams }: PageProps) {
                 placeholder="Why this role is notable, target audience, impact, etc."
                 rows={4}
               />
+              <p className="text-muted-foreground text-xs">
+                Use **bold text**, *italic text*, `inline code`, or create
+                bullet points with - or * at the start of lines.
+              </p>
             </div>
 
             <div className="space-y-2">

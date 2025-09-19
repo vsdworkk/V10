@@ -69,9 +69,23 @@ export default function JobPickCardCompact({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Badge variant="secondary" className="px-2 py-1 text-sm">
-              {classification}
-            </Badge>
+            <div className="flex flex-wrap gap-1">
+              {Array.isArray(classification) ? (
+                classification.map((cls, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="px-2 py-1 text-xs"
+                  >
+                    {cls}
+                  </Badge>
+                ))
+              ) : (
+                <Badge variant="secondary" className="px-2 py-1 text-sm">
+                  {classification}
+                </Badge>
+              )}
+            </div>
             <div onClick={e => e.stopPropagation()}>
               <JobPickShareButton
                 job={{
