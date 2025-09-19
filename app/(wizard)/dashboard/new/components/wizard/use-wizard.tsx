@@ -306,19 +306,37 @@ export function useWizard({
         return
       }
 
-      setCurrentStep(nextStep)
       const formData = methods.getValues()
       setIsSavingInBackground(true)
-      savePitchData(formData, pitchId, setPitchId, toast, nextStep)
-        .catch(() => {
-          toast({
-            title: "Save Warning",
-            description:
-              "Your progress will be saved automatically. You can continue working.",
-            variant: "default"
-          })
+      try {
+        const result = await savePitchData(
+          formData,
+          pitchId,
+          setPitchId,
+          toast,
+          nextStep
+        )
+
+        // Only redirect if we're transitioning from no pitch ID to having one (new pitch created)
+        // If we already have a pitch ID, use normal step advancement to avoid navigation conflicts
+        if (result?.id && !pitchId) {
+          // New pitch created - redirect immediately to prevent jarring URL change
+          sessionStorage.setItem("ongoingPitchId", result.id)
+          router.replace(`/dashboard/new/${result.id}?step=${nextStep}`)
+        } else {
+          // Existing pitch updated OR no pitch ID returned - use normal step advancement
+          setCurrentStep(nextStep)
+        }
+      } catch {
+        toast({
+          title: "Save Error",
+          description: "Failed to save your progress. Please try again.",
+          variant: "destructive"
         })
-        .finally(() => setIsSavingInBackground(false))
+        // Don't advance step if save failed
+      } finally {
+        setIsSavingInBackground(false)
+      }
     } catch {
       toast({
         title: "Validation Error",

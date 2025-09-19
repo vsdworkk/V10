@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 
 export default function CheckStoredPitch({
   onReady
@@ -10,6 +10,7 @@ export default function CheckStoredPitch({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
 
   useEffect(() => {
     const isNewPitch = searchParams.get("new") === "true"
@@ -39,16 +40,13 @@ export default function CheckStoredPitch({
       }
     } else {
       // Redirect to clean /new only if not already there
-      if (
-        window.location.pathname + window.location.search !==
-        "/dashboard/new"
-      ) {
+      if (pathname !== "/dashboard/new") {
         router.replace("/dashboard/new")
       } else {
         onReady?.()
       }
     }
-  }, [router, searchParams, onReady])
+  }, [router, searchParams, onReady, pathname])
 
   return null
 }
