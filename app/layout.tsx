@@ -8,6 +8,7 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { auth } from "@clerk/nextjs/server"
 import type { Metadata } from "next"
 import { cn } from "@/lib/utils"
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import Script from "next/script"
@@ -82,6 +83,7 @@ export default async function RootLayout({
             {children}
 
             <Analytics />
+            <VercelAnalytics />
             <TailwindIndicator />
             <Toaster />
             <SonnerToaster />
