@@ -13,7 +13,7 @@
 
 import Link from "next/link"
 import { Settings, CreditCard, Newspaper } from "lucide-react"
-import { getProfileByUserIdAction } from "@/actions/db/profiles-actions"
+import { ensureProfileAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -37,7 +37,7 @@ export default async function DashboardSidebar({
   userId
 }: DashboardSidebarProps) {
   // Credits
-  const profileResult = await getProfileByUserIdAction(userId)
+  const profileResult = await ensureProfileAction(userId)
   const credits = profileResult.isSuccess
     ? (profileResult.data?.credits ?? 0)
     : 0
