@@ -110,34 +110,12 @@ export default function PitchWizardLayout({
         </div>
       </header>
 
-      {/* Main container - Mobile and Desktop layouts */}
+      {/* Main container - Responsive layout with shared wizard instance */}
       <div className="flex flex-1">
-        {/* Mobile Layout - Stacked */}
-        <div className="flex flex-1 flex-col lg:hidden">
-          <div className="flex-1 p-4 pb-20">
-            {/* Extra bottom padding for mobile nav */}
-            <div className="h-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
-              {/*
-              <div className="block px-4 pt-2">
-                <NavigationButton
-                  text="Back to Dashboard"
-                  className="text-[#444ec1]"
-                />
-              </div>
-              */}
-
-              <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-                <div className="px-4 pb-4 pt-3 sm:p-6">{children}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout - Sidebar + Content */}
-        <div className="hidden flex-1 items-center justify-center p-6 lg:flex">
-          <div className="flex h-[calc(100vh-140px)] w-[90%] max-w-6xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl">
+        <div className="flex w-full flex-1 justify-center p-4 pb-20 lg:p-6">
+          <div className="flex w-full max-w-6xl flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl lg:h-[calc(100vh-140px)] lg:flex-row lg:rounded-3xl lg:shadow-2xl">
             {/* Desktop Sidebar */}
-            <div className="w-72 shrink-0 border-r border-gray-100 bg-white shadow-lg">
+            <div className="hidden w-72 shrink-0 border-r border-gray-100 bg-white shadow-lg lg:block">
               <div className="h-full overflow-y-auto p-8">
                 <SectionProgressSidebar
                   current={currentSection}
@@ -147,10 +125,17 @@ export default function PitchWizardLayout({
               </div>
             </div>
 
-            {/* Desktop Main content */}
+            {/* Wizard content */}
             <div className="flex min-w-0 flex-1 flex-col">
               {/*
-              <div className="ml-10 py-4">
+              <div className="block px-4 pt-2 lg:hidden">
+                <NavigationButton
+                  text="Back to Dashboard"
+                  className="text-[#444ec1]"
+                />
+              </div>
+
+              <div className="ml-10 py-4 lg:block">
                 <NavigationButton
                   text="Back to Dashboard"
                   className="text-[#444ec1]"
@@ -159,7 +144,9 @@ export default function PitchWizardLayout({
               */}
 
               <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-                <div className="px-8 pb-8 pt-5">{children}</div>
+                <div className="px-4 pb-4 pt-3 sm:p-6 lg:px-8 lg:pb-8 lg:pt-5">
+                  {children}
+                </div>
               </div>
             </div>
           </div>
