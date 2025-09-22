@@ -248,20 +248,48 @@ export async function ensureProfileAction(
   userId: string
 ): Promise<ActionState<SelectProfile>> {
   try {
-    const existing = await getProfileByUserIdAction(userId)
-    if (existing.isSuccess && existing.data) {
-      return existing
+    const existingProfile = await db.query.profiles.findFirst({
+      where: eq(profilesTable.userId, userId)
+    })
+
+    if (existingProfile) {
+      return {
+        isSuccess: true,
+        message: "Profile retrieved successfully",
+        data: existingProfile
+      }
     }
 
-    const created = await createProfileAction({ userId })
-    if (!created.isSuccess) {
-      return { isSuccess: false, message: created.message }
-    }
+    try {
+      const [createdProfile] = await db
+        .insert(profilesTable)
+        .values({ userId })
+        .returning()
 
-    return {
-      isSuccess: true,
-      message: "Profile ensured successfully",
-      data: created.data
+      return {
+        isSuccess: true,
+        message: "Profile ensured successfully",
+        data: createdProfile
+      }
+    } catch (insertError) {
+      console.warn(
+        "Profile creation race detected, attempting to refetch:",
+        insertError
+      )
+
+      const retryProfile = await db.query.profiles.findFirst({
+        where: eq(profilesTable.userId, userId)
+      })
+
+      if (retryProfile) {
+        return {
+          isSuccess: true,
+          message: "Profile ensured successfully",
+          data: retryProfile
+        }
+      }
+
+      throw insertError
     }
   } catch (error) {
     console.error("Error ensuring profile:", error)
