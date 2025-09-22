@@ -5,9 +5,7 @@ import { useLayoutEffect, useState, useRef } from "react"
 import SectionProgressSidebar from "./components/progress/section-progress-bar"
 import MobileProgressHeader from "./components/progress/mobile-progress-header"
 import { Section } from "@/types"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import NavigationButton from "@/components/navigation-button"
 
 interface PitchWizardLayoutProps {
   children: React.ReactNode
@@ -29,7 +27,6 @@ export default function PitchWizardLayout({
   const [currentSection, setCurrentSection] = useState<Section>("INTRO")
   const [maxCompletedSection, setMaxCompletedSection] =
     useState<Section>("INTRO")
-  const router = useRouter()
 
   // Ref to track the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -111,33 +108,11 @@ export default function PitchWizardLayout({
       </header>
 
       {/* Main container - Mobile and Desktop layouts */}
-      <div className="flex flex-1">
-        {/* Mobile Layout - Stacked */}
-        <div className="flex flex-1 flex-col lg:hidden">
-          <div className="flex-1 p-4 pb-20">
-            {/* Extra bottom padding for mobile nav */}
-            <div className="h-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
-              {/*
-              <div className="block px-4 pt-2">
-                <NavigationButton
-                  text="Back to Dashboard"
-                  className="text-[#444ec1]"
-                />
-              </div>
-              */}
-
-              <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-                <div className="px-4 pb-4 pt-3 sm:p-6">{children}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout - Sidebar + Content */}
-        <div className="hidden flex-1 items-center justify-center p-6 lg:flex">
-          <div className="flex h-[calc(100vh-140px)] w-[90%] max-w-6xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl">
+      <div className="flex flex-1 justify-center lg:p-6">
+        <div className="flex w-full flex-1 flex-col p-4 pb-20 lg:h-[calc(100vh-140px)] lg:w-[90%] lg:max-w-6xl lg:p-0">
+          <div className="flex h-full flex-1 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl lg:flex-row lg:rounded-3xl lg:shadow-2xl">
             {/* Desktop Sidebar */}
-            <div className="w-72 shrink-0 border-r border-gray-100 bg-white shadow-lg">
+            <div className="hidden w-72 shrink-0 border-r border-gray-100 bg-white shadow-lg lg:flex">
               <div className="h-full overflow-y-auto p-8">
                 <SectionProgressSidebar
                   current={currentSection}
@@ -147,19 +122,12 @@ export default function PitchWizardLayout({
               </div>
             </div>
 
-            {/* Desktop Main content */}
+            {/* Main content area */}
             <div className="flex min-w-0 flex-1 flex-col">
-              {/*
-              <div className="ml-10 py-4">
-                <NavigationButton
-                  text="Back to Dashboard"
-                  className="text-[#444ec1]"
-                />
-              </div>
-              */}
-
               <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-                <div className="px-8 pb-8 pt-5">{children}</div>
+                <div className="px-4 pb-4 pt-3 sm:p-6 lg:px-8 lg:pb-8 lg:pt-5">
+                  {children}
+                </div>
               </div>
             </div>
           </div>
