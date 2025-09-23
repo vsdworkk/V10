@@ -15,10 +15,12 @@
 
 import * as React from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 import type { SelectJobPick } from "@/types"
 import JobPickCardCompact from "@/components/job-picks/job-pick-card-compact"
 import JobPickDetailView from "@/components/job-picks/job-pick-detail-view"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface JobPicksSplitBrowserProps {
@@ -101,14 +103,14 @@ export default function JobPicksSplitBrowser({
   const total = picks.length
 
   return (
-    <div className="bg-background h-[800px] overflow-hidden rounded-lg">
+    <div className="bg-background h-[min(800px,calc(100vh-200px))] min-h-[400px] overflow-hidden rounded-lg">
       {/* Mobile view */}
       <div className="block h-full lg:hidden">
         {!showMobileDetail ? (
           // Mobile list view
           <div className="flex h-full flex-col">
             <ScrollArea className="flex-1">
-              <div className="p-4">
+              <div className="p-3 pb-6 sm:p-4">
                 {total === 0 ? (
                   <div className="text-muted-foreground rounded-md bg-gray-50 p-6 text-center text-sm">
                     No roles in this group.
@@ -131,15 +133,17 @@ export default function JobPicksSplitBrowser({
         ) : (
           // Mobile detail view
           <div className="flex h-full flex-col">
-            <div className="shrink-0 border-b bg-white/50 p-4">
-              <button
+            <div className="sticky top-0 z-10 shrink-0 border-b bg-white/50 p-4 backdrop-blur-sm">
+              <Button
+                variant="ghost"
                 onClick={handleBackToList}
-                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                className="group -ml-2 flex items-center gap-2 px-3 py-2 font-medium text-gray-600 transition-all duration-200 hover:bg-white/80 hover:text-gray-900 hover:shadow-sm"
               >
-                ← Back to jobs
-              </button>
+                <ArrowLeft className="size-4 transition-transform duration-200 group-hover:-translate-x-1" />
+                Back to jobs
+              </Button>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 overflow-hidden">
               <JobPickDetailView job={selectedJob} />
             </div>
           </div>

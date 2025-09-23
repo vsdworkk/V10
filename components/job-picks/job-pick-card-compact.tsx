@@ -57,31 +57,34 @@ export default function JobPickCardCompact({
       )}
       onClick={onClick}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
+      <CardHeader className="px-4 pb-3 sm:px-6">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-2 text-base font-semibold leading-tight">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-tight sm:text-base">
               {title}
             </h3>
-            <div className="text-muted-foreground mt-2 flex items-center gap-1 text-sm">
-              <Building2 className="size-4" />
+            <div className="text-muted-foreground mt-2 flex items-center gap-1 text-xs sm:text-sm">
+              <Building2 className="size-3 shrink-0 sm:size-4" />
               <span className="truncate">{agency}</span>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-start gap-2">
             <div className="flex flex-wrap gap-1">
               {Array.isArray(classification) ? (
                 classification.map((cls, index) => (
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="px-2 py-1 text-xs"
+                    className="px-1.5 py-0.5 text-xs sm:px-2 sm:py-1"
                   >
                     {cls}
                   </Badge>
                 ))
               ) : (
-                <Badge variant="secondary" className="px-2 py-1 text-sm">
+                <Badge
+                  variant="secondary"
+                  className="px-1.5 py-0.5 text-xs sm:px-2 sm:py-1"
+                >
                   {classification}
                 </Badge>
               )}
@@ -99,27 +102,27 @@ export default function JobPickCardCompact({
                 }}
                 variant="ghost"
                 size="icon"
-                className="size-7"
+                className="size-6 shrink-0 sm:size-7"
               />
             </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="text-muted-foreground space-y-2 text-sm">
+      <CardContent className="px-4 pb-4 pt-0 sm:px-6">
+        <div className="text-muted-foreground space-y-2 text-xs sm:text-sm">
           {location && (
             <div className="flex items-center gap-1">
-              <MapPin className="size-4" />
+              <MapPin className="size-3 shrink-0 sm:size-4" />
               <span className="truncate">{location}</span>
             </div>
           )}
           <div className="flex items-center gap-1">
-            <CalendarDays className="size-4" />
+            <CalendarDays className="size-3 shrink-0 sm:size-4" />
             <span>Closes: {formatCompactDate(closingDate)}</span>
           </div>
           {salary && (
-            <div className="text-foreground truncate text-sm font-medium">
+            <div className="text-foreground truncate text-xs font-medium sm:text-sm">
               {salary}
             </div>
           )}

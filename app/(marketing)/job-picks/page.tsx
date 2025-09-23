@@ -101,11 +101,11 @@ async function JobPicksFetcher() {
   }
 
   return (
-    <div className="container mx-auto py-12">
-      <div className="mx-auto mb-8 max-w-3xl text-center">
-        <div className="text-3xl font-bold">APS Job Picks</div>
+    <div className="container mx-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto mb-6 max-w-3xl text-center sm:mb-8">
+        <div className="text-2xl font-bold sm:text-3xl">APS Job Picks</div>
 
-        <div className="text-muted-foreground mt-3">
+        <div className="text-muted-foreground mt-3 text-sm sm:text-base">
           Handpicked APS roles with key details and direct APS Jobs links.
           Generate a tailored APS pitch in minutes.
         </div>

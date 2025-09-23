@@ -71,9 +71,9 @@ export default function JobPicksWithFilters({
   const totalOriginal = picks.length
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Global filter bar with search-like styling */}
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl px-2 sm:px-0">
         <JobPickFilters
           picks={picks}
           onChange={handleFilterChange}
@@ -81,17 +81,17 @@ export default function JobPicksWithFilters({
         />
 
         {/* Results count */}
-        <div className="text-muted-foreground mt-4 text-center text-sm">
+        <div className="text-muted-foreground mt-4 text-center text-xs sm:text-sm">
           Showing {totalVisible} of {totalOriginal} role
           {totalOriginal === 1 ? "" : "s"}
         </div>
       </div>
 
       {/* Filtered results grouped by month */}
-      <div className="space-y-12">
+      <div className="space-y-8 sm:space-y-12">
         {totalVisible === 0 ? (
-          <div className="py-12 text-center">
-            <div className="text-muted-foreground mx-auto max-w-md rounded-md border p-8">
+          <div className="py-8 text-center sm:py-12">
+            <div className="text-muted-foreground mx-auto max-w-md rounded-md border p-6 sm:p-8">
               No roles match your filters. Try adjusting your search criteria.
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function JobPicksWithFilters({
           monthKeys.map(key => {
             const monthPicks = groups[key]
             return (
-              <div key={key} className="space-y-6">
+              <div key={key} className="space-y-4 sm:space-y-6">
                 {/* Split-view browser with clickable cards and detail panel */}
                 <JobPicksSplitBrowser picks={monthPicks} />
               </div>

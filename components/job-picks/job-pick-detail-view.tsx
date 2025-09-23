@@ -105,32 +105,38 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 pb-8 sm:p-6">
         {/* Header */}
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold leading-tight">{job.title}</h1>
+            <div className="min-w-0 flex-1 space-y-2">
+              <h1 className="text-xl font-bold leading-tight sm:text-2xl">
+                {job.title}
+              </h1>
               <div className="text-muted-foreground flex items-center gap-2">
-                <Building2 className="size-4" />
-                <span className="text-lg">{job.agency}</span>
+                <Building2 className="size-4 shrink-0" />
+                <span className="truncate text-base sm:text-lg">
+                  {job.agency}
+                </span>
               </div>
             </div>
-            <Badge variant="secondary" className="text-sm">
-              {job.classification}
-            </Badge>
+            <div className="shrink-0">
+              <Badge variant="secondary" className="text-xs sm:text-sm">
+                {job.classification}
+              </Badge>
+            </div>
           </div>
 
           {/* Quick info row */}
-          <div className="flex flex-wrap gap-4 text-sm">
+          <div className="flex flex-wrap gap-3 text-sm sm:gap-4">
             {job.location && (
               <div className="flex items-center gap-1">
-                <MapPin className="text-muted-foreground size-4" />
-                <span>{job.location}</span>
+                <MapPin className="text-muted-foreground size-4 shrink-0" />
+                <span className="truncate">{job.location}</span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <Clock className="text-muted-foreground size-4" />
+              <Clock className="text-muted-foreground size-4 shrink-0" />
               <span>Full-time</span>
             </div>
           </div>
@@ -138,11 +144,20 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={handleGenerate} size="lg" className="flex-1">
+          <Button
+            onClick={handleGenerate}
+            size="lg"
+            className="w-full sm:flex-1"
+          >
             <Wand2 className="mr-2 size-4" />
             Generate your Pitch
           </Button>
-          <Button asChild variant="outline" size="lg" className="flex-1">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full sm:flex-1"
+          >
             <a
               href={apsHref}
               target="_blank"
@@ -160,51 +175,53 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
         {/* Job details */}
         <div className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg">Job Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="text-muted-foreground size-4" />
+                    <DollarSign className="text-muted-foreground size-4 shrink-0" />
                     <span className="font-medium">Salary</span>
                   </div>
-                  <div className="text-lg font-semibold">
+                  <div className="break-words text-base font-semibold sm:text-lg">
                     {job.salary || "Not specified"}
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <CalendarDays className="text-muted-foreground size-4" />
+                    <CalendarDays className="text-muted-foreground size-4 shrink-0" />
                     <span className="font-medium">Closing Date</span>
                   </div>
-                  <div className="text-lg font-semibold">
+                  <div className="text-base font-semibold sm:text-lg">
                     {formatAUSDate(job.closingDate)}
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <MapPin className="text-muted-foreground size-4" />
+                    <MapPin className="text-muted-foreground size-4 shrink-0" />
                     <span className="font-medium">Location</span>
                   </div>
-                  <div className="text-lg font-semibold">
+                  <div className="break-words text-base font-semibold sm:text-lg">
                     {job.location || "Not specified"}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Clock className="text-muted-foreground size-4" />
+                    <Clock className="text-muted-foreground size-4 shrink-0" />
                     <span className="font-medium">Job Type</span>
                   </div>
-                  <div className="text-lg font-semibold">Full-time</div>
+                  <div className="text-base font-semibold sm:text-lg">
+                    Full-time
+                  </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1 sm:col-span-2">
                   <div className="flex items-center gap-2">
-                    <Building2 className="text-muted-foreground size-4" />
+                    <Building2 className="text-muted-foreground size-4 shrink-0" />
                     <span className="font-medium">Classification</span>
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -213,13 +230,13 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
                         <Badge
                           key={index}
                           variant="secondary"
-                          className="text-sm"
+                          className="text-xs sm:text-sm"
                         >
                           {cls}
                         </Badge>
                       ))
                     ) : (
-                      <Badge variant="secondary" className="text-sm">
+                      <Badge variant="secondary" className="text-xs sm:text-sm">
                         {job.classification}
                       </Badge>
                     )}
@@ -232,12 +249,12 @@ export default function JobPickDetailView({ job }: JobPickDetailViewProps) {
           {/* Highlight note */}
           {job.highlightNote && (
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <CardTitle className="text-lg">About this role</CardTitle>
               </CardHeader>
               <CardContent>
                 <div
-                  className="text-sm leading-relaxed"
+                  className="break-words text-sm leading-relaxed"
                   dangerouslySetInnerHTML={getHighlightNoteHTML(
                     job.highlightNote
                   )}
