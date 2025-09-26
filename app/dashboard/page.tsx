@@ -124,7 +124,12 @@ async function PitchTableFetcher() {
     )
   }
 
-  return <PitchTable pitches={dashboardRes.data.pitches} />
+  return (
+    <PitchTable
+      pitches={dashboardRes.data.pitches}
+      credits={dashboardRes.data.profile.credits}
+    />
+  )
 }
 
 /**

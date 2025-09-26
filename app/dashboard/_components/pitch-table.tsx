@@ -8,6 +8,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useUser } from "@clerk/nextjs"
 import { SelectPitch } from "@/db/schema/pitches-schema"
+import CreatePitchButton from "@/app/dashboard/_components/create-pitch-button"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,9 +43,10 @@ import {
 
 interface PitchTableProps {
   pitches: SelectPitch[]
+  credits: number
 }
 
-export default function PitchTable({ pitches }: PitchTableProps) {
+export default function PitchTable({ pitches, credits }: PitchTableProps) {
   const { user } = useUser()
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
@@ -289,9 +291,9 @@ export default function PitchTable({ pitches }: PitchTableProps) {
         </p>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <div className="flex-1">
+      {/* Search, Filters, and Create New (right aligned) */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-1 items-center gap-3">
           <Input
             type="text"
             placeholder="Search pitches."
@@ -299,51 +301,56 @@ export default function PitchTable({ pitches }: PitchTableProps) {
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full shadow-sm"
           />
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 whitespace-nowrap shadow-sm"
+              >
+                <Filter className="size-4" />
+                <span>Filter</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 space-y-3" align="start">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Role</label>
+                <Input
+                  value={roleFilter}
+                  onChange={e => setRoleFilter(e.target.value)}
+                  placeholder="Role name"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Organisation</label>
+                <Input
+                  value={orgFilter}
+                  onChange={e => setOrgFilter(e.target.value)}
+                  placeholder="Organisation"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 whitespace-nowrap shadow-sm"
-            >
-              <Filter className="size-4" />
-              <span>Filter</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 space-y-3" align="end">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Role</label>
-              <Input
-                value={roleFilter}
-                onChange={e => setRoleFilter(e.target.value)}
-                placeholder="Role name"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Organisation</label>
-              <Input
-                value={orgFilter}
-                onChange={e => setOrgFilter(e.target.value)}
-                placeholder="Organisation"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </PopoverContent>
-        </Popover>
+        {/* Right-aligned Create New Pitch button */}
+        <div className="sm:ml-auto">
+          <CreatePitchButton credits={credits} />
+        </div>
       </div>
 
       {/* Results */}

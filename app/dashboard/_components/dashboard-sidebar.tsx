@@ -12,12 +12,11 @@
 "use server"
 
 import Link from "next/link"
-import { Settings, CreditCard, Newspaper, Video } from "lucide-react"
+import { Settings, CreditCard, Newspaper, Video, FileText } from "lucide-react"
 import { ensureProfileAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import CreatePitchButton from "./create-pitch-button"
 import {
   Sidebar,
   SidebarContent,
@@ -80,28 +79,37 @@ export default async function DashboardSidebar({
 
       <SidebarContent className="p-4">
         <SidebarMenu>
-          {/* Create New Pitch Button */}
+          {/* AI Pitch Writer - navigates to pitches table */}
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <CreatePitchButton credits={credits} />
-            </SidebarMenuButton>
+            <Button
+              asChild
+              className="h-10 w-full justify-start px-3 text-sm text-white shadow-sm transition-all hover:brightness-110"
+              style={{ backgroundColor: "#444ec1" }}
+            >
+              <Link href="/dashboard">
+                <FileText className="mr-2 size-4" />
+                AI Pitch Writer
+              </Link>
+            </Button>
+          </SidebarMenuItem>
+
+          {/* AI Interviewer Button - styled like Create New Pitch and placed directly under it */}
+          <SidebarMenuItem className="mt-3">
+            <Button
+              asChild
+              className="h-10 w-full justify-start px-3 text-sm text-white shadow-sm transition-all hover:brightness-110"
+              style={{ backgroundColor: "#444ec1" }}
+            >
+              <Link href="/dashboard/ai-interviewer">
+                <Video className="mr-2 size-4" />
+                AI Interviewer
+              </Link>
+            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
 
         <div className="mt-4 border-t pt-4">
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link
-                  href="/dashboard/ai-interviewer"
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
-                >
-                  <Video className="size-4" />
-                  AI Interviewer
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link
