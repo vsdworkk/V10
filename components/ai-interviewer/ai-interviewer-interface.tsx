@@ -335,37 +335,62 @@ export default function AIInterviewerInterface({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="flex items-center gap-2">
-                  <Building2 className="size-4 text-slate-500" />
-                  <div>
-                    <p className="text-sm text-slate-500">Position</p>
-                    <p className="font-medium">{session.jobTitle}</p>
+              {/* Cleaner and more professional layout */}
+              <div className="grid divide-y divide-slate-200 overflow-hidden rounded-lg border md:grid-cols-3 md:divide-x md:divide-y-0 dark:divide-slate-700 dark:border-slate-700">
+                {/* Position */}
+                <div className="flex items-start gap-4 p-4">
+                  <div className="flex size-10 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800">
+                    <Building2 className="size-5 text-slate-600 dark:text-slate-400" />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Position
+                    </span>
+
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">
+                      {session.jobTitle}
+                    </span>
+
                     {session.companyName && (
-                      <p className="text-sm text-slate-600">
-                        at {session.companyName}
-                      </p>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        @ {session.companyName}
+                      </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Clock className="size-4 text-slate-500" />
-                  <div>
-                    <p className="text-sm text-slate-500">Duration</p>
-                    <p className="font-medium">
+                {/* Duration */}
+                <div className="flex items-start gap-4 p-4">
+                  <div className="flex size-10 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800">
+                    <Clock className="size-5 text-slate-600 dark:text-slate-400" />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Duration
+                    </span>
+
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">
                       {formatDuration(session.duration || 30)}
-                    </p>
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Video className="size-4 text-slate-500" />
-                  <div>
-                    <p className="text-sm text-slate-500">Interview Type</p>
-                    <p className="font-medium capitalize">
+                {/* Interview Type */}
+                <div className="flex items-start gap-4 p-4">
+                  <div className="flex size-10 items-center justify-center rounded-md bg-slate-100 dark:bg-slate-800">
+                    <Video className="size-5 text-slate-600 dark:text-slate-400" />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Interview Type
+                    </span>
+
+                    <span className="font-semibold capitalize text-slate-900 dark:text-slate-100">
                       {session.interviewType}
-                    </p>
+                    </span>
                   </div>
                 </div>
               </div>
