@@ -12,7 +12,7 @@
 "use server"
 
 import Link from "next/link"
-import { Settings, CreditCard, Newspaper } from "lucide-react"
+import { Settings, CreditCard, Newspaper, Video } from "lucide-react"
 import { ensureProfileAction } from "@/actions/db/profiles-actions"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -90,6 +90,18 @@ export default async function DashboardSidebar({
 
         <div className="mt-4 border-t pt-4">
           <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  href="/dashboard/ai-interviewer"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                >
+                  <Video className="size-4" />
+                  AI Interviewer
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link

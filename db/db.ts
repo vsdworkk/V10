@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/postgres-js"
 import { profilesTable } from "@/db/schema"
 import { pitchesTable } from "@/db/schema"
 import { jobPicksTable } from "@/db/schema"
+import { interviewSessionsTable } from "@/db/schema"
 import { config } from "dotenv"
 import postgres from "postgres"
 
@@ -29,7 +30,8 @@ config({ path: ".env.local" })
 const schema = {
   profiles: profilesTable,
   pitches: pitchesTable,
-  jobPicks: jobPicksTable
+  jobPicks: jobPicksTable,
+  interviewSessions: interviewSessionsTable
 }
 
 /**
