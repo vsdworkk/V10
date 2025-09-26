@@ -65,22 +65,45 @@ export default function InterviewAnalyticsDashboard({
     return "Needs Improvement"
   }
 
-  const strengths = Array.isArray(session.strengths)
-    ? (session.strengths as string[])
-    : []
-  const improvements = Array.isArray(session.improvements)
-    ? (session.improvements as string[])
-    : []
-  const recommendations = Array.isArray(session.recommendations)
-    ? (session.recommendations as string[])
-    : []
+  const toStringArray = (value: unknown): string[] => {
+    if (!Array.isArray(value)) {
+      return []
+    }
+
+    return value.map(item => String(item))
+  }
+
+  const strengths = toStringArray(session.strengths)
+  const improvements = toStringArray(session.improvements)
+  const recommendations = toStringArray(session.recommendations)
+  const getFeedbackSummary = (feedback: unknown): string | null => {
+    if (
+      feedback &&
+      typeof feedback === "object" &&
+      "summary" in feedback &&
+      typeof (feedback as { summary?: unknown }).summary === "string"
+    ) {
+      return (feedback as { summary: string }).summary
+    }
+
+    return null
+  }
+  const feedbackSummary = getFeedbackSummary(session.feedback)
   const keyMoments = Array.isArray(session.keyMoments)
-    ? (session.keyMoments as Array<{
-        timestamp?: string
-        topic: string
-        analysis: string
-        score?: number
-      }>)
+    ? (
+        session.keyMoments as Array<{
+          timestamp?: string
+          topic: string
+          analysis: string
+          score?: number
+        }>
+      ).map(moment => ({
+        ...moment,
+        topic: String(moment.topic),
+        analysis: String(moment.analysis),
+        timestamp: moment.timestamp ? String(moment.timestamp) : undefined,
+        score: typeof moment.score === "number" ? moment.score : undefined
+      }))
     : []
 
   return (
@@ -280,21 +303,17 @@ export default function InterviewAnalyticsDashboard({
       )}
 
       {/* Summary */}
-      {session.feedback &&
-        typeof session.feedback === "object" &&
-        "summary" in session.feedback && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Interview Summary</CardTitle>
-              <CardDescription>Overall assessment and feedback</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm leading-relaxed">
-                {session.feedback.summary}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      {feedbackSummary && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Interview Summary</CardTitle>
+            <CardDescription>Overall assessment and feedback</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">{feedbackSummary}</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
