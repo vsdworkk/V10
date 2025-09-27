@@ -1,3 +1,6 @@
+// Client component to manage interview sessions list and creation dialog.
+// Interview Type is fixed to behavioral, duration fixed to 15 minutes,
+// and custom instructions are not collected.
 "use client"
 
 import React, { useState } from "react"
@@ -18,13 +21,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -38,7 +34,6 @@ import {
   Building2,
   User,
   Plus,
-  Edit,
   Trash2,
   Play,
   Eye
@@ -55,13 +50,13 @@ interface InterviewSessionManagerProps {
   onStartInterview: (session: SelectInterviewSession) => void
 }
 
+// Local form state for creating a session. We've simplified the form to
+// only collect core fields; type, duration, and custom instructions are
+// now fixed defaults.
 interface CreateSessionForm {
   jobTitle: string
   companyName: string
   jobDescription: string
-  interviewType: "behavioral" | "technical" | "mixed" | "custom"
-  duration: number
-  customInstructions: string
 }
 
 export default function InterviewSessionManager({
@@ -74,10 +69,7 @@ export default function InterviewSessionManager({
   const [formData, setFormData] = useState<CreateSessionForm>({
     jobTitle: "",
     companyName: "",
-    jobDescription: "",
-    interviewType: "behavioral",
-    duration: 30,
-    customInstructions: ""
+    jobDescription: ""
   })
 
   const handleCreateSession = async () => {
@@ -92,9 +84,9 @@ export default function InterviewSessionManager({
         jobTitle: formData.jobTitle,
         companyName: formData.companyName || null,
         jobDescription: formData.jobDescription || null,
-        interviewType: formData.interviewType,
-        duration: formData.duration,
-        customInstructions: formData.customInstructions || null,
+        interviewType: "behavioral", // fixed default
+        duration: 15, // fixed default (minutes)
+        customInstructions: null, // removed from form
         status: "scheduled"
       }
 
@@ -106,10 +98,7 @@ export default function InterviewSessionManager({
         setFormData({
           jobTitle: "",
           companyName: "",
-          jobDescription: "",
-          interviewType: "behavioral",
-          duration: 30,
-          customInstructions: ""
+          jobDescription: ""
         })
         onSessionsUpdate()
       } else {
@@ -241,62 +230,8 @@ export default function InterviewSessionManager({
                 </p>
               </div>
 
-              <div>
-                <Label htmlFor="interviewType">Interview Type</Label>
-                <Select
-                  value={formData.interviewType}
-                  onValueChange={(value: any) =>
-                    setFormData({ ...formData, interviewType: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="behavioral">Behavioral</SelectItem>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="duration">Duration (minutes)</Label>
-                <Select
-                  value={formData.duration.toString()}
-                  onValueChange={value =>
-                    setFormData({ ...formData, duration: parseInt(value) })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15">15 minutes</SelectItem>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="45">45 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="90">1.5 hours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="customInstructions">Custom Instructions</Label>
-                <Textarea
-                  id="customInstructions"
-                  placeholder="Any specific topics or requirements for the interview..."
-                  value={formData.customInstructions}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      customInstructions: e.target.value
-                    })
-                  }
-                  rows={3}
-                />
-              </div>
+              {/* Interview Type, Duration, and Custom Instructions removed.
+                  Defaults applied on create: behavioral, 15 minutes, no custom instructions. */}
 
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
