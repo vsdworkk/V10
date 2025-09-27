@@ -147,12 +147,11 @@ export default function InterviewSessionManager({
   const formatDate = (date: Date | string | null) => {
     if (!date) return "Not set"
     const d = typeof date === "string" ? new Date(date) : date
+    // Show date only (no time)
     return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
+      year: "numeric"
     })
   }
 
@@ -278,7 +277,7 @@ export default function InterviewSessionManager({
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-3">
+                    <div className="mb-3 flex items-center gap-3">
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                         {session.jobTitle}
                       </h3>
@@ -287,7 +286,7 @@ export default function InterviewSessionManager({
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 text-sm text-slate-600 sm:grid-cols-3 dark:text-slate-400">
+                    <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm text-slate-600 sm:grid-cols-3 dark:text-slate-400">
                       {session.companyName && (
                         <div className="flex items-center gap-2">
                           <Building2 className="size-4" />
@@ -306,12 +305,7 @@ export default function InterviewSessionManager({
                       </div>
                     </div>
 
-                    {session.jobDescription && (
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
-                        <span className="font-medium">Job Description:</span>{" "}
-                        {session.jobDescription}
-                      </p>
-                    )}
+                    {/* Job description removed from card for a cleaner summary view. */}
 
                     {session.customInstructions && (
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
