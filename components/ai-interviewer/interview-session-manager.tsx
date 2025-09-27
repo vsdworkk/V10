@@ -182,9 +182,12 @@ export default function InterviewSessionManager({
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button
+              className="h-10 justify-start px-3 text-sm text-white shadow-sm transition-all hover:brightness-110"
+              style={{ backgroundColor: "#444ec1" }}
+            >
               <Plus className="mr-2 size-4" />
-              New Session
+              New Practice Interview
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
@@ -306,7 +309,8 @@ export default function InterviewSessionManager({
                 <Button
                   onClick={handleCreateSession}
                   disabled={isLoading}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="h-10 justify-start px-3 text-sm text-white shadow-sm transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#444ec1" }}
                 >
                   {isLoading ? "Creating..." : "Create Session"}
                 </Button>
@@ -327,13 +331,6 @@ export default function InterviewSessionManager({
             <p className="mb-4 text-center text-slate-600 dark:text-slate-400">
               Create your first AI interview session to start practicing
             </p>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Plus className="mr-2 size-4" />
-              Create First Session
-            </Button>
           </CardContent>
         </Card>
       ) : (
